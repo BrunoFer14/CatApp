@@ -2,7 +2,7 @@ import SwiftUI
 
 struct FavoritesView: View {
     @ObservedObject var viewModel: CatBreedsViewModel
-    
+
     var favoriteBreeds: [CatBreed] {
         viewModel.breeds.filter { viewModel.isFavorite($0) }
     }
@@ -35,8 +35,10 @@ struct FavoritesView: View {
 
                 List(favoriteBreeds) { breed in
                     HStack {
-                        Text(breed.name)
-                            .font(.headline)
+                        NavigationLink(destination: BreedDetailView(breed: breed, viewModel: viewModel)) {
+                            Text(breed.name)
+                                .font(.headline)
+                        }
 
                         Spacer()
 
@@ -54,5 +56,3 @@ struct FavoritesView: View {
         .navigationTitle("Favoritos")
     }
 }
-
-
