@@ -5,78 +5,161 @@ import SwiftData
 @MainActor
 class CatBreedsViewModel: ObservableObject {
     @Published var breeds: [CatBreed] = []
-    @Published var searchText = ""
     @Published var favoriteIDs: Set<String> = []
+    @Published var isLoadingPage = false
+    @Published var currentPage = 0
 
-    var cancellables = Set<AnyCancellable>()
-    var favoritesContext: ModelContext
+    private var cancellables = Set<AnyCancellable>()
+    private let repository: BreedsRepositoryProtocol
+    private let favoritesRepository: FavoritesRepositoryProtocol
+    private let context: ModelContext
 
-    init(context: ModelContext) {
-        self.favoritesContext = context
+    private let limit = 20
+
+    init(
+        context: ModelContext,
+        repository: BreedsRepositoryProtocol = BreedsRepository(),
+        favoritesRepository: FavoritesRepositoryProtocol? = nil
+    ) {
+        self.repository = repository
+        self.favoritesRepository = favoritesRepository ?? FavoritesRepository(context: context)
+        self.context = context
+
+        // Carrega do cache primeiro (mostra algo mesmo offline)
+        loadFromCache()
         fetchFavorites()
-        fetchBreeds()
+        fetchPage(page: 0)
     }
 
-    func fetchBreeds() {
-        guard let url = URL(string: "https://api.thecatapi.com/v1/breeds") else { return }
+    // MARK: - Paginação
+    func fetchPage(page: Int) {
+        guard !isLoadingPage else { return }
+        isLoadingPage = true
 
-        URLSession.shared.dataTaskPublisher(for: url)
-            .map { $0.data }
-            .decode(type: [CatBreed].self, decoder: JSONDecoder())
+        repository.fetchBreeds(page: page, limit: limit)
             .receive(on: DispatchQueue.main)
-            .sink(receiveCompletion: { completion in
-                if case let .failure(error) = completion {
-                    print("Erro ao buscar raças: \(error)")
+            .sink(receiveCompletion: { [weak self] completion in
+                if case .failure = completion {
+                    self?.loadFromCache()
                 }
-            }, receiveValue: { [weak self] breeds in
-                self?.breeds = breeds
+                self?.isLoadingPage = false
+            }, receiveValue: { [weak self] newBreeds in
+                guard let self else { return }
+
+                if page == 0 {
+                    self.breeds = newBreeds
+                } else {
+                    self.breeds.append(contentsOf: newBreeds)
+                }
+
+                self.currentPage = page
+                self.saveToCache(newBreeds)
             })
             .store(in: &cancellables)
     }
 
+    // MARK: - Cache
+    private func saveToCache(_ breeds: [CatBreed]) {
+        do {
+            for breed in breeds {
+                // Upsert: atualiza se existir, senão insere
+                let predicate = #Predicate<CachedBreed> { $0.id == breed.id }
+                var descriptor = FetchDescriptor<CachedBreed>(predicate: predicate)
+                descriptor.fetchLimit = 1
+
+                if let existing = try context.fetch(descriptor).first {
+                    existing.name = breed.name
+                    existing.origin = breed.origin
+                    existing.temperament = breed.temperament
+                    existing.life_span = breed.life_span
+                    existing.breedDescription = breed.description
+                    existing.imageUrl = breed.image?.url ?? breed.referenceImageUrl
+                } else {
+                    let cached = CachedBreed(
+                        id: breed.id,
+                        name: breed.name,
+                        origin: breed.origin,
+                        temperament: breed.temperament,
+                        life_span: breed.life_span,
+                        breedDescription: breed.description,
+                        imageUrl: breed.image?.url ?? breed.referenceImageUrl
+                    )
+                    context.insert(cached)
+                }
+            }
+
+            try context.save()
+        } catch {
+            print("❌ Erro ao guardar cache: \(error)")
+        }
+    }
+
+    private func loadFromCache() {
+        do {
+            let cachedBreeds = try context.fetch(FetchDescriptor<CachedBreed>())
+            self.breeds = cachedBreeds.map {
+                CatBreed(
+                    id: $0.id,
+                    name: $0.name,
+                    origin: $0.origin,
+                    description: $0.breedDescription,
+                    temperament: $0.temperament,
+                    life_span: $0.life_span,
+                    image: BreedImage(url: $0.imageUrl),
+                    referenceImageId: nil
+                )
+            }
+        } catch {
+            print("❌ Erro ao carregar cache: \(error)")
+        }
+    }
+
+    // MARK: - Favoritos
     func fetchFavorites() {
         do {
-            let favorites = try favoritesContext.fetch(FetchDescriptor<Favorite>())
+            let favorites = try favoritesRepository.fetchFavorites()
             favoriteIDs = Set(favorites.map { $0.breedId })
         } catch {
-            print("Erro ao buscar favoritos: \(error)")
+            print("❌ Erro ao buscar favoritos: \(error)")
         }
     }
 
     func toggleFavorite(for breed: CatBreed) {
         if isFavorite(breed) {
-            // Remover da base
             do {
-                let favorites = try favoritesContext.fetch(FetchDescriptor<Favorite>())
-                if let toDelete = favorites.first(where: { $0.breedId == breed.id }) {
-                    favoritesContext.delete(toDelete)
-                    try favoritesContext.save()
-                    fetchFavorites()
-                }
-            } catch {
-                print("Erro ao remover favorito: \(error)")
-            }
-        } else {
-            let newFavorite = Favorite(breedId: breed.id)
-            favoritesContext.insert(newFavorite)
-            do {
-                try favoritesContext.save()
+                try favoritesRepository.removeFavorite(id: breed.id)
                 fetchFavorites()
             } catch {
-                print("Erro ao adicionar favorito: \(error)")
+                print("❌ Erro ao remover favorito: \(error)")
+            }
+        } else {
+            do {
+                try favoritesRepository.addFavorite(id: breed.id)
+                fetchFavorites()
+            } catch {
+                print("❌ Erro ao adicionar favorito: \(error)")
             }
         }
     }
 
     func isFavorite(_ breed: CatBreed) -> Bool {
-        favoriteIDs.contains(breed.id)
+        favoritesRepository.isFavorite(id: breed.id)
     }
 
-    var filteredBreeds: [CatBreed] {
-        if searchText.isEmpty {
-            return breeds
-        } else {
-            return breeds.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+    // MARK: - Média de vida dos favoritos
+    func averageLifeSpanForFavorites() -> Double? {
+        let favoriteBreeds = breeds.filter { favoriteIDs.contains($0.id) }
+
+        let spans: [Double] = favoriteBreeds.compactMap { breed in
+            guard let spanString = breed.life_span else { return nil }
+            let numbers = spanString
+                .components(separatedBy: CharacterSet.decimalDigits.inverted)
+                .compactMap { Double($0) }
+            guard !numbers.isEmpty else { return nil }
+            return numbers.reduce(0, +) / Double(numbers.count)
         }
+
+        guard !spans.isEmpty else { return nil }
+        return spans.reduce(0, +) / Double(spans.count)
     }
 }

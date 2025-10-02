@@ -7,48 +7,54 @@ struct BreedDetailView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                if let imageUrl = breed.image?.url, let url = URL(string: imageUrl) {
-                    AsyncImage(url: url) { image in
-                        image.resizable()
-                            .aspectRatio(contentMode: .fit)
-                    } placeholder: {
-                        ProgressView()
-                    }
-                    .frame(maxWidth: .infinity)
-                    .cornerRadius(12)
-                }
 
-                HStack {
-                    Text(breed.name)
-                        .font(.largeTitle)
-                        .bold()
+                // ✅ Usa o CatImageView com fallback (url ou referenceImageUrl)
+                CatImageView(
+                    urlString: breed.image?.url ?? breed.referenceImageUrl,
+                    height: 200,
+                    cornerRadius: 12
+                )
+                .frame(maxWidth: .infinity)
 
-                    Spacer()
-
-                    Button(action: {
-                        viewModel.toggleFavorite(for: breed)
-                    }) {
-                        Image(systemName: viewModel.isFavorite(breed) ? "heart.fill" : "heart")
-                            .foregroundColor(.red)
-                            .imageScale(.large)
-                    }
-                }
+                Text(breed.name)
+                    .font(.largeTitle)
+                    .bold()
 
                 if let origin = breed.origin {
-                    Text("🌍 Origem: \(origin)")
-                }
-
-                if let life = breed.life_span {
-                    Text("🕐 Expectativa de vida: \(life) anos")
+                    Text("🌍 Origin: \(origin)")
+                        .font(.subheadline)
                 }
 
                 if let temperament = breed.temperament {
-                    Text("😺 Temperamento: \(temperament)")
+                    Text("😺 Temperament: \(temperament)")
+                        .font(.subheadline)
+                }
+
+                if let lifeSpan = breed.life_span {
+                    Text("⏳ Life span: \(lifeSpan) years")
+                        .font(.subheadline)
                 }
 
                 if let description = breed.description {
-                    Text("📄 Descrição:\n\(description)")
+                    Text(description)
+                        .padding(.top, 8)
                 }
+
+                // ✅ Botão de favoritos
+                Button(action: {
+                    viewModel.toggleFavorite(for: breed)
+                }) {
+                    HStack {
+                        Image(systemName: viewModel.isFavorite(breed) ? "heart.fill" : "heart")
+                            .foregroundColor(.red)
+                        Text(viewModel.isFavorite(breed) ? "Remove from Favorites" : "Add to Favorites")
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(Color(.systemGray6))
+                    .cornerRadius(8)
+                }
+                .padding(.top, 16)
             }
             .padding()
         }
@@ -56,5 +62,3 @@ struct BreedDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 }
-
-

@@ -7,6 +7,7 @@ struct CatAppApp: App {
         WindowGroup {
             ContentView()
         }
-        .modelContainer(for: Favorite.self)
+        // Inclui TODOS os modelos que queres persistir
+        .modelContainer(for: [Favorite.self, CachedBreed.self])
     }
 }

@@ -1,53 +1,42 @@
 import SwiftUI
 
 struct MainView: View {
-    @StateObject var viewModel: CatBreedsViewModel
+    @ObservedObject var viewModel: CatBreedsViewModel
 
     var body: some View {
-        NavigationStack {
-            List(viewModel.filteredBreeds) { breed in
-                HStack {
+        NavigationView {
+            List {
+                ForEach(viewModel.breeds) { breed in
                     NavigationLink(destination: BreedDetailView(breed: breed, viewModel: viewModel)) {
                         HStack {
-                            if let urlString = breed.image?.url, let url = URL(string: urlString) {
-                                AsyncImage(url: url) { image in
-                                    image.resizable()
-                                } placeholder: {
-                                    ProgressView()
-                                }
-                                .frame(width: 60, height: 60)
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
-                            } else {
-                                Image(systemName: "photo")
-                                    .resizable()
-                                    .frame(width: 60, height: 60)
-                                    .foregroundColor(.gray)
-                            }
-
-                            VStack(alignment: .leading) {
-                                Text(breed.name)
-                                    .font(.headline)
-                            }
-
-                            Spacer()
+                            CatImageView(
+                                urlString: breed.image?.url ?? breed.referenceImageUrl,
+                                width: 60,
+                                height: 60,
+                                cornerRadius: 8
+                            )
+                            Text(breed.name)
+                                .font(.headline)
                         }
                     }
-
-                    Button(action: {
-                        viewModel.toggleFavorite(for: breed)
-                    }) {
-                        Image(systemName: viewModel.isFavorite(breed) ? "heart.fill" : "heart")
-                            .foregroundColor(.red)
+                    // 👉 trigger da paginação
+                    .onAppear {
+                        if breed.id == viewModel.breeds.last?.id {
+                            viewModel.fetchPage(page: viewModel.currentPage + 1)
+                        }
                     }
-                    .buttonStyle(PlainButtonStyle())
                 }
             }
-            .searchable(text: $viewModel.searchText)
             .navigationTitle("Cat Breeds")
             .toolbar {
-                NavigationLink(destination: FavoritesView(viewModel: viewModel)) {
-                    Image(systemName: "heart.circle")
-                        .imageScale(.large)
+                HStack {
+                    NavigationLink(destination: SearchView(viewModel: viewModel)) {
+                        Image(systemName: "magnifyingglass")
+                    }
+                    NavigationLink(destination: FavoritesView(viewModel: viewModel)) {
+                        Image(systemName: "heart.fill")
+                            .foregroundColor(.red)
+                    }
                 }
             }
         }

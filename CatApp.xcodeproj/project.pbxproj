@@ -21,28 +21,43 @@
 			remoteGlobalIDString = AF7B3B1F2E43AEAB005F7801;
 			remoteInfo = CatApp;
 		};
+		B38B17F62E8C276C00F2B693 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AF7B3B182E43AEAB005F7801 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF7B3B1F2E43AEAB005F7801;
+			remoteInfo = CatApp;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		AF7B3B202E43AEAB005F7801 /* CatApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CatApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF7B3B2E2E43AEAD005F7801 /* CatAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CatAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF7B3B382E43AEAD005F7801 /* CatAppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CatAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B38B17F22E8C276C00F2B693 /* CatAppTests1.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CatAppTests1.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		B38B180B2E8C397500F2B693 /* Exceptions for "Repositories" folder in "CatAppTests1" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				MockBreedsRepository.swift,
+			);
+			target = B38B17F12E8C276C00F2B693 /* CatAppTests1 */;
+		};
+		B38B180C2E8C39B000F2B693 /* Exceptions for "Repositories" folder in "CatApp" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				MockBreedsRepository.swift,
+			);
+			target = AF7B3B1F2E43AEAB005F7801 /* CatApp */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		AF7B3B222E43AEAB005F7801 /* CatApp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = CatApp;
-			sourceTree = "<group>";
-		};
-		AF7B3B312E43AEAD005F7801 /* CatAppTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = CatAppTests;
-			sourceTree = "<group>";
-		};
-		AF7B3B3B2E43AEAD005F7801 /* CatAppUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = CatAppUITests;
 			sourceTree = "<group>";
 		};
 		AF7B3B4B2E43AF37005F7801 /* Models */ = {
@@ -58,6 +73,25 @@
 		AF7B3B4D2E43AF4B005F7801 /* Views */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Views;
+			sourceTree = "<group>";
+		};
+		B38B17C42E8A860A00F2B693 /* Services */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Services;
+			sourceTree = "<group>";
+		};
+		B38B17C82E8A879C00F2B693 /* Repositories */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				B38B180C2E8C39B000F2B693 /* Exceptions for "Repositories" folder in "CatApp" target */,
+				B38B180B2E8C397500F2B693 /* Exceptions for "Repositories" folder in "CatAppTests1" target */,
+			);
+			path = Repositories;
+			sourceTree = "<group>";
+		};
+		B38B17F32E8C276C00F2B693 /* CatAppTests1 */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = CatAppTests1;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -84,18 +118,26 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B38B17EF2E8C276C00F2B693 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		AF7B3B172E43AEAB005F7801 = {
 			isa = PBXGroup;
 			children = (
+				B38B17C82E8A879C00F2B693 /* Repositories */,
+				B38B17C42E8A860A00F2B693 /* Services */,
 				AF7B3B4D2E43AF4B005F7801 /* Views */,
 				AF7B3B4C2E43AF40005F7801 /* ViewModels */,
 				AF7B3B4B2E43AF37005F7801 /* Models */,
 				AF7B3B222E43AEAB005F7801 /* CatApp */,
-				AF7B3B312E43AEAD005F7801 /* CatAppTests */,
-				AF7B3B3B2E43AEAD005F7801 /* CatAppUITests */,
+				B38B17F32E8C276C00F2B693 /* CatAppTests1 */,
 				AF7B3B212E43AEAB005F7801 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -106,6 +148,7 @@
 				AF7B3B202E43AEAB005F7801 /* CatApp.app */,
 				AF7B3B2E2E43AEAD005F7801 /* CatAppTests.xctest */,
 				AF7B3B382E43AEAD005F7801 /* CatAppUITests.xctest */,
+				B38B17F22E8C276C00F2B693 /* CatAppTests1.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -130,6 +173,8 @@
 				AF7B3B4B2E43AF37005F7801 /* Models */,
 				AF7B3B4C2E43AF40005F7801 /* ViewModels */,
 				AF7B3B4D2E43AF4B005F7801 /* Views */,
+				B38B17C42E8A860A00F2B693 /* Services */,
+				B38B17C82E8A879C00F2B693 /* Repositories */,
 			);
 			name = CatApp;
 			packageProductDependencies = (
@@ -151,9 +196,6 @@
 			dependencies = (
 				AF7B3B302E43AEAD005F7801 /* PBXTargetDependency */,
 			);
-			fileSystemSynchronizedGroups = (
-				AF7B3B312E43AEAD005F7801 /* CatAppTests */,
-			);
 			name = CatAppTests;
 			packageProductDependencies = (
 			);
@@ -174,15 +216,35 @@
 			dependencies = (
 				AF7B3B3A2E43AEAD005F7801 /* PBXTargetDependency */,
 			);
-			fileSystemSynchronizedGroups = (
-				AF7B3B3B2E43AEAD005F7801 /* CatAppUITests */,
-			);
 			name = CatAppUITests;
 			packageProductDependencies = (
 			);
 			productName = CatAppUITests;
 			productReference = AF7B3B382E43AEAD005F7801 /* CatAppUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		B38B17F12E8C276C00F2B693 /* CatAppTests1 */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B38B17F82E8C276C00F2B693 /* Build configuration list for PBXNativeTarget "CatAppTests1" */;
+			buildPhases = (
+				B38B17EE2E8C276C00F2B693 /* Sources */,
+				B38B17EF2E8C276C00F2B693 /* Frameworks */,
+				B38B17F02E8C276C00F2B693 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B38B17F72E8C276C00F2B693 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				B38B17F32E8C276C00F2B693 /* CatAppTests1 */,
+			);
+			name = CatAppTests1;
+			packageProductDependencies = (
+			);
+			productName = CatAppTests1;
+			productReference = B38B17F22E8C276C00F2B693 /* CatAppTests1.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
 
@@ -191,7 +253,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1640;
+				LastSwiftUpdateCheck = 2600;
 				LastUpgradeCheck = 1640;
 				TargetAttributes = {
 					AF7B3B1F2E43AEAB005F7801 = {
@@ -203,6 +265,10 @@
 					};
 					AF7B3B372E43AEAD005F7801 = {
 						CreatedOnToolsVersion = 16.4;
+						TestTargetID = AF7B3B1F2E43AEAB005F7801;
+					};
+					B38B17F12E8C276C00F2B693 = {
+						CreatedOnToolsVersion = 26.0.1;
 						TestTargetID = AF7B3B1F2E43AEAB005F7801;
 					};
 				};
@@ -224,6 +290,7 @@
 				AF7B3B1F2E43AEAB005F7801 /* CatApp */,
 				AF7B3B2D2E43AEAD005F7801 /* CatAppTests */,
 				AF7B3B372E43AEAD005F7801 /* CatAppUITests */,
+				B38B17F12E8C276C00F2B693 /* CatAppTests1 */,
 			);
 		};
 /* End PBXProject section */
@@ -244,6 +311,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		AF7B3B362E43AEAD005F7801 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B38B17F02E8C276C00F2B693 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -274,6 +348,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B38B17EE2E8C276C00F2B693 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -286,6 +367,11 @@
 			isa = PBXTargetDependency;
 			target = AF7B3B1F2E43AEAB005F7801 /* CatApp */;
 			targetProxy = AF7B3B392E43AEAD005F7801 /* PBXContainerItemProxy */;
+		};
+		B38B17F72E8C276C00F2B693 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF7B3B1F2E43AEAB005F7801 /* CatApp */;
+			targetProxy = B38B17F62E8C276C00F2B693 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -564,6 +650,51 @@
 			};
 			name = Release;
 		};
+		B38B17F92E8C276C00F2B693 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = CatApp.CatAppTests1;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CatApp.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/CatApp";
+			};
+			name = Debug;
+		};
+		B38B17FA2E8C276C00F2B693 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = CatApp.CatAppTests1;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CatApp.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/CatApp";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -599,6 +730,15 @@
 			buildConfigurations = (
 				AF7B3B492E43AEAD005F7801 /* Debug */,
 				AF7B3B4A2E43AEAD005F7801 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B38B17F82E8C276C00F2B693 /* Build configuration list for PBXNativeTarget "CatAppTests1" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B38B17F92E8C276C00F2B693 /* Debug */,
+				B38B17FA2E8C276C00F2B693 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
