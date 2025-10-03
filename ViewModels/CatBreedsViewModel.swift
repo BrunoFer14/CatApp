@@ -53,15 +53,27 @@ class CatBreedsViewModel: ObservableObject {
                 }
 
                 self.currentPage = page
-                self.saveToCache(newBreeds)
+                self.saveToCache(newBreeds, page: page)
+
+                // Prefetch das imagens para uso offline
+                let urls = newBreeds
+                    .compactMap { $0.image?.url ?? $0.referenceImageUrl }
+                    .compactMap(URL.init(string:))
+                if !urls.isEmpty {
+                    Task {
+                        await ImageCache.shared.prefetch(urls: urls)
+                    }
+                }
             })
             .store(in: &cancellables)
     }
 
     // MARK: - Cache
-    private func saveToCache(_ breeds: [CatBreed]) {
+    private func saveToCache(_ breeds: [CatBreed], page: Int) {
         do {
-            for breed in breeds {
+            for (offset, breed) in breeds.enumerated() {
+                let idx = page * limit + offset
+
                 // Upsert: atualiza se existir, senão insere
                 let predicate = #Predicate<CachedBreed> { $0.id == breed.id }
                 var descriptor = FetchDescriptor<CachedBreed>(predicate: predicate)
@@ -74,6 +86,7 @@ class CatBreedsViewModel: ObservableObject {
                     existing.life_span = breed.life_span
                     existing.breedDescription = breed.description
                     existing.imageUrl = breed.image?.url ?? breed.referenceImageUrl
+                    existing.orderIndex = idx
                 } else {
                     let cached = CachedBreed(
                         id: breed.id,
@@ -82,7 +95,8 @@ class CatBreedsViewModel: ObservableObject {
                         temperament: breed.temperament,
                         life_span: breed.life_span,
                         breedDescription: breed.description,
-                        imageUrl: breed.image?.url ?? breed.referenceImageUrl
+                        imageUrl: breed.image?.url ?? breed.referenceImageUrl,
+                        orderIndex: idx
                     )
                     context.insert(cached)
                 }
@@ -96,7 +110,10 @@ class CatBreedsViewModel: ObservableObject {
 
     private func loadFromCache() {
         do {
-            let cachedBreeds = try context.fetch(FetchDescriptor<CachedBreed>())
+            var descriptor = FetchDescriptor<CachedBreed>()
+            descriptor.sortBy = [SortDescriptor(\.orderIndex, order: .forward)]
+            let cachedBreeds = try context.fetch(descriptor)
+
             self.breeds = cachedBreeds.map {
                 CatBreed(
                     id: $0.id,

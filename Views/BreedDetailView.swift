@@ -1,8 +1,25 @@
 import SwiftUI
+#if canImport(UIKit)
+import UIKit
+#endif
+#if canImport(AppKit)
+import AppKit
+#endif
 
 struct BreedDetailView: View {
     let breed: CatBreed
     @ObservedObject var viewModel: CatBreedsViewModel
+
+    // Cor de fundo do botão, compatível com múltiplas plataformas
+    private var buttonBackground: Color {
+        #if canImport(UIKit)
+        return Color(UIColor.systemGray6)
+        #elseif canImport(AppKit)
+        return Color(NSColor.windowBackgroundColor)
+        #else
+        return Color.gray.opacity(0.12)
+        #endif
+    }
 
     var body: some View {
         ScrollView {
@@ -51,7 +68,7 @@ struct BreedDetailView: View {
                     }
                     .padding()
                     .frame(maxWidth: .infinity)
-                    .background(Color(.systemGray6))
+                    .background(buttonBackground)
                     .cornerRadius(8)
                 }
                 .padding(.top, 16)
