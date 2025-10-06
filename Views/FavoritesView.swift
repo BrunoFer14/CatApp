@@ -1,17 +1,24 @@
 import SwiftUI
 
 struct FavoritesView: View {
-    @ObservedObject var viewModel: CatBreedsViewModel
+    @StateObject private var viewModel: FavoritesViewModel
+
+    // Mantém compatibilidade com o MainView atual
+    init(viewModel: CatBreedsViewModel) {
+        _viewModel = StateObject(wrappedValue: FavoritesViewModel(catViewModel: viewModel))
+    }
 
     var body: some View {
         VStack {
-            if viewModel.favoriteIDs.isEmpty {
+            if viewModel.isEmpty {
                 Text("No favorites yet 🐾")
                     .foregroundColor(.gray)
                     .padding()
             } else {
-                List(favoriteBreeds) { breed in
-                    NavigationLink(destination: BreedDetailView(breed: breed, viewModel: viewModel)) {
+                List(viewModel.favoriteBreeds) { breed in
+                    NavigationLink(
+                        destination: BreedDetailView(breed: breed, viewModel: viewModel.catViewModel)
+                    ) {
                         HStack {
                             CatImageView(
                                 urlString: breed.image?.url ?? breed.referenceImageUrl,
@@ -21,23 +28,22 @@ struct FavoritesView: View {
                             )
                             Text(breed.name)
                                 .font(.headline)
+                            Spacer()
+                            // Exemplo: botão para remover dos favoritos direto na lista (opcional)
+                            FavoriteButton(isFavorite: viewModel.isFavorite(breed)) {
+                                viewModel.toggleFavorite(breed)
+                            }
                         }
                     }
                 }
 
-                // ✅ Mostra a média calculada no ViewModel
-                if let avg = viewModel.averageLifeSpanForFavorites() {
-                    Text("Average life span of favorites: \(String(format: "%.1f", avg)) years")
+                if let avgText = viewModel.averageLifeSpanText() {
+                    Text("Average life span of favorites: \(avgText) years")
                         .font(.subheadline)
                         .padding()
                 }
             }
         }
         .navigationTitle("Favorites")
-    }
-
-    // Só filtra os favoritos para mostrar na lista
-    private var favoriteBreeds: [CatBreed] {
-        viewModel.breeds.filter { viewModel.favoriteIDs.contains($0.id) }
     }
 }
