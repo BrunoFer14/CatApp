@@ -11,19 +11,25 @@ class CatBreedsViewModel: ObservableObject {
 
     private var cancellables = Set<AnyCancellable>()
     private let repository: BreedsRepositoryProtocol
+    private let detailsRepository: DetailsRepositoryProtocol
     private let favoritesRepository: FavoritesRepositoryProtocol
-    private let context: ModelContext
+    private let breedsCacheDB: BreedsCacheDatabaseServiceProtocol
 
     private let limit = 20
 
     init(
         context: ModelContext,
         repository: BreedsRepositoryProtocol = BreedsRepository(),
-        favoritesRepository: FavoritesRepositoryProtocol? = nil
+        detailsRepository: DetailsRepositoryProtocol = DetailsRepository(),
+        favoritesRepository: FavoritesRepositoryProtocol? = nil,
+        breedsCacheDB: BreedsCacheDatabaseServiceProtocol? = nil
     ) {
         self.repository = repository
-        self.favoritesRepository = favoritesRepository ?? FavoritesRepository(context: context)
-        self.context = context
+        self.detailsRepository = detailsRepository
+
+        let baseDB = SwiftDataDatabaseService(context: context)
+        self.favoritesRepository = favoritesRepository ?? FavoritesRepository(db: baseDB)
+        self.breedsCacheDB = breedsCacheDB ?? BreedsCacheDatabaseService(db: baseDB)
 
         // Carrega do cache primeiro (mostra algo mesmo offline)
         loadFromCache()
@@ -49,13 +55,14 @@ class CatBreedsViewModel: ObservableObject {
                 if page == 0 {
                     self.breeds = newBreeds
                 } else {
-                    self.breeds.append(contentsOf: newBreeds)
+                    let existingIDs = Set(self.breeds.map { $0.id })
+                    let filteredNew = newBreeds.filter { !existingIDs.contains($0.id) }
+                    self.breeds.append(contentsOf: filteredNew)
                 }
 
                 self.currentPage = page
                 self.saveToCache(newBreeds, page: page)
 
-                // Prefetch das imagens para uso offline
                 let urls = newBreeds
                     .compactMap { $0.image?.url ?? $0.referenceImageUrl }
                     .compactMap(URL.init(string:))
@@ -68,41 +75,10 @@ class CatBreedsViewModel: ObservableObject {
             .store(in: &cancellables)
     }
 
-    // MARK: - Cache
+    // MARK: - Cache (via serviço)
     private func saveToCache(_ breeds: [CatBreed], page: Int) {
         do {
-            for (offset, breed) in breeds.enumerated() {
-                let idx = page * limit + offset
-
-                // Upsert: atualiza se existir, senão insere
-                let predicate = #Predicate<CachedBreed> { $0.id == breed.id }
-                var descriptor = FetchDescriptor<CachedBreed>(predicate: predicate)
-                descriptor.fetchLimit = 1
-
-                if let existing = try context.fetch(descriptor).first {
-                    existing.name = breed.name
-                    existing.origin = breed.origin
-                    existing.temperament = breed.temperament
-                    existing.life_span = breed.life_span
-                    existing.breedDescription = breed.description
-                    existing.imageUrl = breed.image?.url ?? breed.referenceImageUrl
-                    existing.orderIndex = idx
-                } else {
-                    let cached = CachedBreed(
-                        id: breed.id,
-                        name: breed.name,
-                        origin: breed.origin,
-                        temperament: breed.temperament,
-                        life_span: breed.life_span,
-                        breedDescription: breed.description,
-                        imageUrl: breed.image?.url ?? breed.referenceImageUrl,
-                        orderIndex: idx
-                    )
-                    context.insert(cached)
-                }
-            }
-
-            try context.save()
+            try breedsCacheDB.upsertBreeds(breeds, page: page, limit: limit)
         } catch {
             print("❌ Erro ao guardar cache: \(error)")
         }
@@ -110,10 +86,7 @@ class CatBreedsViewModel: ObservableObject {
 
     private func loadFromCache() {
         do {
-            var descriptor = FetchDescriptor<CachedBreed>()
-            descriptor.sortBy = [SortDescriptor(\.orderIndex, order: .forward)]
-            let cachedBreeds = try context.fetch(descriptor)
-
+            let cachedBreeds = try breedsCacheDB.fetchCachedBreedsSorted()
             self.breeds = cachedBreeds.map {
                 CatBreed(
                     id: $0.id,
@@ -136,6 +109,61 @@ class CatBreedsViewModel: ObservableObject {
         do {
             let favorites = try favoritesRepository.fetchFavorites()
             favoriteIDs = Set(favorites.map { $0.breedId })
+
+            // IDs de favoritos que ainda não estão em breeds
+            let currentIDs = Set(breeds.map { $0.id })
+            let missingIDs = favoriteIDs.subtracting(currentIDs)
+
+            // 1) Completa a partir do cache
+            var appendedIDs = Set<String>()
+            if !missingIDs.isEmpty {
+                let cachedMissing = try breedsCacheDB.fetchBreedsByIDs(missingIDs)
+                let mappedMissing: [CatBreed] = cachedMissing.map {
+                    CatBreed(
+                        id: $0.id,
+                        name: $0.name,
+                        origin: $0.origin,
+                        description: $0.breedDescription,
+                        temperament: $0.temperament,
+                        life_span: $0.life_span,
+                        image: BreedImage(url: $0.imageUrl),
+                        referenceImageId: nil
+                    )
+                }
+
+                let existingIDs = Set(breeds.map { $0.id })
+                let toAppend = mappedMissing.filter { !existingIDs.contains($0.id) }
+                if !toAppend.isEmpty {
+                    breeds.append(contentsOf: toAppend)
+                    appendedIDs.formUnion(toAppend.map { $0.id })
+                }
+            }
+
+            // 2) Para o que ainda faltar, fallback à rede por ID
+            let stillMissing = missingIDs.subtracting(appendedIDs)
+            guard !stillMissing.isEmpty else { return }
+
+            let publishers = stillMissing.map { id in
+                detailsRepository.fetchBreedDetail(by: id)
+                    .replaceError(with: nil)
+            }
+
+            Publishers.MergeMany(publishers)
+                .compactMap { $0 }
+                .collect()
+                .receive(on: DispatchQueue.main)
+                .sink { [weak self] fetched in
+                    guard let self else { return }
+                    let existingIDs = Set(self.breeds.map { $0.id })
+                    let toAppend = fetched.filter { !existingIDs.contains($0.id) }
+                    if !toAppend.isEmpty {
+                        self.breeds.append(contentsOf: toAppend)
+                        // Guarda estes no cache para futuras execuções
+                        self.saveToCache(toAppend, page: self.currentPage)
+                    }
+                }
+                .store(in: &cancellables)
+
         } catch {
             print("❌ Erro ao buscar favoritos: \(error)")
         }

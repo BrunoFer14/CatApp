@@ -10,42 +10,36 @@ protocol FavoritesRepositoryProtocol {
 
 @MainActor
 class FavoritesRepository: FavoritesRepositoryProtocol {
-    private let context: ModelContext
+    private let db: DatabaseServiceProtocol
 
-    init(context: ModelContext) {
-        self.context = context
+    init(db: DatabaseServiceProtocol) {
+        self.db = db
+    }
+
+    convenience init(context: ModelContext) {
+        self.init(db: SwiftDataDatabaseService(context: context))
     }
 
     func fetchFavorites() throws -> [Favorite] {
-        try context.fetch(FetchDescriptor<Favorite>())
+        try db.fetch(FetchDescriptor<Favorite>())
     }
 
     func addFavorite(id: String) throws {
         let favorite = Favorite(breedId: id)
-        context.insert(favorite)
-        try context.save()
+        try db.insert(favorite)
     }
 
     func removeFavorite(id: String) throws {
-        let predicate = #Predicate<Favorite> { $0.breedId == id }
-        var descriptor = FetchDescriptor<Favorite>(predicate: predicate)
-        descriptor.fetchLimit = 0 // sem limite; apaga todos os duplicados, se existirem
-
-        let matches = try context.fetch(descriptor)
+        // Sem #Predicate: busca todos e filtra em memória
+        let all = try db.fetch(FetchDescriptor<Favorite>())
+        let matches = all.filter { $0.breedId == id }
         for fav in matches {
-            context.delete(fav)
-        }
-        if !matches.isEmpty {
-            try context.save()
+            try db.delete(fav)
         }
     }
 
     func isFavorite(id: String) -> Bool {
-        let predicate = #Predicate<Favorite> { $0.breedId == id }
-        var descriptor = FetchDescriptor<Favorite>(predicate: predicate)
-        descriptor.fetchLimit = 1
-
-        let result = try? context.fetch(descriptor)
-        return (result?.isEmpty == false)
+        let all = try? db.fetch(FetchDescriptor<Favorite>())
+        return all?.contains(where: { $0.breedId == id }) ?? false
     }
 }

@@ -23,6 +23,10 @@ final class FavoritesViewModel: ObservableObject {
             .store(in: &cancellables)
     }
 
+    func refreshFavorites() {
+        catViewModel.fetchFavorites()
+    }
+
     func toggleFavorite(_ breed: CatBreed) {
         catViewModel.toggleFavorite(for: breed)
     }

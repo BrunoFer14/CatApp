@@ -29,7 +29,6 @@ struct FavoritesView: View {
                             Text(breed.name)
                                 .font(.headline)
                             Spacer()
-                            // Exemplo: botão para remover dos favoritos direto na lista (opcional)
                             FavoriteButton(isFavorite: viewModel.isFavorite(breed)) {
                                 viewModel.toggleFavorite(breed)
                             }
@@ -45,5 +44,9 @@ struct FavoritesView: View {
             }
         }
         .navigationTitle("Favorites")
+        .onAppear {
+            // Recarrega favoritos sempre que entras neste ecrã
+            viewModel.refreshFavorites()
+        }
     }
 }
