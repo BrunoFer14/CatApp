@@ -37,23 +37,6 @@
 		B38B17F22E8C276C00F2B693 /* CatAppTests1.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CatAppTests1.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		B38B180B2E8C397500F2B693 /* Exceptions for "Repositories" folder in "CatAppTests1" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				MockBreedsRepository.swift,
-			);
-			target = B38B17F12E8C276C00F2B693 /* CatAppTests1 */;
-		};
-		B38B180C2E8C39B000F2B693 /* Exceptions for "Repositories" folder in "CatApp" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				MockBreedsRepository.swift,
-			);
-			target = AF7B3B1F2E43AEAB005F7801 /* CatApp */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		AF7B3B222E43AEAB005F7801 /* CatApp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
@@ -82,10 +65,6 @@
 		};
 		B38B17C82E8A879C00F2B693 /* Repositories */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				B38B180C2E8C39B000F2B693 /* Exceptions for "Repositories" folder in "CatApp" target */,
-				B38B180B2E8C397500F2B693 /* Exceptions for "Repositories" folder in "CatAppTests1" target */,
-			);
 			path = Repositories;
 			sourceTree = "<group>";
 		};
@@ -196,6 +175,9 @@
 			dependencies = (
 				AF7B3B302E43AEAD005F7801 /* PBXTargetDependency */,
 			);
+			fileSystemSynchronizedGroups = (
+				B38B17F32E8C276C00F2B693 /* CatAppTests1 */,
+			);
 			name = CatAppTests;
 			packageProductDependencies = (
 			);
@@ -235,9 +217,6 @@
 			);
 			dependencies = (
 				B38B17F72E8C276C00F2B693 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				B38B17F32E8C276C00F2B693 /* CatAppTests1 */,
 			);
 			name = CatAppTests1;
 			packageProductDependencies = (

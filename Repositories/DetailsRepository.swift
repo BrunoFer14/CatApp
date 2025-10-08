@@ -1,12 +1,12 @@
 import Foundation
 import Combine
 
-/// Protocolo para obter detalhes de uma raça
+/// Repositório para obter detalhes de uma raça por ID.
 protocol DetailsRepositoryProtocol {
     func fetchBreedDetail(by id: String) -> AnyPublisher<CatBreed?, Error>
 }
 
-/// Implementação que reusa a mesma API `/breeds`
+/// Implementação simples: busca todas as raças e filtra localmente pelo ID.
 class DetailsRepository: DetailsRepositoryProtocol {
     private let networkService: NetworkServiceProtocol
 
@@ -15,11 +15,11 @@ class DetailsRepository: DetailsRepositoryProtocol {
     }
 
     func fetchBreedDetail(by id: String) -> AnyPublisher<CatBreed?, Error> {
+        // API não tem endpoint por ID aqui, por isso busca todas e filtra
         guard let url = URL(string: "https://api.thecatapi.com/v1/breeds") else {
             return Fail(error: URLError(.badURL)).eraseToAnyPublisher()
         }
 
-        // Faz fetch de todas as raças e filtra pelo id
         return networkService.fetch([CatBreed].self, from: url)
             .map { breeds in
                 breeds.first(where: { $0.id == id })

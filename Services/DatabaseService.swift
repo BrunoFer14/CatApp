@@ -1,5 +1,6 @@
 import SwiftData
 
+/// Abstração por cima do SwiftData para facilitar testes e reutilização.
 @MainActor
 protocol DatabaseServiceProtocol {
     var context: ModelContext { get }
@@ -11,6 +12,7 @@ protocol DatabaseServiceProtocol {
     func saveIfNeeded() throws
 }
 
+/// Implementação concreta usando SwiftData.
 @MainActor
 final class SwiftDataDatabaseService: DatabaseServiceProtocol {
     let context: ModelContext
@@ -34,12 +36,14 @@ final class SwiftDataDatabaseService: DatabaseServiceProtocol {
     }
 
     func deleteAll<T: PersistentModel>(_ modelType: T.Type) throws {
+        // Busca tudo e apaga, depois guarda
         let all = try context.fetch(FetchDescriptor<T>())
         for m in all { context.delete(m) }
         try saveIfNeeded()
     }
 
     func saveIfNeeded() throws {
+        // Só faz save se houver alterações pendentes
         if context.hasChanges {
             try context.save()
         }

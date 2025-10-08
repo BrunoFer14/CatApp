@@ -22,7 +22,8 @@ class CatBreedsViewModel: ObservableObject {
         repository: BreedsRepositoryProtocol = BreedsRepository(),
         detailsRepository: DetailsRepositoryProtocol = DetailsRepository(),
         favoritesRepository: FavoritesRepositoryProtocol? = nil,
-        breedsCacheDB: BreedsCacheDatabaseServiceProtocol? = nil
+        breedsCacheDB: BreedsCacheDatabaseServiceProtocol? = nil,
+        autoFetchFirstPage: Bool = true
     ) {
         self.repository = repository
         self.detailsRepository = detailsRepository
@@ -31,13 +32,17 @@ class CatBreedsViewModel: ObservableObject {
         self.favoritesRepository = favoritesRepository ?? FavoritesRepository(db: baseDB)
         self.breedsCacheDB = breedsCacheDB ?? BreedsCacheDatabaseService(db: baseDB)
 
-        // Carrega do cache primeiro (mostra algo mesmo offline)
         loadFromCache()
         fetchFavorites()
-        fetchPage(page: 0)
+        if autoFetchFirstPage {
+            fetchPage(page: 0)
+        }
     }
 
-    // MARK: - Paginação
+    private func sortBreedsAlphabetically() {
+        breeds.sort { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    }
+
     func fetchPage(page: Int) {
         guard !isLoadingPage else { return }
         isLoadingPage = true
@@ -51,7 +56,6 @@ class CatBreedsViewModel: ObservableObject {
                 self?.isLoadingPage = false
             }, receiveValue: { [weak self] newBreeds in
                 guard let self else { return }
-
                 if page == 0 {
                     self.breeds = newBreeds
                 } else {
@@ -59,29 +63,23 @@ class CatBreedsViewModel: ObservableObject {
                     let filteredNew = newBreeds.filter { !existingIDs.contains($0.id) }
                     self.breeds.append(contentsOf: filteredNew)
                 }
-
                 self.currentPage = page
+                self.sortBreedsAlphabetically()
                 self.saveToCache(newBreeds, page: page)
 
                 let urls = newBreeds
                     .compactMap { $0.image?.url ?? $0.referenceImageUrl }
                     .compactMap(URL.init(string:))
                 if !urls.isEmpty {
-                    Task {
-                        await ImageCache.shared.prefetch(urls: urls)
-                    }
+                    Task { await ImageCache.shared.prefetch(urls: urls) }
                 }
             })
             .store(in: &cancellables)
     }
 
-    // MARK: - Cache (via serviço)
     private func saveToCache(_ breeds: [CatBreed], page: Int) {
-        do {
-            try breedsCacheDB.upsertBreeds(breeds, page: page, limit: limit)
-        } catch {
-            print("❌ Erro ao guardar cache: \(error)")
-        }
+        do { try breedsCacheDB.upsertBreeds(breeds, page: page, limit: limit) }
+        catch { print("❌ Erro ao guardar cache: \(error)") }
     }
 
     private func loadFromCache() {
@@ -99,112 +97,125 @@ class CatBreedsViewModel: ObservableObject {
                     referenceImageId: nil
                 )
             }
+            sortBreedsAlphabetically()
         } catch {
             print("❌ Erro ao carregar cache: \(error)")
         }
     }
 
-    // MARK: - Favoritos
-    func fetchFavorites() {
+    // MARK: - Favorites
+
+    private func fetchFavorites() {
         do {
-            let favorites = try favoritesRepository.fetchFavorites()
-            favoriteIDs = Set(favorites.map { $0.breedId })
-
-            // IDs de favoritos que ainda não estão em breeds
-            let currentIDs = Set(breeds.map { $0.id })
-            let missingIDs = favoriteIDs.subtracting(currentIDs)
-
-            // 1) Completa a partir do cache
-            var appendedIDs = Set<String>()
-            if !missingIDs.isEmpty {
-                let cachedMissing = try breedsCacheDB.fetchBreedsByIDs(missingIDs)
-                let mappedMissing: [CatBreed] = cachedMissing.map {
-                    CatBreed(
-                        id: $0.id,
-                        name: $0.name,
-                        origin: $0.origin,
-                        description: $0.breedDescription,
-                        temperament: $0.temperament,
-                        life_span: $0.life_span,
-                        image: BreedImage(url: $0.imageUrl),
-                        referenceImageId: nil
-                    )
-                }
-
-                let existingIDs = Set(breeds.map { $0.id })
-                let toAppend = mappedMissing.filter { !existingIDs.contains($0.id) }
-                if !toAppend.isEmpty {
-                    breeds.append(contentsOf: toAppend)
-                    appendedIDs.formUnion(toAppend.map { $0.id })
-                }
-            }
-
-            // 2) Para o que ainda faltar, fallback à rede por ID
-            let stillMissing = missingIDs.subtracting(appendedIDs)
-            guard !stillMissing.isEmpty else { return }
-
-            let publishers = stillMissing.map { id in
-                detailsRepository.fetchBreedDetail(by: id)
-                    .replaceError(with: nil)
-            }
-
-            Publishers.MergeMany(publishers)
-                .compactMap { $0 }
-                .collect()
-                .receive(on: DispatchQueue.main)
-                .sink { [weak self] fetched in
-                    guard let self else { return }
-                    let existingIDs = Set(self.breeds.map { $0.id })
-                    let toAppend = fetched.filter { !existingIDs.contains($0.id) }
-                    if !toAppend.isEmpty {
-                        self.breeds.append(contentsOf: toAppend)
-                        // Guarda estes no cache para futuras execuções
-                        self.saveToCache(toAppend, page: self.currentPage)
-                    }
-                }
-                .store(in: &cancellables)
-
+            let favs = try favoritesRepository.fetchFavorites()
+            favoriteIDs = Set(favs.map { $0.breedId })
+            // Completa breeds com favoritos que ainda não estão carregados
+            mergeMissingFavoriteBreedsFromCache()
         } catch {
+            // In tests, prefer silent failure but keep state consistent
+            favoriteIDs = []
             print("❌ Erro ao buscar favoritos: \(error)")
         }
     }
 
+    // Public/internal wrapper to allow external refresh without exposing internals
+    func refreshFavorites() {
+        fetchFavorites()
+    }
+
+    func isFavorite(_ breed: CatBreed) -> Bool {
+        favoriteIDs.contains(breed.id)
+    }
+
     func toggleFavorite(for breed: CatBreed) {
-        if isFavorite(breed) {
+        let id = breed.id
+        if favoriteIDs.contains(id) {
             do {
-                try favoritesRepository.removeFavorite(id: breed.id)
-                fetchFavorites()
+                try favoritesRepository.removeFavorite(id: id)
+                favoriteIDs.remove(id)
+                // Remover dos favoritos não exige mexer em breeds
             } catch {
                 print("❌ Erro ao remover favorito: \(error)")
             }
         } else {
             do {
-                try favoritesRepository.addFavorite(id: breed.id)
-                fetchFavorites()
+                try favoritesRepository.addFavorite(id: id)
+                favoriteIDs.insert(id)
+                // Se o item favorito ainda não está em breeds, tenta completar via cache
+                mergeMissingFavoriteBreedsFromCache()
             } catch {
                 print("❌ Erro ao adicionar favorito: \(error)")
             }
         }
     }
 
-    func isFavorite(_ breed: CatBreed) -> Bool {
-        favoritesRepository.isFavorite(id: breed.id)
-    }
+    // MARK: - Life span average for favorites
 
-    // MARK: - Média de vida dos favoritos
+    /// Computes the average life span (in years) across the current favorite breeds.
+    /// - Returns: The mean of each favorite's life span value, where a range like "10 - 12"
+    ///            is interpreted as its midpoint (11). Returns nil if no parsable values.
     func averageLifeSpanForFavorites() -> Double? {
         let favoriteBreeds = breeds.filter { favoriteIDs.contains($0.id) }
 
-        let spans: [Double] = favoriteBreeds.compactMap { breed in
-            guard let spanString = breed.life_span else { return nil }
-            let numbers = spanString
-                .components(separatedBy: CharacterSet.decimalDigits.inverted)
-                .compactMap { Double($0) }
-            guard !numbers.isEmpty else { return nil }
-            return numbers.reduce(0, +) / Double(numbers.count)
+        let values: [Double] = favoriteBreeds.compactMap { breed in
+            guard let life = breed.life_span else { return nil }
+            // Split by hyphen and trim spaces, then parse to Double
+            let parts = life
+                .components(separatedBy: "-")
+                .map { $0.trimmingCharacters(in: .whitespaces) }
+                .compactMap(Double.init)
+
+            switch parts.count {
+            case 2:
+                return (parts[0] + parts[1]) / 2.0
+            case 1:
+                return parts[0]
+            default:
+                return nil
+            }
         }
 
-        guard !spans.isEmpty else { return nil }
-        return spans.reduce(0, +) / Double(spans.count)
+        guard !values.isEmpty else { return nil }
+        let sum = values.reduce(0, +)
+        return sum / Double(values.count)
+    }
+
+    // MARK: - Helpers
+
+    /// Garante que todas as raças favoritas existam em `breeds`, preenchendo a partir do cache local
+    /// quaisquer IDs favoritos que ainda não tenham sido carregados via paginação.
+    private func mergeMissingFavoriteBreedsFromCache() {
+        let existingIDs = Set(breeds.map { $0.id })
+        let missingIDs = favoriteIDs.subtracting(existingIDs)
+        guard !missingIDs.isEmpty else { return }
+
+        do {
+            let cached = try breedsCacheDB.fetchBreedsByIDs(missingIDs)
+            guard !cached.isEmpty else { return }
+
+            // Mapear CachedBreed -> CatBreed
+            let mapped: [CatBreed] = cached.map {
+                CatBreed(
+                    id: $0.id,
+                    name: $0.name,
+                    origin: $0.origin,
+                    description: $0.breedDescription,
+                    temperament: $0.temperament,
+                    life_span: $0.life_span,
+                    image: BreedImage(url: $0.imageUrl),
+                    referenceImageId: nil
+                )
+            }
+
+            // Mesclar sem duplicar
+            let existingSet = Set(breeds.map { $0.id })
+            let toAppend = mapped.filter { !existingSet.contains($0.id) }
+            guard !toAppend.isEmpty else { return }
+
+            breeds.append(contentsOf: toAppend)
+            sortBreedsAlphabetically()
+        } catch {
+            print("❌ Erro ao completar favoritos do cache: \(error)")
+        }
     }
 }

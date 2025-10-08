@@ -14,7 +14,8 @@ final class LifeSpanAverageTests: XCTestCase {
                 description: nil,
                 temperament: nil,
                 life_span: "10 - 12",
-                image: nil
+                image: nil,
+                referenceImageId: nil
             ),
             CatBreed(
                 id: "2",
@@ -23,7 +24,8 @@ final class LifeSpanAverageTests: XCTestCase {
                 description: nil,
                 temperament: nil,
                 life_span: "8 - 14",
-                image: nil
+                image: nil,
+                referenceImageId: nil
             )
         ]
 

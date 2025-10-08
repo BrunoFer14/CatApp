@@ -1,5 +1,7 @@
 import SwiftUI
 
+/// Botão de coração simples para favoritos.
+/// Recebe o estado atual (isFavorite) e uma ação a executar ao tocar.
 struct FavoriteButton: View {
     let isFavorite: Bool
     let action: () -> Void
@@ -13,5 +15,3 @@ struct FavoriteButton: View {
         .buttonStyle(PlainButtonStyle())
     }
 }
-
-

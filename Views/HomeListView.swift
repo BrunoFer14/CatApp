@@ -6,10 +6,11 @@ import UIKit
 import AppKit
 #endif
 
+/// Lista principal de raças com paginação ao fazer scroll.
 struct HomeListView: View {
     @ObservedObject var viewModel: CatBreedsViewModel
 
-    // Cores compatíveis com múltiplas plataformas
+    // Cores adaptadas à plataforma
     private var cardBackground: Color {
         #if canImport(UIKit)
         return Color(UIColor.secondarySystemBackground)
@@ -31,9 +32,11 @@ struct HomeListView: View {
     var body: some View {
         ScrollView {
             LazyVStack(spacing: 16) {
+                // Para cada raça, mostra um cartão
                 ForEach(viewModel.breeds) { breed in
                     NavigationLink(destination: BreedDetailView(breed: breed, viewModel: viewModel)) {
                         HStack(alignment: .center, spacing: 12) {
+                            // Imagem da raça (usa URL direta ou derivada do referenceImageId)
                             CatImageView(
                                 urlString: breed.image?.url ?? breed.referenceImageUrl,
                                 width: 90,
@@ -41,6 +44,7 @@ struct HomeListView: View {
                                 cornerRadius: 12
                             )
 
+                            // Nome, origem e temperamento
                             VStack(alignment: .leading, spacing: 6) {
                                 Text(breed.name)
                                     .font(.headline)
@@ -61,6 +65,7 @@ struct HomeListView: View {
 
                             Spacer()
 
+                            // Ícone de favorito, se aplicável
                             if viewModel.isFavorite(breed) {
                                 Image(systemName: "heart.fill")
                                     .foregroundColor(.red)
@@ -74,13 +79,14 @@ struct HomeListView: View {
                     .buttonStyle(PlainButtonStyle())
                     .padding(.horizontal)
                     .onAppear {
-                        // Paginação: ao chegar ao último item, carrega mais
+                        // Paginação: quando o último item aparece, carrega a próxima página
                         if breed.id == viewModel.breeds.last?.id {
                             viewModel.fetchPage(page: viewModel.currentPage + 1)
                         }
                     }
                 }
 
+                // Indicador de carregamento de página
                 if viewModel.isLoadingPage {
                     ProgressView()
                         .padding()

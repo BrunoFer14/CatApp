@@ -1,15 +1,16 @@
 import SwiftData
 
+/// Modelo SwiftData para guardar raças em cache (persistência local).
 @Model
 class CachedBreed {
-    @Attribute(.unique) var id: String
+    @Attribute(.unique) var id: String // único por raça
     var name: String
     var origin: String?
     var temperament: String?
     var life_span: String?
     var breedDescription: String?
     var imageUrl: String?
-    // Valor padrão para permitir migração leve
+    // Índice para manter a ordem de carregamento/paginação
     var orderIndex: Int = 0
 
     init(

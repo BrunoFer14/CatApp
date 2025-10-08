@@ -3,6 +3,8 @@ import Foundation
 import CryptoKit
 #endif
 
+/// Cache de imagens em memória + disco, seguro com actor.
+/// Usa hash do URL como nome de ficheiro para persistir no disco.
 actor ImageCache {
     static let shared = ImageCache()
 
@@ -11,32 +13,38 @@ actor ImageCache {
     private let directoryURL: URL
 
     init() {
-        memoryCache.totalCostLimit = 50 * 1024 * 1024 // ~50 MB
+        // Limite aproximado de 50 MB em memória
+        memoryCache.totalCostLimit = 50 * 1024 * 1024
+        // Pasta de cache no disco
         let base = fm.urls(for: .cachesDirectory, in: .userDomainMask).first!
         directoryURL = base.appendingPathComponent("ImageCache", isDirectory: true)
         try? fm.createDirectory(at: directoryURL, withIntermediateDirectories: true)
     }
 
+    /// Obtém dados da imagem (memória → disco → rede).
     func imageData(for url: URL) async throws -> Data {
         let key = url.absoluteString as NSString
 
+        // 1) Tenta memória
         if let cached = memoryCache.object(forKey: key) {
             return cached as Data
         }
 
+        // 2) Tenta disco
         let fileURL = fileURL(for: url)
         if let data = try? Data(contentsOf: fileURL) {
             memoryCache.setObject(data as NSData, forKey: key, cost: data.count)
             return data
         }
 
-        // Download e persiste
+        // 3) Faz download e guarda
         let (data, _) = try await URLSession.shared.data(from: url)
         memoryCache.setObject(data as NSData, forKey: key, cost: data.count)
         try? data.write(to: fileURL, options: .atomic)
         return data
     }
 
+    /// Pré-carrega várias imagens em paralelo.
     func prefetch(urls: [URL]) async {
         guard !urls.isEmpty else { return }
         await withTaskGroup(of: Void.self) { group in
@@ -47,6 +55,8 @@ actor ImageCache {
             }
         }
     }
+
+    // MARK: - Helpers
 
     private func fileURL(for url: URL) -> URL {
         directoryURL.appendingPathComponent(hash(url.absoluteString))

@@ -6,11 +6,12 @@ import UIKit
 import AppKit
 #endif
 
+/// Ecrã de detalhes de uma raça.
 struct BreedDetailView: View {
     let breed: CatBreed
     @ObservedObject var viewModel: CatBreedsViewModel
 
-    // Cor de fundo do botão, compatível com múltiplas plataformas
+    // Cor do botão (compatível com várias plataformas)
     private var buttonBackground: Color {
         #if canImport(UIKit)
         return Color(UIColor.systemGray6)
@@ -25,7 +26,7 @@ struct BreedDetailView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
 
-                // ✅ Usa o CatImageView com fallback (url ou referenceImageUrl)
+                // Imagem principal
                 CatImageView(
                     urlString: breed.image?.url ?? breed.referenceImageUrl,
                     height: 200,
@@ -33,10 +34,12 @@ struct BreedDetailView: View {
                 )
                 .frame(maxWidth: .infinity)
 
+                // Título
                 Text(breed.name)
                     .font(.largeTitle)
                     .bold()
 
+                // Campos informativos
                 if let origin = breed.origin {
                     Text("🌍 Origin: \(origin)")
                         .font(.subheadline)
@@ -57,7 +60,7 @@ struct BreedDetailView: View {
                         .padding(.top, 8)
                 }
 
-                // ✅ Botão de favoritos
+                // Botão para marcar/desmarcar favorito
                 Button(action: {
                     viewModel.toggleFavorite(for: breed)
                 }) {

@@ -6,6 +6,7 @@ import UIKit
 import AppKit
 #endif
 
+/// Vista que carrega e mostra uma imagem por URL, com cache (memória + disco).
 struct CatImageView: View {
     let urlString: String?
     let width: CGFloat?
@@ -45,12 +46,14 @@ struct CatImageView: View {
         .frame(width: width, height: height)
         .cornerRadius(cornerRadius)
         .task(id: urlString) {
+            // Quando a URL muda, tenta carregar a imagem
             await loadImage()
         }
     }
 
     @MainActor
     private func setImage(from data: Data) {
+        // Converte Data → Image (compatível com UIKit/AppKit)
         #if canImport(UIKit)
         if let uiImage = UIImage(data: data) {
             image = Image(uiImage: uiImage)
@@ -64,11 +67,12 @@ struct CatImageView: View {
 
     private func loadImage() async {
         guard let urlString, let url = URL(string: urlString) else { return }
-        if image != nil { return }
+        if image != nil { return } // evita recarregar
         isLoading = true
         defer { isLoading = false }
 
         do {
+            // Usa o ImageCache (actor) para obter dados (com cache memória+disco)
             let data = try await ImageCache.shared.imageData(for: url)
             await setImage(from: data)
         } catch {

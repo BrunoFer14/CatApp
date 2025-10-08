@@ -1,9 +1,11 @@
 import SwiftUI
 
+/// Ecrã de pesquisa local (filtra a lista já carregada).
 struct SearchView: View {
     @ObservedObject var viewModel: CatBreedsViewModel
     @State private var searchText = ""
 
+    // Filtra por nome, ignorando maiúsculas/minúsculas
     private var filteredBreeds: [CatBreed] {
         if searchText.isEmpty {
             return viewModel.breeds

@@ -3,6 +3,8 @@ import Foundation
 import CryptoKit
 #endif
 
+/// Cópia do ImageCache (parece duplicada, possivelmente gerada).
+/// Mantém a mesma lógica de cache em memória + disco.
 actor ImageCache {
     static let shared = ImageCache()
 

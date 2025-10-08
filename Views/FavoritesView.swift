@@ -1,9 +1,10 @@
 import SwiftUI
 
+/// Ecrã que lista apenas os favoritos.
 struct FavoritesView: View {
     @StateObject private var viewModel: FavoritesViewModel
 
-    // Mantém compatibilidade com o MainView atual
+    // Recebe o CatBreedsViewModel para partilhar estado
     init(viewModel: CatBreedsViewModel) {
         _viewModel = StateObject(wrappedValue: FavoritesViewModel(catViewModel: viewModel))
     }
@@ -20,6 +21,7 @@ struct FavoritesView: View {
                         destination: BreedDetailView(breed: breed, viewModel: viewModel.catViewModel)
                     ) {
                         HStack {
+                            // Miniatura
                             CatImageView(
                                 urlString: breed.image?.url ?? breed.referenceImageUrl,
                                 width: 40,
@@ -29,6 +31,7 @@ struct FavoritesView: View {
                             Text(breed.name)
                                 .font(.headline)
                             Spacer()
+                            // Botão coração dentro da célula
                             FavoriteButton(isFavorite: viewModel.isFavorite(breed)) {
                                 viewModel.toggleFavorite(breed)
                             }
@@ -36,6 +39,7 @@ struct FavoritesView: View {
                     }
                 }
 
+                // Informação extra: média de vida dos favoritos
                 if let avgText = viewModel.averageLifeSpanText() {
                     Text("Average life span of favorites: \(avgText) years")
                         .font(.subheadline)
@@ -45,7 +49,7 @@ struct FavoritesView: View {
         }
         .navigationTitle("Favorites")
         .onAppear {
-            // Recarrega favoritos sempre que entras neste ecrã
+            // Recarrega favoritos ao abrir o ecrã
             viewModel.refreshFavorites()
         }
     }
