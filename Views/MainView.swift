@@ -20,9 +20,6 @@ struct MainView: View {
     @State private var searchPath = NavigationPath()
     @State private var settingsPath = NavigationPath()
 
-    // Guarda a última tab tocada para detetar "re-tap"
-    @State private var lastSelectedTab: Tab = .home
-
     var body: some View {
         TabView(selection: $selectedTab) {
             // Home
@@ -65,7 +62,7 @@ struct MainView: View {
         // Sempre que a seleção muda:
         // - Se for para Home, limpa SEMPRE o path (volta à raiz).
         // - Se for re-tap na mesma tab, limpa o path dessa tab (pop to root).
-        .onChange(of: selectedTab) { newValue in
+        .onChange(of: selectedTab) { oldValue, newValue in
             // Sempre que vamos para Home, garantir pop to root
             if newValue == .home {
                 homePath = NavigationPath()
@@ -73,7 +70,7 @@ struct MainView: View {
 
             // Re-tap: se o utilizador toca na mesma tab duas vezes seguidas,
             // limpamos o respetivo NavigationPath (pop to root).
-            if lastSelectedTab == newValue {
+            if oldValue == newValue {
                 switch newValue {
                 case .home:
                     homePath = NavigationPath()
@@ -85,8 +82,6 @@ struct MainView: View {
                     settingsPath = NavigationPath()
                 }
             }
-
-            lastSelectedTab = newValue
         }
     }
 }
