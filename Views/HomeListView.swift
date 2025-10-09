@@ -37,34 +37,57 @@ struct HomeListView: View {
     }
 
     var body: some View {
-        ScrollView {
-            LazyVGrid(columns: columns, spacing: 12) {
-                ForEach(viewModel.breeds) { breed in
-                    NavigationLink(destination: BreedDetailView(breed: breed, viewModel: viewModel)) {
-                        BreedSquareTile(
-                            breed: breed,
-                            isFavorite: viewModel.isFavorite(breed),
-                            favoriteAction: { viewModel.toggleFavorite(for: breed) },
-                            cardBackground: cardBackground,
-                            shadowColor: Color(shadowColor)
-                        )
-                    }
-                    .buttonStyle(.plain)
-                    .onAppear {
-                        // Paginação: quando o último item aparece, carrega a próxima página
-                        if breed.id == viewModel.breeds.last?.id {
-                            viewModel.fetchPage(page: viewModel.currentPage + 1)
+        Group {
+            if !viewModel.hasLoadedFirstPage {
+                // Estado de loading inicial: pode ser um skeleton mais elaborado
+                VStack {
+                    ProgressView("Loading breeds…")
+                        .progressViewStyle(.circular)
+                        .padding()
+                    // Opcional: placeholders da grelha
+                    LazyVGrid(columns: columns, spacing: 12) {
+                        ForEach(0..<6, id: \.self) { _ in
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(cardBackground)
+                                .frame(height: 180)
+                                .redacted(reason: .placeholder)
+                                .shimmer() // se tiver um modifier de shimmer; caso não, remova
                         }
                     }
+                    .padding(.all, 12)
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                ScrollView {
+                    LazyVGrid(columns: columns, spacing: 12) {
+                        ForEach(viewModel.breeds) { breed in
+                            NavigationLink(destination: BreedDetailView(breed: breed, viewModel: viewModel)) {
+                                BreedSquareTile(
+                                    breed: breed,
+                                    isFavorite: viewModel.isFavorite(breed),
+                                    favoriteAction: { viewModel.toggleFavorite(for: breed) },
+                                    cardBackground: cardBackground,
+                                    shadowColor: Color(shadowColor)
+                                )
+                            }
+                            .buttonStyle(.plain)
+                            .onAppear {
+                                // Paginação: quando o último item aparece, carrega a próxima página
+                                if breed.id == viewModel.breeds.last?.id {
+                                    viewModel.fetchPage(page: viewModel.currentPage + 1)
+                                }
+                            }
+                        }
 
-                if viewModel.isLoadingPage {
-                    ProgressView()
-                        .padding()
-                        .gridCellColumns(2)
+                        if viewModel.isLoadingPage {
+                            ProgressView()
+                                .padding()
+                                .gridCellColumns(2)
+                        }
+                    }
+                    .padding(.all, 12)
                 }
             }
-            .padding(.all, 12)
         }
         .navigationTitle("Cat Breeds")
     }
@@ -83,7 +106,6 @@ private struct BreedSquareTile: View {
 
     var body: some View {
         VStack(spacing: 8) {
-            // Usamos GeometryReader para obter a largura da célula e torná-la quadrada
             GeometryReader { geo in
                 let side = geo.size.width
                 CatImageView(
@@ -94,16 +116,14 @@ private struct BreedSquareTile: View {
                     contentMode: .fill
                 )
             }
-            .aspectRatio(1, contentMode: .fit) // garante quadrado
+            .aspectRatio(1, contentMode: .fit)
 
-            // Nome centrado
             Text(breed.name)
                 .font(.headline)
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
                 .frame(maxWidth: .infinity, alignment: .center)
 
-            // Botão favorito centrado
             Button(action: favoriteAction) {
                 HStack(spacing: 6) {
                     Image(systemName: isFavorite ? "heart.fill" : "heart")
@@ -125,4 +145,10 @@ private struct BreedSquareTile: View {
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         .shadow(color: shadowColor, radius: 4, x: 0, y: 2)
     }
+}
+
+// Remova este modificador se não tiver implementação de shimmer
+private extension View {
+    @ViewBuilder
+    func shimmer() -> some View { self }
 }

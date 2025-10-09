@@ -12,7 +12,7 @@ final class CatBreedsViewModelTests: XCTestCase {
 
     override func setUpWithError() throws {
         container = try ModelContainer(
-            for: Favorite.self, CachedBreed.self,
+            for: Favorite.self, CachedBreed.self, FavoriteBreedDetail.self,
             configurations: ModelConfiguration(isStoredInMemoryOnly: true)
         )
         context = container.mainContext

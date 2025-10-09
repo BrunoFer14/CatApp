@@ -8,6 +8,7 @@ class CatBreedsViewModel: ObservableObject {
     @Published var favoriteIDs: Set<String> = []
     @Published var isLoadingPage = false
     @Published var currentPage = 0
+    @Published var hasLoadedFirstPage = false
 
     private var cancellables = Set<AnyCancellable>()
     private let repository: BreedsRepositoryProtocol
@@ -16,8 +17,6 @@ class CatBreedsViewModel: ObservableObject {
     private let breedsCacheDB: BreedsCacheDatabaseServiceProtocol
 
     private let limit = 20
-
-    // Evita pedidos repetidos/precoces
     private var pagesRequested: Set<Int> = []
 
     init(
@@ -35,10 +34,12 @@ class CatBreedsViewModel: ObservableObject {
         self.favoritesRepository = favoritesRepository ?? FavoritesRepository(db: baseDB)
         self.breedsCacheDB = breedsCacheDB ?? BreedsCacheDatabaseService(db: baseDB)
 
-        // Não carregar a cache global no arranque; apenas usar cache por página em fallback
         fetchFavorites()
         if autoFetchFirstPage {
             fetchPage(page: 0)
+        } else {
+            // hydrate favorites from their durable details even if we don't fetch immediately
+            hydrateMissingFavoritesFromFavoriteDetails()
         }
     }
 
@@ -63,7 +64,7 @@ class CatBreedsViewModel: ObservableObject {
                 guard let self else { return }
                 self.isLoadingPage = false
                 if case .failure = completion {
-                    // Fallback: carregar apenas a página pedida a partir da cache
+                    // Fallback: load requested page from cache
                     do {
                         let cached = try self.breedsCacheDB.fetchCachedPage(page: page, limit: self.limit)
                         let mapped: [CatBreed] = cached.map {
@@ -80,6 +81,9 @@ class CatBreedsViewModel: ObservableObject {
                         }
                         if page == 0 {
                             self.breeds = mapped
+                            self.hasLoadedFirstPage = true
+                            // Make sure favorites not in this page are visible
+                            self.hydrateMissingFavoritesFromFavoriteDetails()
                         } else {
                             let existingIDs = Set(self.breeds.map { $0.id })
                             let toAppend = mapped.filter { !existingIDs.contains($0.id) }
@@ -88,17 +92,18 @@ class CatBreedsViewModel: ObservableObject {
                         self.currentPage = page
                         self.sortBreedsAlphabetically()
                     } catch {
-                        print("❌ Erro ao carregar página \(page) da cache: \(error)")
+                        print("❌ Cache load error page \(page): \(error)")
                     }
                 }
             }, receiveValue: { [weak self] newBreeds in
                 guard let self else { return }
-
-                // Clampa ao limit para não poluir a cache se a API devolver mais
                 let pageSlice = Array(newBreeds.prefix(self.limit))
 
                 if page == 0 {
                     self.breeds = pageSlice
+                    self.hasLoadedFirstPage = true
+                    // Ensure favorites not in page 0 also appear
+                    self.hydrateMissingFavoritesFromFavoriteDetails()
                 } else {
                     let existingIDs = Set(self.breeds.map { $0.id })
                     let filteredNew = pageSlice.filter { !existingIDs.contains($0.id) }
@@ -108,7 +113,7 @@ class CatBreedsViewModel: ObservableObject {
                 self.sortBreedsAlphabetically()
                 self.saveToCache(pageSlice, page: page)
 
-                // Prefetch de imagens principais
+                // Prefetch images
                 let urls = pageSlice
                     .compactMap { $0.image?.url ?? $0.referenceImageUrl }
                     .compactMap(URL.init(string:))
@@ -123,7 +128,7 @@ class CatBreedsViewModel: ObservableObject {
 
     private func saveToCache(_ breeds: [CatBreed], page: Int) {
         do { try breedsCacheDB.upsertBreeds(breeds, page: page, limit: limit) }
-        catch { print("❌ Erro ao guardar cache: \(error)") }
+        catch { print("❌ Cache save error: \(error)") }
     }
 
     // MARK: - Cache management (Settings)
@@ -131,17 +136,19 @@ class CatBreedsViewModel: ObservableObject {
     func clearCache() {
         do {
             try breedsCacheDB.clearCache()
-            // Limpa estado em memória da lista e da paginação
             breeds = []
             currentPage = 0
             isLoadingPage = false
             pagesRequested.removeAll()
+            hasLoadedFirstPage = false
 
-            // Recarrega favoritos (persistem em Favorite) e volta a buscar a primeira página
             refreshFavorites()
+            // Hydrate from durable favorite details immediately (no network)
+            hydrateMissingFavoritesFromFavoriteDetails()
+            // Optionally fetch page 0 for the rest of the list
             fetchPage(page: 0)
         } catch {
-            print("❌ Erro ao limpar cache: \(error)")
+            print("❌ Error clearing cache: \(error)")
         }
     }
 
@@ -151,11 +158,11 @@ class CatBreedsViewModel: ObservableObject {
         do {
             let favs = try favoritesRepository.fetchFavorites()
             favoriteIDs = Set(favs.map { $0.breedId })
-            // Completa breeds com favoritos que ainda não estão carregados
-            mergeMissingFavoriteBreedsFromCache()
+            // Ensure favorites appear even before pages load
+            hydrateMissingFavoritesFromFavoriteDetails()
         } catch {
             favoriteIDs = []
-            print("❌ Erro ao buscar favoritos: \(error)")
+            print("❌ Error fetching favorites: \(error)")
         }
     }
 
@@ -172,26 +179,31 @@ class CatBreedsViewModel: ObservableObject {
         if favoriteIDs.contains(id) {
             do {
                 try favoritesRepository.removeFavorite(id: id)
+                try favoritesRepository.deleteFavoriteDetail(id: id)
                 favoriteIDs.remove(id)
+                // Remove from in-memory breeds if it isn't part of non-favorite list yet
+                breeds.removeAll { $0.id == id && !favoriteIDs.contains($0.id) }
             } catch {
-                print("❌ Erro ao remover favorito: \(error)")
+                print("❌ Error removing favorite: \(error)")
             }
         } else {
             do {
                 try favoritesRepository.addFavorite(id: id)
+                try favoritesRepository.upsertFavoriteDetail(from: breed)
                 favoriteIDs.insert(id)
-                mergeMissingFavoriteBreedsFromCache()
+                // Make sure it is visible in the list even if page not loaded
+                injectIfMissing([breed])
             } catch {
-                print("❌ Erro ao adicionar favorito: \(error)")
+                print("❌ Error adding favorite: \(error)")
             }
         }
+        sortBreedsAlphabetically()
     }
 
     // MARK: - Life span average for favorites
 
     func averageLifeSpanForFavorites() -> Double? {
         let favoriteBreeds = breeds.filter { favoriteIDs.contains($0.id) }
-
         let values: [Double] = favoriteBreeds.compactMap { breed in
             guard let life = breed.life_span else { return nil }
             let parts = life
@@ -205,24 +217,23 @@ class CatBreedsViewModel: ObservableObject {
             default: return nil
             }
         }
-
         guard !values.isEmpty else { return nil }
         let sum = values.reduce(0, +)
         return sum / Double(values.count)
     }
 
-    // MARK: - Helpers
+    // MARK: - Hydration helpers
 
-    private func mergeMissingFavoriteBreedsFromCache() {
+    private func hydrateMissingFavoritesFromFavoriteDetails() {
         let existingIDs = Set(breeds.map { $0.id })
         let missingIDs = favoriteIDs.subtracting(existingIDs)
         guard !missingIDs.isEmpty else { return }
 
         do {
-            let cached = try breedsCacheDB.fetchBreedsByIDs(missingIDs)
-            guard !cached.isEmpty else { return }
+            let details = try favoritesRepository.fetchFavoriteDetailsByIDs(missingIDs)
+            guard !details.isEmpty else { return }
 
-            let mapped: [CatBreed] = cached.map {
+            let mapped: [CatBreed] = details.map {
                 CatBreed(
                     id: $0.id,
                     name: $0.name,
@@ -235,14 +246,19 @@ class CatBreedsViewModel: ObservableObject {
                 )
             }
 
-            let existingSet = Set(breeds.map { $0.id })
-            let toAppend = mapped.filter { !existingSet.contains($0.id) }
-            guard !toAppend.isEmpty else { return }
-
-            breeds.append(contentsOf: toAppend)
-            sortBreedsAlphabetically()
+            injectIfMissing(mapped)
+            // Optionally write to cache so they persist in CachedBreed as well
+            saveToCache(mapped, page: 0) // page index arbitrary; order is sorted anyway
         } catch {
-            print("❌ Erro ao completar favoritos do cache: \(error)")
+            print("❌ Error hydrating favorites from details: \(error)")
         }
+    }
+
+    private func injectIfMissing(_ breedsToInject: [CatBreed]) {
+        let existingSet = Set(breeds.map { $0.id })
+        let toAppend = breedsToInject.filter { !existingSet.contains($0.id) }
+        guard !toAppend.isEmpty else { return }
+        breeds.append(contentsOf: toAppend)
+        sortBreedsAlphabetically()
     }
 }

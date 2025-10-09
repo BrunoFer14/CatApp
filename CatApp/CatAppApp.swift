@@ -7,10 +7,8 @@ import SwiftData
 struct CatAppApp: App {
     var body: some Scene {
         WindowGroup {
-            // Primeira vista da app
             ContentView()
         }
-        // Regista modelos do SwiftData que vão ser guardados localmente
-        .modelContainer(for: [Favorite.self, CachedBreed.self])
+        .modelContainer(for: [Favorite.self, CachedBreed.self, FavoriteBreedDetail.self])
     }
 }

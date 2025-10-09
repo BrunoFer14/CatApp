@@ -224,7 +224,7 @@ struct BreedDetailView: View {
             currentIndex = 0
         }
         // Sempre que a galeria é atualizada, garantimos que o índice fica no 0 (imagem principal)
-        .onChange(of: detailVM.galleryImages) { _ in
+        .onChange(of: detailVM.galleryImages) {
             currentIndex = 0
         }
         // Fullscreen viewer
