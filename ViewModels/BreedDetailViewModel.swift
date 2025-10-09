@@ -8,6 +8,11 @@ class BreedDetailViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
 
+    // Galeria de imagens adicionais
+    @Published var galleryImages: [BreedGalleryImage] = []
+    @Published var isLoadingGallery = false
+    @Published var galleryError: String?
+
     private let repository: DetailsRepositoryProtocol?
     private var cancellables = Set<AnyCancellable>()
 
@@ -33,6 +38,22 @@ class BreedDetailViewModel: ObservableObject {
                 }
             }, receiveValue: { [weak self] breed in
                 self?.breed = breed
+            })
+            .store(in: &cancellables)
+    }
+
+    func loadGalleryImages(breedId: String, limit: Int = 10) {
+        isLoadingGallery = true
+        galleryError = nil
+        repository?.fetchBreedImages(by: breedId, limit: limit)
+            .receive(on: DispatchQueue.main)
+            .sink(receiveCompletion: { [weak self] completion in
+                self?.isLoadingGallery = false
+                if case let .failure(error) = completion {
+                    self?.galleryError = "Erro: \(error.localizedDescription)"
+                }
+            }, receiveValue: { [weak self] images in
+                self?.galleryImages = images
             })
             .store(in: &cancellables)
     }

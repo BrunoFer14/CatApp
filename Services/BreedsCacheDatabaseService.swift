@@ -6,6 +6,7 @@ protocol BreedsCacheDatabaseServiceProtocol {
     func upsertBreeds(_ breeds: [CatBreed], page: Int, limit: Int) throws
     func fetchCachedBreedsSorted() throws -> [CachedBreed]
     func fetchBreedsByIDs(_ ids: Set<String>) throws -> [CachedBreed]
+    func fetchCachedPage(page: Int, limit: Int) throws -> [CachedBreed] // NOVO: buscar só uma página
     func clearCache() throws
 }
 
@@ -69,6 +70,15 @@ final class BreedsCacheDatabaseService: BreedsCacheDatabaseServiceProtocol {
         // Busca tudo e filtra em memória pelos IDs pedidos
         let all = try db.fetch(FetchDescriptor<CachedBreed>())
         return all.filter { ids.contains($0.id) }
+    }
+
+    // NOVO: devolve apenas os itens daquela página (com base no orderIndex)
+    func fetchCachedPage(page: Int, limit: Int) throws -> [CachedBreed] {
+        let start = page * limit
+        let endExclusive = (page + 1) * limit
+        let all = try db.fetch(FetchDescriptor<CachedBreed>())
+        let pageItems = all.filter { $0.orderIndex >= start && $0.orderIndex < endExclusive }
+        return pageItems.sorted { $0.orderIndex < $1.orderIndex }
     }
 
     func clearCache() throws {

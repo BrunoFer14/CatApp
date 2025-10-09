@@ -8,10 +8,19 @@ import AppKit
 
 /// Vista que carrega e mostra uma imagem por URL, com cache (memória + disco).
 struct CatImageView: View {
+    enum ContentMode {
+        case fit
+        case fill
+    }
+
     let urlString: String?
     let width: CGFloat?
     let height: CGFloat?
     let cornerRadius: CGFloat
+    let contentMode: ContentMode
+
+    // Expor a imagem carregada para o exterior (opcional)
+    private var loadedImageBinding: Binding<Image?>?
 
     @State private var image: Image?
     @State private var isLoading = false
@@ -20,12 +29,16 @@ struct CatImageView: View {
         urlString: String?,
         width: CGFloat? = nil,
         height: CGFloat? = nil,
-        cornerRadius: CGFloat = 8
+        cornerRadius: CGFloat = 8,
+        contentMode: ContentMode = .fit,
+        loadedImage: Binding<Image?>? = nil
     ) {
         self.urlString = urlString
         self.width = width
         self.height = height
         self.cornerRadius = cornerRadius
+        self.contentMode = contentMode
+        self.loadedImageBinding = loadedImage
     }
 
     var body: some View {
@@ -33,14 +46,25 @@ struct CatImageView: View {
             if let image {
                 image
                     .resizable()
-                    .aspectRatio(contentMode: .fit)
+                    .aspectRatio(contentMode: contentMode == .fill ? .fill : .fit)
+                    .if(contentMode == .fill) { view in
+                        view.clipped()
+                    }
             } else if isLoading {
                 ProgressView()
             } else {
                 Image(systemName: "photo")
                     .resizable()
+                    .aspectRatio(contentMode: contentMode == .fill ? .fill : .fit)
                     .scaledToFit()
                     .foregroundColor(.gray)
+                    .if(contentMode == .fill) { view in
+                        view.clipped()
+                    }
+                    .onAppear {
+                        // placeholder => limpar binding
+                        loadedImageBinding?.wrappedValue = nil
+                    }
             }
         }
         .frame(width: width, height: height)
@@ -56,11 +80,15 @@ struct CatImageView: View {
         // Converte Data → Image (compatível com UIKit/AppKit)
         #if canImport(UIKit)
         if let uiImage = UIImage(data: data) {
-            image = Image(uiImage: uiImage)
+            let swiftUIImage = Image(uiImage: uiImage)
+            image = swiftUIImage
+            loadedImageBinding?.wrappedValue = swiftUIImage
         }
         #elseif canImport(AppKit)
         if let nsImage = NSImage(data: data) {
-            image = Image(nsImage: nsImage)
+            let swiftUIImage = Image(nsImage: nsImage)
+            image = swiftUIImage
+            loadedImageBinding?.wrappedValue = swiftUIImage
         }
         #endif
     }
@@ -77,6 +105,20 @@ struct CatImageView: View {
             await setImage(from: data)
         } catch {
             // Mantém placeholder se falhar
+            // Limpa binding se não conseguimos carregar
+            loadedImageBinding?.wrappedValue = nil
+        }
+    }
+}
+
+// Pequeno helper para aplicar modificadores condicionalmente
+private extension View {
+    @ViewBuilder
+    func `if`<Content: View>(_ condition: Bool, transform: (Self) -> Content) -> some View {
+        if condition {
+            transform(self)
+        } else {
+            self
         }
     }
 }

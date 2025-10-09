@@ -4,6 +4,7 @@ import Combine
 /// Repositório para obter detalhes de uma raça por ID.
 protocol DetailsRepositoryProtocol {
     func fetchBreedDetail(by id: String) -> AnyPublisher<CatBreed?, Error>
+    func fetchBreedImages(by id: String, limit: Int) -> AnyPublisher<[BreedGalleryImage], Error>
 }
 
 /// Implementação simples: busca todas as raças e filtra localmente pelo ID.
@@ -26,5 +27,12 @@ class DetailsRepository: DetailsRepositoryProtocol {
             }
             .eraseToAnyPublisher()
     }
-}
 
+    func fetchBreedImages(by id: String, limit: Int) -> AnyPublisher<[BreedGalleryImage], Error> {
+        // Endpoint oficial: /v1/images/search?breed_ids={id}&limit={limit}
+        guard let url = URL(string: "https://api.thecatapi.com/v1/images/search?breed_ids=\(id)&limit=\(limit)") else {
+            return Fail(error: URLError(.badURL)).eraseToAnyPublisher()
+        }
+        return networkService.fetch([BreedGalleryImage].self, from: url)
+    }
+}

@@ -6,9 +6,16 @@ import UIKit
 import AppKit
 #endif
 
-/// Lista principal de raças com paginação ao fazer scroll.
+/// Lista principal de raças em grelha 2-colunas com cartões quadrados.
+/// Imagem em cima, nome centrado em baixo da imagem e botão de favorito centrado por baixo do nome.
 struct HomeListView: View {
     @ObservedObject var viewModel: CatBreedsViewModel
+
+    // 2 colunas flexíveis para manter pares simétricos
+    private let columns: [GridItem] = [
+        GridItem(.flexible(), spacing: 12),
+        GridItem(.flexible(), spacing: 12)
+    ]
 
     // Cores adaptadas à plataforma
     private var cardBackground: Color {
@@ -31,60 +38,18 @@ struct HomeListView: View {
 
     var body: some View {
         ScrollView {
-            LazyVStack(spacing: 16) {
-                // Para cada raça, mostra um cartão
+            LazyVGrid(columns: columns, spacing: 12) {
                 ForEach(viewModel.breeds) { breed in
                     NavigationLink(destination: BreedDetailView(breed: breed, viewModel: viewModel)) {
-                        HStack(alignment: .center, spacing: 12) {
-                            // Imagem da raça (usa URL direta ou derivada do referenceImageId)
-                            CatImageView(
-                                urlString: breed.image?.url ?? breed.referenceImageUrl,
-                                width: 90,
-                                height: 90,
-                                cornerRadius: 12
-                            )
-
-                            // Nome, origem e temperamento
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text(breed.name)
-                                    .font(.headline)
-
-                                if let origin = breed.origin, !origin.isEmpty {
-                                    Text(origin)
-                                        .font(.subheadline)
-                                        .foregroundColor(.secondary)
-                                }
-
-                                if let temperament = breed.temperament, !temperament.isEmpty {
-                                    Text(temperament)
-                                        .font(.footnote)
-                                        .foregroundColor(.secondary)
-                                        .lineLimit(2)
-                                }
-                            }
-
-                            Spacer()
-
-                            // Botão de favorito na lista principal
-                            Button {
-                                viewModel.toggleFavorite(for: breed)
-                            } label: {
-                                Image(systemName: viewModel.isFavorite(breed) ? "heart.fill" : "heart")
-                                    .foregroundColor(.red)
-                                    .imageScale(.medium)
-                                    .padding(6)
-                            }
-                            .buttonStyle(.plain)
-                            .contentShape(Rectangle())
-                            .accessibilityLabel(viewModel.isFavorite(breed) ? "Remove from favorites" : "Add to favorites")
-                        }
-                        .padding(12)
-                        .background(cardBackground)
-                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                        .shadow(color: shadowColor, radius: 4, x: 0, y: 2)
+                        BreedSquareTile(
+                            breed: breed,
+                            isFavorite: viewModel.isFavorite(breed),
+                            favoriteAction: { viewModel.toggleFavorite(for: breed) },
+                            cardBackground: cardBackground,
+                            shadowColor: Color(shadowColor)
+                        )
                     }
-                    .buttonStyle(PlainButtonStyle())
-                    .padding(.horizontal)
+                    .buttonStyle(.plain)
                     .onAppear {
                         // Paginação: quando o último item aparece, carrega a próxima página
                         if breed.id == viewModel.breeds.last?.id {
@@ -93,14 +58,71 @@ struct HomeListView: View {
                     }
                 }
 
-                // Indicador de carregamento de página
                 if viewModel.isLoadingPage {
                     ProgressView()
                         .padding()
+                        .gridCellColumns(2)
                 }
             }
-            .padding(.vertical)
+            .padding(.all, 12)
         }
         .navigationTitle("Cat Breeds")
+    }
+}
+
+/// Cartão quadrado simétrico para grelha 2-colunas.
+/// - Imagem quadrada em cima
+/// - Nome centrado
+/// - Botão de favorito centrado em baixo do nome
+private struct BreedSquareTile: View {
+    let breed: CatBreed
+    let isFavorite: Bool
+    let favoriteAction: () -> Void
+    let cardBackground: Color
+    let shadowColor: Color
+
+    var body: some View {
+        VStack(spacing: 8) {
+            // Usamos GeometryReader para obter a largura da célula e torná-la quadrada
+            GeometryReader { geo in
+                let side = geo.size.width
+                CatImageView(
+                    urlString: breed.image?.url ?? breed.referenceImageUrl,
+                    width: side,
+                    height: side,
+                    cornerRadius: 12,
+                    contentMode: .fill
+                )
+            }
+            .aspectRatio(1, contentMode: .fit) // garante quadrado
+
+            // Nome centrado
+            Text(breed.name)
+                .font(.headline)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .frame(maxWidth: .infinity, alignment: .center)
+
+            // Botão favorito centrado
+            Button(action: favoriteAction) {
+                HStack(spacing: 6) {
+                    Image(systemName: isFavorite ? "heart.fill" : "heart")
+                        .foregroundColor(.red)
+                    Text(isFavorite ? "Remove favorite" : "Add favorite")
+                        .font(.footnote)
+                }
+                .padding(.vertical, 6)
+                .padding(.horizontal, 8)
+                .background(cardBackground.opacity(0.7))
+                .cornerRadius(8)
+            }
+            .buttonStyle(.plain)
+            .frame(maxWidth: .infinity, alignment: .center)
+            .accessibilityLabel(isFavorite ? "Remove from favorites" : "Add to favorites")
+        }
+        .padding(10)
+        .background(cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .shadow(color: shadowColor, radius: 4, x: 0, y: 2)
     }
 }

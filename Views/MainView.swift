@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Tab bar principal com 3 separadores: Home, Favorites e Search.
+/// Tab bar principal com 4 separadores: Home, Favorites, Search e Settings.
 struct MainView: View {
     @ObservedObject var viewModel: CatBreedsViewModel
 
@@ -28,6 +28,14 @@ struct MainView: View {
             }
             .tabItem {
                 Label("Search", systemImage: "magnifyingglass")
+            }
+
+            // Separador Settings
+            NavigationView {
+                SettingsView(viewModel: viewModel)
+            }
+            .tabItem {
+                Label("Settings", systemImage: "gearshape")
             }
         }
     }

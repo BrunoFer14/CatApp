@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Ecrã de pesquisa local (filtra a lista já carregada).
+/// Ecrã de pesquisa local (filtra a lista já carregada) em lista normal.
 struct SearchView: View {
     @ObservedObject var viewModel: CatBreedsViewModel
     @State private var searchText = ""
@@ -21,16 +21,28 @@ struct SearchView: View {
             NavigationLink(
                 destination: BreedDetailView(breed: breed, viewModel: viewModel)
             ) {
-                HStack {
+                HStack(spacing: 12) {
                     CatImageView(
                         urlString: breed.image?.url ?? breed.referenceImageUrl,
-                        width: 40,
-                        height: 40,
-                        cornerRadius: 6
+                        width: 60,
+                        height: 60,
+                        cornerRadius: 8
                     )
-                    Text(breed.name)
-                        .font(.headline)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(breed.name)
+                            .font(.headline)
+                        if let origin = breed.origin, !origin.isEmpty {
+                            Text(origin)
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    Spacer()
+                    FavoriteButton(isFavorite: viewModel.isFavorite(breed)) {
+                        viewModel.toggleFavorite(for: breed)
+                    }
                 }
+                .padding(.vertical, 4)
             }
         }
         .navigationTitle("Search Breeds")
