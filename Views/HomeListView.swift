@@ -65,11 +65,18 @@ struct HomeListView: View {
 
                             Spacer()
 
-                            // Ícone de favorito, se aplicável
-                            if viewModel.isFavorite(breed) {
-                                Image(systemName: "heart.fill")
+                            // Botão de favorito na lista principal
+                            Button {
+                                viewModel.toggleFavorite(for: breed)
+                            } label: {
+                                Image(systemName: viewModel.isFavorite(breed) ? "heart.fill" : "heart")
                                     .foregroundColor(.red)
+                                    .imageScale(.medium)
+                                    .padding(6)
                             }
+                            .buttonStyle(.plain)
+                            .contentShape(Rectangle())
+                            .accessibilityLabel(viewModel.isFavorite(breed) ? "Remove from favorites" : "Add to favorites")
                         }
                         .padding(12)
                         .background(cardBackground)
