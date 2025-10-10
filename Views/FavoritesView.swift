@@ -21,43 +21,30 @@ struct FavoritesView: View {
                     .foregroundColor(.gray)
                     .padding()
             } else {
-                List(favoriteDetails, id: \.id) { detail in
-                    // Mapear FavoriteBreedDetail -> CatBreed para reutilizar UI existente
-                    let breed = CatBreed(
-                        id: detail.id,
-                        name: detail.name,
-                        origin: detail.origin,
-                        description: detail.breedDescription,
-                        temperament: detail.temperament,
-                        life_span: detail.life_span,
-                        image: BreedImage(url: detail.imageUrl),
-                        referenceImageId: nil
-                    )
-
+                List(viewModel.rows) { row in
                     NavigationLink(
-                        destination: BreedDetailView(breed: breed, viewModel: viewModel.catViewModel)
+                        destination: BreedDetailView(breed: row.breed, viewModel: viewModel.catViewModel)
                     ) {
                         HStack {
                             // Miniatura
                             CatImageView(
-                                urlString: breed.image?.url ?? breed.referenceImageUrl,
+                                urlString: row.imageURL ?? row.breed.referenceImageUrl,
                                 width: 40,
                                 height: 40,
                                 cornerRadius: 6
                             )
-                            Text(breed.name)
+                            Text(row.name)
                                 .font(.headline)
                             Spacer()
                             // Botão coração dentro da célula
-                            FavoriteButton(isFavorite: viewModel.isFavorite(breed)) {
-                                viewModel.toggleFavorite(breed)
+                            FavoriteButton(isFavorite: row.isFavorite) {
+                                viewModel.toggleFavorite(row)
                             }
                         }
                     }
                 }
 
-                // Informação extra: média de vida dos favoritos (mantida via ViewModel)
-                if let avgText = viewModel.averageLifeSpanText(from: favoriteDetails) {
+                if let avgText = viewModel.averageLifeSpanText {
                     Text("Average life span of favorites: \(avgText) years")
                         .font(.subheadline)
                         .padding()
@@ -66,8 +53,13 @@ struct FavoritesView: View {
         }
         .navigationTitle("Favorites")
         .onAppear {
-            // Recarrega IDs de favoritos ao abrir o ecrã (mantém estado de IDs coerente)
+            // Atualiza IDs e constrói rows iniciais
             viewModel.refreshFavorites()
+            viewModel.update(with: favoriteDetails)
+        }
+        .onChange(of: favoriteDetails) { _, newValue in
+            // Sempre que SwiftData mudar, reconstruir rows e derivados
+            viewModel.update(with: newValue)
         }
     }
 }

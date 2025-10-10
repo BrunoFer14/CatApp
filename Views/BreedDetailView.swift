@@ -24,67 +24,25 @@ struct BreedDetailView: View {
         #endif
     }
 
-    @State private var currentIndex: Int = 0
-
-    // Fullscreen image state
-    @State private var showFullscreen = false
-    @State private var fullscreenURL: String?
-    @State private var fullscreenImage: Image? // imagem já carregada (para funcionar offline)
-
-    // Mantém uma cache temporária das imagens carregadas por índice
-    @State private var loadedImagesByIndex: [Int: Image] = [:]
-
-    // Constrói a lista de imagens para o carrossel:
-    // - Primeira imagem: a mesma usada na lista (principal)
-    // - Seguem as imagens da galeria, removendo duplicados por URL
-    private var combinedImages: [String] {
-        var urls: [String] = []
-        if let main = breed.image?.url ?? breed.referenceImageUrl {
-            urls.append(main)
-        }
-        let gallery = detailVM.galleryImages.map { $0.url }
-        // Deduplicar mantendo ordem (main primeiro)
-        var seen = Set<String>()
-        var result: [String] = []
-        for url in urls + gallery {
-            if !seen.contains(url) {
-                seen.insert(url)
-                result.append(url)
-            }
-        }
-        return result
-    }
-
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
 
-                // Carrossel de imagens (inclui a principal como primeira)
-                if !combinedImages.isEmpty {
+                // Carrossel de imagens já pronto (main + galeria deduplicada)
+                if !detailVM.imageItems.isEmpty {
                     VStack(spacing: 0) {
-                        TabView(selection: $currentIndex) {
-                            ForEach(Array(combinedImages.enumerated()), id: \.offset) { index, url in
-                                // Top-aligned: usar fill + clipped e frame fixo
+                        TabView(selection: $detailVM.selectedIndex) {
+                            ForEach(Array(detailVM.imageItems.enumerated()), id: \.offset) { index, item in
                                 CatImageView(
-                                    urlString: url,
+                                    urlString: item.url,
                                     height: 260,
                                     cornerRadius: 12,
-                                    contentMode: .fill,
-                                    loadedImage: Binding(
-                                        get: { loadedImagesByIndex[index] },
-                                        set: { newValue in
-                                            if let img = newValue {
-                                                loadedImagesByIndex[index] = img
-                                            }
-                                        }
-                                    )
+                                    contentMode: .fill
                                 )
                                 .contentShape(Rectangle())
                                 .onTapGesture {
-                                    // Preferir a imagem já carregada para fullscreen (funciona offline)
-                                    fullscreenImage = loadedImagesByIndex[index]
-                                    fullscreenURL = url
-                                    showFullscreen = true
+                                    detailVM.select(index: index)
+                                    detailVM.presentFullscreenForSelected()
                                 }
                                 .tag(index)
                             }
@@ -92,15 +50,14 @@ struct BreedDetailView: View {
                         .tabViewStyle(.page(indexDisplayMode: .automatic))
                         .frame(height: 260)
 
-                        // Bigger arrows with more spacing
                         HStack {
                             Button {
                                 withAnimation {
-                                    currentIndex = max(0, currentIndex - 1)
+                                    detailVM.goPrev()
                                 }
                             } label: {
                                 Image(systemName: "chevron.left")
-                                    .font(.title2) // larger icon
+                                    .font(.title2)
                                     .foregroundColor(.primary)
                                     .padding(10)
                                     .background(
@@ -109,11 +66,10 @@ struct BreedDetailView: View {
                                     )
                             }
                             .buttonStyle(.plain)
-                            .disabled(currentIndex == 0)
+                            .disabled(detailVM.selectedIndex == 0)
 
                             Spacer()
 
-                            // Optional loading indicator to hint gallery fetch
                             if detailVM.isLoadingGallery {
                                 ProgressView()
                                     .progressViewStyle(.circular)
@@ -124,11 +80,11 @@ struct BreedDetailView: View {
 
                             Button {
                                 withAnimation {
-                                    currentIndex = min(combinedImages.count - 1, currentIndex + 1)
+                                    detailVM.goNext()
                                 }
                             } label: {
                                 Image(systemName: "chevron.right")
-                                    .font(.title2) // larger icon
+                                    .font(.title2)
                                     .foregroundColor(.primary)
                                     .padding(10)
                                     .background(
@@ -137,10 +93,10 @@ struct BreedDetailView: View {
                                     )
                             }
                             .buttonStyle(.plain)
-                            .disabled(currentIndex >= combinedImages.count - 1)
+                            .disabled(detailVM.selectedIndex >= detailVM.imageItems.count - 1)
                         }
                         .padding(.horizontal)
-                        .padding(.top, 12) // extra spacing from the image
+                        .padding(.top, 12)
                     }
                 } else {
                     // Fallback se não houver imagem nenhuma
@@ -148,22 +104,14 @@ struct BreedDetailView: View {
                         urlString: breed.image?.url ?? breed.referenceImageUrl,
                         height: 200,
                         cornerRadius: 12,
-                        contentMode: .fill,
-                        loadedImage: Binding(
-                            get: { loadedImagesByIndex[-1] },
-                            set: { newValue in
-                                if let img = newValue {
-                                    loadedImagesByIndex[-1] = img
-                                }
-                            }
-                        )
+                        contentMode: .fill
                     )
                     .contentShape(Rectangle())
                     .onTapGesture {
-                        fullscreenImage = loadedImagesByIndex[-1]
-                        fullscreenURL = breed.image?.url ?? breed.referenceImageUrl
-                        if fullscreenImage != nil || fullscreenURL != nil {
-                            showFullscreen = true
+                        // Se houver URL válido, abrir fullscreen
+                        if let url = breed.image?.url ?? breed.referenceImageUrl {
+                            detailVM.fullscreenURL = url
+                            detailVM.isPresentingFullscreen = true
                         }
                     }
                     .frame(maxWidth: .infinity)
@@ -216,21 +164,13 @@ struct BreedDetailView: View {
         .navigationTitle(breed.name)
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
-            // Carrega detalhes se necessário
-            detailVM.loadBreedDetail(id: breed.id)
-            // Carrega galeria de imagens para o carrossel
-            detailVM.loadGalleryImages(breedId: breed.id, limit: 10)
-            // Garantir que começamos na imagem principal (índice 0)
-            currentIndex = 0
-        }
-        // Sempre que a galeria é atualizada, garantimos que o índice fica no 0 (imagem principal)
-        .onChange(of: detailVM.galleryImages) {
-            currentIndex = 0
+            // VM decide o que carregar e como construir imagens
+            detailVM.prepare(for: breed)
         }
         // Fullscreen viewer
-        .fullScreenCover(isPresented: $showFullscreen) {
-            FullscreenImageView(urlString: fullscreenURL, inlineImage: fullscreenImage) {
-                showFullscreen = false
+        .fullScreenCover(isPresented: $detailVM.isPresentingFullscreen) {
+            FullscreenImageView(urlString: detailVM.fullscreenURL) {
+                detailVM.dismissFullscreen()
             }
         }
     }
@@ -239,7 +179,6 @@ struct BreedDetailView: View {
 // MARK: - Fullscreen Image Viewer
 private struct FullscreenImageView: View {
     let urlString: String?
-    let inlineImage: Image?
     let onClose: () -> Void
 
     var body: some View {
@@ -249,25 +188,16 @@ private struct FullscreenImageView: View {
             ZStack {
                 Color.black.ignoresSafeArea()
 
-                if let inlineImage {
-                    // Usa a imagem já carregada (funciona offline)
-                    inlineImage
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: side, height: side, alignment: .center)
-                } else {
-                    // Fallback para carregar por URL (se disponível/online)
-                    CatImageView(
-                        urlString: urlString,
-                        width: side,
-                        height: side,
-                        cornerRadius: 0,
-                        contentMode: .fit
-                    )
-                    .frame(width: side, height: side, alignment: .center)
-                }
+                CatImageView(
+                    urlString: urlString,
+                    width: side,
+                    height: side,
+                    cornerRadius: 0,
+                    contentMode: .fit
+                )
+                .id(urlString) // força reload quando a URL muda
+                .frame(width: side, height: side, alignment: .center)
 
-                // Close button
                 VStack {
                     HStack {
                         Spacer()

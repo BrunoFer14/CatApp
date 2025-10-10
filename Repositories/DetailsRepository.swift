@@ -11,7 +11,7 @@ protocol DetailsRepositoryProtocol {
 class DetailsRepository: DetailsRepositoryProtocol {
     private let networkService: NetworkServiceProtocol
 
-    init(networkService: NetworkServiceProtocol = NetworkService(apiKey: "live_jM7hf3la9E8N4JaZgTk88Rd9zqXxhS2Xm9w3yAi5eLNuevXmE1Xq564UyqFOMsoi")) {
+    init(networkService: NetworkServiceProtocol = NetworkService(apiKey: secrets.catApiKey)) {
         self.networkService = networkService
     }
 

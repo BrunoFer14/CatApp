@@ -10,9 +10,8 @@ protocol BreedsRepositoryProtocol {
 class BreedsRepository: BreedsRepositoryProtocol {
     private let networkService: NetworkServiceProtocol
 
-    // Por agora, injetamos a API key diretamente no código conforme pedido.
-    // No futuro, trocar para Info.plist/.xcconfig/Keychain.
-    init(networkService: NetworkServiceProtocol = NetworkService(apiKey: "live_jM7hf3la9E8N4JaZgTk88Rd9zqXxhS2Xm9w3yAi5eLNuevXmE1Xq564UyqFOMsoi")) {
+    // Agora lê a API key do Info.plist através do helper 'secrets.catApiKey'.
+    init(networkService: NetworkServiceProtocol = NetworkService(apiKey: secrets.catApiKey)) {
         self.networkService = networkService
     }
 
@@ -25,4 +24,3 @@ class BreedsRepository: BreedsRepositoryProtocol {
         return networkService.fetch([CatBreed].self, from: url)
     }
 }
-

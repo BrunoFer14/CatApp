@@ -13,6 +13,9 @@ class MockBreedsRepository: BreedsRepositoryProtocol {
     }
 
     func fetchBreeds(page: Int, limit: Int) -> AnyPublisher<[CatBreed], Error> {
+        if let error {
+            return Fail(error: error).eraseToAnyPublisher()
+        }
         let result = mockBreedsByPage[page] ?? []
         return Just(result)
             .setFailureType(to: Error.self)

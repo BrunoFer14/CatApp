@@ -88,23 +88,82 @@ final class CatBreedsViewModelTests: XCTestCase {
     }
 
     func testToggleFavoriteAddsAndRemovesPersistedSnapshot() throws {
-        // Prepara um breed e insere snapshot ao favoritar
         let breed = CatBreed(id: "fav1", name: "Fav Breed", origin: nil, description: "desc", temperament: nil, life_span: "10 - 12", image: nil, referenceImageId: nil)
 
         XCTAssertFalse(viewModel.favoriteIDs.contains(breed.id))
         viewModel.toggleFavorite(for: breed)
         XCTAssertTrue(viewModel.favoriteIDs.contains(breed.id))
 
-        // Verifica que o snapshot foi persistido
         let details = try context.fetch(FetchDescriptor<FavoriteBreedDetail>())
         XCTAssertTrue(details.contains(where: { $0.id == "fav1" }))
 
-        // Remove favorito
         viewModel.toggleFavorite(for: breed)
         XCTAssertFalse(viewModel.favoriteIDs.contains(breed.id))
 
         let detailsAfter = try context.fetch(FetchDescriptor<FavoriteBreedDetail>())
         XCTAssertFalse(detailsAfter.contains(where: { $0.id == "fav1" }))
     }
-}
 
+    // MARK: - Extra scenarios aligned with the current ViewModel
+
+    func testRequestNextPageIfNeededAdvancesPage() {
+        mockRepo.mockBreedsByPage[0] = (0..<2).map { i in
+            CatBreed(id: "p0-\(i)", name: "P0-\(i)", origin: nil, description: nil, temperament: nil, life_span: nil, image: nil, referenceImageId: nil)
+        }
+        mockRepo.mockBreedsByPage[1] = (0..<2).map { i in
+            CatBreed(id: "p1-\(i)", name: "P1-\(i)", origin: nil, description: nil, temperament: nil, life_span: nil, image: nil, referenceImageId: nil)
+        }
+
+        viewModel.fetchPage(page: 0)
+        RunLoop.main.run(until: Date().addingTimeInterval(0.05))
+        XCTAssertEqual(viewModel.currentPage, 0)
+
+        viewModel.requestNextPageIfNeeded()
+        RunLoop.main.run(until: Date().addingTimeInterval(0.05))
+        XCTAssertEqual(viewModel.currentPage, 1)
+    }
+
+    func testNetworkFailureFallsBackToCacheAndUpdatesPaging() throws {
+        // Seed cache with page 0
+        let cached0 = (0..<2).map { offset in
+            CachedBreed(
+                id: "c\(offset)",
+                name: "C\(offset)",
+                origin: nil,
+                temperament: nil,
+                life_span: nil,
+                breedDescription: nil,
+                imageUrl: nil,
+                orderIndex: offset
+            )
+        }
+        for c in cached0 { context.insert(c) }
+        try context.save()
+
+        // Force network error for page 0
+        struct Dummy: Error {}
+        mockRepo.error = Dummy()
+
+        viewModel.fetchPage(page: 0)
+        RunLoop.main.run(until: Date().addingTimeInterval(0.05))
+
+        XCTAssertTrue(viewModel.hasLoadedFirstPage, "Should mark first page as loaded even on error with cache")
+        XCTAssertEqual(viewModel.currentPage, 0)
+    }
+
+    func testClearCacheResetsStateAndReloadsFirstPage() {
+        mockRepo.mockBreedsByPage[0] = (0..<1).map { i in
+            CatBreed(id: "id\(i)", name: "Breed \(i)", origin: nil, description: nil, temperament: nil, life_span: nil, image: nil, referenceImageId: nil)
+        }
+
+        viewModel.fetchPage(page: 0)
+        RunLoop.main.run(until: Date().addingTimeInterval(0.05))
+        XCTAssertTrue(viewModel.hasLoadedFirstPage)
+
+        viewModel.clearCache()
+        RunLoop.main.run(until: Date().addingTimeInterval(0.1))
+
+        XCTAssertEqual(viewModel.currentPage, 0)
+        XCTAssertTrue(viewModel.hasLoadedFirstPage, "After clearCache, it should refetch first page")
+    }
+}

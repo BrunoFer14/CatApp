@@ -2,7 +2,7 @@ import Foundation
 import SwiftData
 
 /// Modelo principal vindo da API (Codable) e usado pela UI.
-struct CatBreed: Identifiable, Codable {
+struct CatBreed: Identifiable, Codable, Equatable {
     let id: String
     let name: String
     let origin: String?
@@ -23,14 +23,32 @@ struct CatBreed: Identifiable, Codable {
         case referenceImageId = "reference_image_id"
     }
 
-    // Se a API não trouxer URL direto, cria um URL a partir do reference_image_id
     var referenceImageUrl: String? {
         guard let id = referenceImageId else { return nil }
         return "https://cdn2.thecatapi.com/images/\(id).jpg"
     }
+
+    // URL pronta para UI
+    var displayImageUrl: String? {
+        image?.url ?? referenceImageUrl
+    }
+
+    // Vida média como Double
+    var averageLifeSpan: Double? {
+        guard let life_span else { return nil }
+        let parts = life_span
+            .components(separatedBy: "-")
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .compactMap(Double.init)
+        switch parts.count {
+        case 2: return (parts[0] + parts[1]) / 2.0
+        case 1: return parts[0]
+        default: return nil
+        }
+    }
 }
 
 /// Submodelo para a imagem dentro do JSON.
-struct BreedImage: Codable {
+struct BreedImage: Codable, Equatable {
     let url: String?
 }

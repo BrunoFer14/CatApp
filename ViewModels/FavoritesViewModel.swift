@@ -1,11 +1,23 @@
 import Foundation
 import Combine
 
-/// ViewModel do ecrã de Favoritos: foca-se em ações e derivados.
-/// A lista de favoritos é lida diretamente do SwiftData na View via @Query (FavoriteBreedDetail).
+struct FavoriteRowModel: Identifiable, Equatable {
+    let id: String
+    let name: String
+    let imageURL: String?
+    // Mantemos um CatBreed pronto para navegação/reutilização de UI
+    let breed: CatBreed
+    // Flag derivada para a célula (sincronizada com CatBreedsViewModel.favoriteIDs)
+    var isFavorite: Bool
+}
+
+/// ViewModel do ecrã de Favoritos: agora também transforma dados para a View.
+/// A lista persistida continua a ser lida na View via @Query e passada para o VM.
 @MainActor
 final class FavoritesViewModel: ObservableObject {
     @Published private(set) var isEmpty: Bool = true
+    @Published private(set) var rows: [FavoriteRowModel] = []
+    @Published private(set) var averageLifeSpanText: String?
 
     private var cancellables = Set<AnyCancellable>()
     let catViewModel: CatBreedsViewModel
@@ -13,10 +25,47 @@ final class FavoritesViewModel: ObservableObject {
     init(catViewModel: CatBreedsViewModel) {
         self.catViewModel = catViewModel
 
-        // Observa apenas a lista de IDs para refletir "vazio" (a lista real vem do @Query na View)
+        // Observa IDs para refletir "vazio" e para atualizar flags isFavorite nas rows
         catViewModel.$favoriteIDs
-            .map { $0.isEmpty }
-            .assign(to: &$isEmpty)
+            .sink { [weak self] ids in
+                guard let self else { return }
+                self.isEmpty = ids.isEmpty
+                // Atualiza flags isFavorite nas rows atuais
+                self.rows = self.rows.map { row in
+                    var copy = row
+                    copy.isFavorite = ids.contains(row.id)
+                    return copy
+                }
+            }
+            .store(in: &cancellables)
+    }
+
+    /// A View passa os snapshots persistidos; o VM constrói rows e calcula derivados.
+    func update(with details: [FavoriteBreedDetail]) {
+        // Construir rows prontos
+        let ids = catViewModel.favoriteIDs
+        self.rows = details.map { detail in
+            let breed = CatBreed(
+                id: detail.id,
+                name: detail.name,
+                origin: detail.origin,
+                description: detail.breedDescription,
+                temperament: detail.temperament,
+                life_span: detail.life_span,
+                image: BreedImage(url: detail.imageUrl),
+                referenceImageId: nil
+            )
+            return FavoriteRowModel(
+                id: detail.id,
+                name: detail.name,
+                imageURL: detail.imageUrl,
+                breed: breed,
+                isFavorite: ids.contains(detail.id)
+            )
+        }
+
+        // Média de life span formatada
+        self.averageLifeSpanText = Self.computeAverageLifeSpanText(from: details)
     }
 
     /// Recarrega os IDs de favoritos (sincroniza com SwiftData)
@@ -24,17 +73,17 @@ final class FavoritesViewModel: ObservableObject {
         catViewModel.refreshFavorites()
     }
 
-    func toggleFavorite(_ breed: CatBreed) {
-        catViewModel.toggleFavorite(for: breed)
+    func toggleFavorite(_ row: FavoriteRowModel) {
+        catViewModel.toggleFavorite(for: row.breed)
     }
 
-    func isFavorite(_ breed: CatBreed) -> Bool {
-        catViewModel.isFavorite(breed)
+    func isFavorite(_ row: FavoriteRowModel) -> Bool {
+        catViewModel.isFavorite(row.breed)
     }
 
-    /// Calcula a média de life span a partir de uma lista de snapshots (FavoriteBreedDetail) fornecida pela View.
-    /// Isto evita dependência da lista geral e usa a fonte persistida.
-    func averageLifeSpanText(from details: [FavoriteBreedDetail]) -> String? {
+    // MARK: - Helpers
+
+    private static func computeAverageLifeSpanText(from details: [FavoriteBreedDetail]) -> String? {
         let values: [Double] = details.compactMap { detail in
             guard let life = detail.life_span else { return nil }
             let parts = life
@@ -54,4 +103,3 @@ final class FavoritesViewModel: ObservableObject {
         return String(format: "%.1f", avg)
     }
 }
-
