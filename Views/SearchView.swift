@@ -1,24 +1,39 @@
 import SwiftUI
+import SwiftData
 
-/// Ecrã de pesquisa local (filtra a lista já carregada) com paginação igual à Home.
+/// Ecrã de pesquisa local sobre o armazenamento SwiftData (CachedBreed),
+/// com filtro por texto e paginação igual à Home.
 struct SearchView: View {
     @ObservedObject var viewModel: CatBreedsViewModel
     @State private var searchText = ""
 
-    // Filtra por nome, ignorando maiúsculas/minúsculas
-    private var filteredBreeds: [CatBreed] {
-        if searchText.isEmpty {
-            return viewModel.breeds
-        } else {
-            return viewModel.breeds.filter {
-                $0.name.localizedCaseInsensitiveContains(searchText)
-            }
+    // Lê diretamente do SwiftData, ordenado pelo orderIndex
+    @Query(sort: [SortDescriptor(\CachedBreed.orderIndex, order: .forward)])
+    private var cachedBreeds: [CachedBreed]
+
+    // Filtra por nome, ignorando maiúsculas/minúsculas, sobre o array vindo do @Query
+    private var filteredBreeds: [CachedBreed] {
+        guard !searchText.isEmpty else { return cachedBreeds }
+        return cachedBreeds.filter { cached in
+            cached.name.localizedCaseInsensitiveContains(searchText)
         }
     }
 
     var body: some View {
         List {
-            ForEach(filteredBreeds) { breed in
+            ForEach(filteredBreeds, id: \.id) { cached in
+                // Mapeia para CatBreed apenas para navegação e widgets existentes
+                let breed = CatBreed(
+                    id: cached.id,
+                    name: cached.name,
+                    origin: cached.origin,
+                    description: cached.breedDescription,
+                    temperament: cached.temperament,
+                    life_span: cached.life_span,
+                    image: BreedImage(url: cached.imageUrl),
+                    referenceImageId: nil
+                )
+
                 NavigationLink(
                     destination: BreedDetailView(breed: breed, viewModel: viewModel)
                 ) {
@@ -46,9 +61,8 @@ struct SearchView: View {
                     .padding(.vertical, 4)
                 }
                 .onAppear {
-                    // Paginação: quando o último item filtrado aparece,
-                    // pede a próxima página do catálogo global.
-                    if breed.id == filteredBreeds.last?.id {
+                    // Paginação: quando o último item filtrado aparece, pede próxima página
+                    if cached.id == filteredBreeds.last?.id {
                         viewModel.fetchPage(page: viewModel.currentPage + 1)
                     }
                 }
@@ -65,5 +79,11 @@ struct SearchView: View {
         }
         .navigationTitle("Search Breeds")
         .searchable(text: $searchText, prompt: "Search breeds...")
+        .onAppear {
+            // Garante que existe conteúdo inicial
+            if cachedBreeds.isEmpty && !viewModel.isLoadingPage && !viewModel.hasLoadedFirstPage {
+                viewModel.fetchPage(page: 0)
+            }
+        }
     }
 }

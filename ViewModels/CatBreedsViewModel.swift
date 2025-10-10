@@ -38,8 +38,7 @@ class CatBreedsViewModel: ObservableObject {
         if autoFetchFirstPage {
             fetchPage(page: 0)
         } else {
-            // hydrate favorites from their durable details even if we don't fetch immediately
-            hydrateMissingFavoritesFromFavoriteDetails()
+            // Sem hidratação de favoritos na lista geral
         }
     }
 
@@ -64,7 +63,7 @@ class CatBreedsViewModel: ObservableObject {
                 guard let self else { return }
                 self.isLoadingPage = false
                 if case .failure = completion {
-                    // Fallback: load requested page from cache
+                    // Fallback: load requested page from cache (para manter compatibilidade com UI/Tests)
                     do {
                         let cached = try self.breedsCacheDB.fetchCachedPage(page: page, limit: self.limit)
                         let mapped: [CatBreed] = cached.map {
@@ -82,8 +81,6 @@ class CatBreedsViewModel: ObservableObject {
                         if page == 0 {
                             self.breeds = mapped
                             self.hasLoadedFirstPage = true
-                            // Make sure favorites not in this page are visible
-                            self.hydrateMissingFavoritesFromFavoriteDetails()
                         } else {
                             let existingIDs = Set(self.breeds.map { $0.id })
                             let toAppend = mapped.filter { !existingIDs.contains($0.id) }
@@ -102,8 +99,6 @@ class CatBreedsViewModel: ObservableObject {
                 if page == 0 {
                     self.breeds = pageSlice
                     self.hasLoadedFirstPage = true
-                    // Ensure favorites not in page 0 also appear
-                    self.hydrateMissingFavoritesFromFavoriteDetails()
                 } else {
                     let existingIDs = Set(self.breeds.map { $0.id })
                     let filteredNew = pageSlice.filter { !existingIDs.contains($0.id) }
@@ -143,9 +138,7 @@ class CatBreedsViewModel: ObservableObject {
             hasLoadedFirstPage = false
 
             refreshFavorites()
-            // Hydrate from durable favorite details immediately (no network)
-            hydrateMissingFavoritesFromFavoriteDetails()
-            // Optionally fetch page 0 for the rest of the list
+            // Sem hidratação de favoritos na lista geral
             fetchPage(page: 0)
         } catch {
             print("❌ Error clearing cache: \(error)")
@@ -158,8 +151,6 @@ class CatBreedsViewModel: ObservableObject {
         do {
             let favs = try favoritesRepository.fetchFavorites()
             favoriteIDs = Set(favs.map { $0.breedId })
-            // Ensure favorites appear even before pages load
-            hydrateMissingFavoritesFromFavoriteDetails()
         } catch {
             favoriteIDs = []
             print("❌ Error fetching favorites: \(error)")
@@ -181,8 +172,7 @@ class CatBreedsViewModel: ObservableObject {
                 try favoritesRepository.removeFavorite(id: id)
                 try favoritesRepository.deleteFavoriteDetail(id: id)
                 favoriteIDs.remove(id)
-                // Remove from in-memory breeds if it isn't part of non-favorite list yet
-                breeds.removeAll { $0.id == id && !favoriteIDs.contains($0.id) }
+                // Não alterar a lista geral
             } catch {
                 print("❌ Error removing favorite: \(error)")
             }
@@ -191,8 +181,7 @@ class CatBreedsViewModel: ObservableObject {
                 try favoritesRepository.addFavorite(id: id)
                 try favoritesRepository.upsertFavoriteDetail(from: breed)
                 favoriteIDs.insert(id)
-                // Make sure it is visible in the list even if page not loaded
-                injectIfMissing([breed])
+                // Não injetar na lista geral
             } catch {
                 print("❌ Error adding favorite: \(error)")
             }
@@ -200,8 +189,8 @@ class CatBreedsViewModel: ObservableObject {
         sortBreedsAlphabetically()
     }
 
-    // MARK: - Life span average for favorites
-
+    // MARK: - Life span average for favorites (mantido para compat; pode ser removido se não usado)
+    // Nota: A FavoritesViewModel passará a calcular a média diretamente a partir de FavoriteBreedDetail.
     func averageLifeSpanForFavorites() -> Double? {
         let favoriteBreeds = breeds.filter { favoriteIDs.contains($0.id) }
         let values: [Double] = favoriteBreeds.compactMap { breed in
@@ -221,44 +210,5 @@ class CatBreedsViewModel: ObservableObject {
         let sum = values.reduce(0, +)
         return sum / Double(values.count)
     }
-
-    // MARK: - Hydration helpers
-
-    private func hydrateMissingFavoritesFromFavoriteDetails() {
-        let existingIDs = Set(breeds.map { $0.id })
-        let missingIDs = favoriteIDs.subtracting(existingIDs)
-        guard !missingIDs.isEmpty else { return }
-
-        do {
-            let details = try favoritesRepository.fetchFavoriteDetailsByIDs(missingIDs)
-            guard !details.isEmpty else { return }
-
-            let mapped: [CatBreed] = details.map {
-                CatBreed(
-                    id: $0.id,
-                    name: $0.name,
-                    origin: $0.origin,
-                    description: $0.breedDescription,
-                    temperament: $0.temperament,
-                    life_span: $0.life_span,
-                    image: BreedImage(url: $0.imageUrl),
-                    referenceImageId: nil
-                )
-            }
-
-            injectIfMissing(mapped)
-            // Optionally write to cache so they persist in CachedBreed as well
-            saveToCache(mapped, page: 0) // page index arbitrary; order is sorted anyway
-        } catch {
-            print("❌ Error hydrating favorites from details: \(error)")
-        }
-    }
-
-    private func injectIfMissing(_ breedsToInject: [CatBreed]) {
-        let existingSet = Set(breeds.map { $0.id })
-        let toAppend = breedsToInject.filter { !existingSet.contains($0.id) }
-        guard !toAppend.isEmpty else { return }
-        breeds.append(contentsOf: toAppend)
-        sortBreedsAlphabetically()
-    }
 }
+

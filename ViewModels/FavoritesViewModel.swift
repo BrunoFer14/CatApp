@@ -39,8 +39,36 @@ final class FavoritesViewModel: ObservableObject {
         catViewModel.isFavorite(breed)
     }
 
+    // Passa a calcular a média a partir dos snapshots persistidos (FavoriteBreedDetail) via FavoritesRepository,
+    // acessível através do CatBreedsViewModel (que mantém o repositório).
+    // Como o FavoritesRepository não é exposto publicamente, usamos um helper que faz o fetch via catViewModel.
     func averageLifeSpanText() -> String? {
-        guard let avg = catViewModel.averageLifeSpanForFavorites() else { return nil }
+        // Obter IDs favoritos do ViewModel
+        let ids = catViewModel.favoriteIDs
+        guard !ids.isEmpty else { return nil }
+
+        // Tentar obter detalhes persistidos via FavoritesRepository através de um método auxiliar
+        // Nota: como FavoritesRepository é privado no CatBreedsViewModel, aqui optamos por
+        // reutilizar a lista observable favoriteBreeds se existir (fallback), senão não mostramos média.
+        // Se quiseres o cálculo 100% baseado em FavoriteBreedDetail, expõe um método no ViewModel
+        // para devolver esses detalhes, ou injeta o FavoritesRepository aqui.
+        let values: [Double] = favoriteBreeds.compactMap { breed in
+            guard let life = breed.life_span else { return nil }
+            let parts = life
+                .components(separatedBy: "-")
+                .map { $0.trimmingCharacters(in: .whitespaces) }
+                .compactMap(Double.init)
+
+            switch parts.count {
+            case 2: return (parts[0] + parts[1]) / 2.0
+            case 1: return parts[0]
+            default: return nil
+            }
+        }
+
+        guard !values.isEmpty else { return nil }
+        let avg = values.reduce(0, +) / Double(values.count)
         return String(format: "%.1f", avg)
     }
 }
+

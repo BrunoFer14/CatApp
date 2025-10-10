@@ -5,9 +5,10 @@ import UIKit
 #if canImport(AppKit)
 import AppKit
 #endif
+import SwiftData
 
 /// Lista principal de raças em grelha 2-colunas com cartões quadrados.
-/// Imagem em cima, nome centrado em baixo da imagem e botão de favorito centrado por baixo do nome.
+/// Agora lê diretamente do SwiftData via @Query (CachedBreed) e usa o ViewModel apenas para paginar/sincronizar.
 struct HomeListView: View {
     @ObservedObject var viewModel: CatBreedsViewModel
 
@@ -36,9 +37,13 @@ struct HomeListView: View {
         #endif
     }
 
+    // Lê diretamente do SwiftData, ordenado pelo orderIndex (ordem de paginação)
+    @Query(sort: [SortDescriptor(\CachedBreed.orderIndex, order: .forward)])
+    private var cachedBreeds: [CachedBreed]
+
     var body: some View {
         Group {
-            if !viewModel.hasLoadedFirstPage {
+            if cachedBreeds.isEmpty && !viewModel.hasLoadedFirstPage {
                 // Estado de loading inicial: pode ser um skeleton mais elaborado
                 VStack {
                     ProgressView("Loading breeds…")
@@ -60,7 +65,19 @@ struct HomeListView: View {
             } else {
                 ScrollView {
                     LazyVGrid(columns: columns, spacing: 12) {
-                        ForEach(viewModel.breeds) { breed in
+                        ForEach(cachedBreeds, id: \.id) { cached in
+                            // Mapeia para CatBreed apenas para navegação/detalhe e componentes já existentes
+                            let breed = CatBreed(
+                                id: cached.id,
+                                name: cached.name,
+                                origin: cached.origin,
+                                description: cached.breedDescription,
+                                temperament: cached.temperament,
+                                life_span: cached.life_span,
+                                image: BreedImage(url: cached.imageUrl),
+                                referenceImageId: nil
+                            )
+
                             NavigationLink(destination: BreedDetailView(breed: breed, viewModel: viewModel)) {
                                 BreedSquareTile(
                                     breed: breed,
@@ -73,7 +90,7 @@ struct HomeListView: View {
                             .buttonStyle(.plain)
                             .onAppear {
                                 // Paginação: quando o último item aparece, carrega a próxima página
-                                if breed.id == viewModel.breeds.last?.id {
+                                if cached.id == cachedBreeds.last?.id {
                                     viewModel.fetchPage(page: viewModel.currentPage + 1)
                                 }
                             }
@@ -90,6 +107,12 @@ struct HomeListView: View {
             }
         }
         .navigationTitle("Cat Breeds")
+        .onAppear {
+            // Garante que a primeira página é pedida se o store estiver vazio
+            if cachedBreeds.isEmpty && !viewModel.isLoadingPage && !viewModel.hasLoadedFirstPage {
+                viewModel.fetchPage(page: 0)
+            }
+        }
     }
 }
 
