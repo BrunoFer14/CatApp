@@ -93,6 +93,7 @@ struct CatImageView: View {
         #endif
     }
 
+    @MainActor
     private func loadImage() async {
         guard let urlString, let url = URL(string: urlString) else { return }
         if image != nil { return } // evita recarregar
@@ -102,7 +103,7 @@ struct CatImageView: View {
         do {
             // Usa o ImageCache (actor) para obter dados (com cache memória+disco)
             let data = try await ImageCache.shared.imageData(for: url)
-            await setImage(from: data)
+            setImage(from: data)
         } catch {
             // Mantém placeholder se falhar
             // Limpa binding se não conseguimos carregar

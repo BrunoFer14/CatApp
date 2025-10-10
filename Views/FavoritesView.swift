@@ -57,7 +57,7 @@ struct FavoritesView: View {
                 }
 
                 // Informação extra: média de vida dos favoritos (mantida via ViewModel)
-                if let avgText = viewModel.averageLifeSpanText() {
+                if let avgText = viewModel.averageLifeSpanText(from: favoriteDetails) {
                     Text("Average life span of favorites: \(avgText) years")
                         .font(.subheadline)
                         .padding()

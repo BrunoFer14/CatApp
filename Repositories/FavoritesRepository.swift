@@ -2,6 +2,7 @@ import Foundation
 import SwiftData
 
 /// Repositório para gerir favoritos no SwiftData.
+@MainActor
 protocol FavoritesRepositoryProtocol {
     // Favorite (IDs)
     func fetchFavorites() throws -> [Favorite]

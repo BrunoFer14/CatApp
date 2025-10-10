@@ -1,6 +1,5 @@
 import Foundation
 import Combine
-@testable import CatApp
 
 final class MockDetailsRepository: DetailsRepositoryProtocol {
     var breedsById: [String: CatBreed] = [:]

@@ -4,7 +4,7 @@ import SwiftData
 
 @MainActor
 class CatBreedsViewModel: ObservableObject {
-    @Published var breeds: [CatBreed] = []
+    // Removido: @Published var breeds
     @Published var favoriteIDs: Set<String> = []
     @Published var isLoadingPage = false
     @Published var currentPage = 0
@@ -37,13 +37,7 @@ class CatBreedsViewModel: ObservableObject {
         fetchFavorites()
         if autoFetchFirstPage {
             fetchPage(page: 0)
-        } else {
-            // Sem hidratação de favoritos na lista geral
         }
-    }
-
-    private func sortBreedsAlphabetically() {
-        breeds.sort { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
 
     func requestNextPageIfNeeded() {
@@ -63,31 +57,12 @@ class CatBreedsViewModel: ObservableObject {
                 guard let self else { return }
                 self.isLoadingPage = false
                 if case .failure = completion {
-                    // Fallback: load requested page from cache (para manter compatibilidade com UI/Tests)
+                    // Fallback: tenta ler a página pedida do SwiftData (não atualiza arrays em memória)
                     do {
-                        let cached = try self.breedsCacheDB.fetchCachedPage(page: page, limit: self.limit)
-                        let mapped: [CatBreed] = cached.map {
-                            CatBreed(
-                                id: $0.id,
-                                name: $0.name,
-                                origin: $0.origin,
-                                description: $0.breedDescription,
-                                temperament: $0.temperament,
-                                life_span: $0.life_span,
-                                image: BreedImage(url: $0.imageUrl),
-                                referenceImageId: nil
-                            )
-                        }
-                        if page == 0 {
-                            self.breeds = mapped
-                            self.hasLoadedFirstPage = true
-                        } else {
-                            let existingIDs = Set(self.breeds.map { $0.id })
-                            let toAppend = mapped.filter { !existingIDs.contains($0.id) }
-                            self.breeds.append(contentsOf: toAppend)
-                        }
+                        let _ = try self.breedsCacheDB.fetchCachedPage(page: page, limit: self.limit)
+                        // Mesmo em erro de rede, consideramos a "navegação" de página para manter UX consistente
                         self.currentPage = page
-                        self.sortBreedsAlphabetically()
+                        if page == 0 { self.hasLoadedFirstPage = true }
                     } catch {
                         print("❌ Cache load error page \(page): \(error)")
                     }
@@ -96,19 +71,14 @@ class CatBreedsViewModel: ObservableObject {
                 guard let self else { return }
                 let pageSlice = Array(newBreeds.prefix(self.limit))
 
-                if page == 0 {
-                    self.breeds = pageSlice
-                    self.hasLoadedFirstPage = true
-                } else {
-                    let existingIDs = Set(self.breeds.map { $0.id })
-                    let filteredNew = pageSlice.filter { !existingIDs.contains($0.id) }
-                    self.breeds.append(contentsOf: filteredNew)
-                }
-                self.currentPage = page
-                self.sortBreedsAlphabetically()
+                // Escreve no SwiftData; as Views com @Query atualizam automaticamente
                 self.saveToCache(pageSlice, page: page)
 
-                // Prefetch images
+                // Atualiza estado de paginação
+                self.currentPage = page
+                if page == 0 { self.hasLoadedFirstPage = true }
+
+                // Prefetch de imagens
                 let urls = pageSlice
                     .compactMap { $0.image?.url ?? $0.referenceImageUrl }
                     .compactMap(URL.init(string:))
@@ -131,14 +101,13 @@ class CatBreedsViewModel: ObservableObject {
     func clearCache() {
         do {
             try breedsCacheDB.clearCache()
-            breeds = []
             currentPage = 0
             isLoadingPage = false
             pagesRequested.removeAll()
             hasLoadedFirstPage = false
 
             refreshFavorites()
-            // Sem hidratação de favoritos na lista geral
+            // Recarrega a primeira página para repovoar o store
             fetchPage(page: 0)
         } catch {
             print("❌ Error clearing cache: \(error)")
@@ -172,7 +141,6 @@ class CatBreedsViewModel: ObservableObject {
                 try favoritesRepository.removeFavorite(id: id)
                 try favoritesRepository.deleteFavoriteDetail(id: id)
                 favoriteIDs.remove(id)
-                // Não alterar a lista geral
             } catch {
                 print("❌ Error removing favorite: \(error)")
             }
@@ -181,34 +149,10 @@ class CatBreedsViewModel: ObservableObject {
                 try favoritesRepository.addFavorite(id: id)
                 try favoritesRepository.upsertFavoriteDetail(from: breed)
                 favoriteIDs.insert(id)
-                // Não injetar na lista geral
             } catch {
                 print("❌ Error adding favorite: \(error)")
             }
         }
-        sortBreedsAlphabetically()
-    }
-
-    // MARK: - Life span average for favorites (mantido para compat; pode ser removido se não usado)
-    // Nota: A FavoritesViewModel passará a calcular a média diretamente a partir de FavoriteBreedDetail.
-    func averageLifeSpanForFavorites() -> Double? {
-        let favoriteBreeds = breeds.filter { favoriteIDs.contains($0.id) }
-        let values: [Double] = favoriteBreeds.compactMap { breed in
-            guard let life = breed.life_span else { return nil }
-            let parts = life
-                .components(separatedBy: "-")
-                .map { $0.trimmingCharacters(in: .whitespaces) }
-                .compactMap(Double.init)
-
-            switch parts.count {
-            case 2: return (parts[0] + parts[1]) / 2.0
-            case 1: return parts[0]
-            default: return nil
-            }
-        }
-        guard !values.isEmpty else { return nil }
-        let sum = values.reduce(0, +)
-        return sum / Double(values.count)
     }
 }
 
