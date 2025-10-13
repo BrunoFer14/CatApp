@@ -10,7 +10,7 @@ import AppKit
 /// Usa um binding de texto para ligar ao ViewModel.
 struct SearchBar: View {
     @Binding var text: String
-    var placeholder: String = "Pesquisar..."
+    var placeholder: String = "Search..."
 
     // Cor de fundo compatível com múltiplas plataformas
     private var backgroundColor: Color {
