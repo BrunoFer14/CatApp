@@ -43,7 +43,7 @@ class BreedSearchViewModel: ObservableObject {
                 self?.isLoading = false
                 // Se deu erro, guarda a mensagem para a UI mostrar
                 if case let .failure(error) = completion {
-                    self?.errorMessage = "Erro: \(error.localizedDescription)"
+                    self?.errorMessage = "Error: \(error.localizedDescription)"
                 }
             }, receiveValue: { [weak self] breeds in
                 // Se correu bem, atualiza os resultados
