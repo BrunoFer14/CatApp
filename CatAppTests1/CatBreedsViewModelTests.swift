@@ -8,6 +8,7 @@ final class CatBreedsViewModelTests: XCTestCase {
     var container: ModelContainer!
     var context: ModelContext!
     var mockRepo: MockBreedsRepository!
+    var mockFavs: MockFavoritesRepository!
     var viewModel: CatBreedsViewModel!
 
     override func setUpWithError() throws {
@@ -20,9 +21,12 @@ final class CatBreedsViewModelTests: XCTestCase {
         mockRepo = MockBreedsRepository()
         mockRepo.mockBreedsByPage = [:]
 
+        mockFavs = MockFavoritesRepository()
+
         viewModel = CatBreedsViewModel(
             context: context,
             repository: mockRepo,
+            favoritesRepository: mockFavs,
             autoFetchFirstPage: false
         )
     }
@@ -31,6 +35,7 @@ final class CatBreedsViewModelTests: XCTestCase {
         container = nil
         context = nil
         mockRepo = nil
+        mockFavs = nil
         viewModel = nil
     }
 
@@ -94,17 +99,15 @@ final class CatBreedsViewModelTests: XCTestCase {
         viewModel.toggleFavorite(for: breed)
         XCTAssertTrue(viewModel.favoriteIDs.contains(breed.id))
 
-        let details = try context.fetch(FetchDescriptor<FavoriteBreedDetail>())
-        XCTAssertTrue(details.contains(where: { $0.id == "fav1" }))
+        // Com MockFavoritesRepository, verificamos o estado no mock e não no SwiftData
+        XCTAssertTrue(mockFavs.isFavorite(id: "fav1"))
+        XCTAssertNotNil(mockFavs.details["fav1"])
 
         viewModel.toggleFavorite(for: breed)
         XCTAssertFalse(viewModel.favoriteIDs.contains(breed.id))
-
-        let detailsAfter = try context.fetch(FetchDescriptor<FavoriteBreedDetail>())
-        XCTAssertFalse(detailsAfter.contains(where: { $0.id == "fav1" }))
+        XCTAssertFalse(mockFavs.isFavorite(id: "fav1"))
+        XCTAssertNil(mockFavs.details["fav1"])
     }
-
-    // MARK: - Extra scenarios aligned with the current ViewModel
 
     func testRequestNextPageIfNeededAdvancesPage() {
         mockRepo.mockBreedsByPage[0] = (0..<2).map { i in

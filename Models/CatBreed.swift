@@ -36,14 +36,27 @@ struct CatBreed: Identifiable, Codable, Equatable {
     // Vida média como Double
     var averageLifeSpan: Double? {
         guard let life_span else { return nil }
-        let parts = life_span
-            .components(separatedBy: "-")
-            .map { $0.trimmingCharacters(in: .whitespaces) }
-            .compactMap(Double.init)
-        switch parts.count {
-        case 2: return (parts[0] + parts[1]) / 2.0
-        case 1: return parts[0]
-        default: return nil
+
+        // Normalize whitespace around hyphen, but keep components to validate both sides
+        let components = life_span.split(separator: "-", maxSplits: 1, omittingEmptySubsequences: false)
+        if components.count == 2 {
+            // Range form: require both sides to be valid numbers
+            let leftString = components[0].trimmingCharacters(in: .whitespaces)
+            let rightString = components[1].trimmingCharacters(in: .whitespaces)
+            guard
+                !leftString.isEmpty,
+                !rightString.isEmpty,
+                let left = Double(leftString),
+                let right = Double(rightString)
+            else {
+                return nil
+            }
+            return (left + right) / 2.0
+        } else {
+            // Single value form: require it to be a valid number
+            let single = life_span.trimmingCharacters(in: .whitespaces)
+            guard !single.isEmpty, let value = Double(single) else { return nil }
+            return value
         }
     }
 }
