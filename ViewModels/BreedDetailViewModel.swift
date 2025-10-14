@@ -114,19 +114,34 @@ class BreedDetailViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
 
+        var receivedNonNilValue = false
+
         repository?.fetchBreedDetail(by: id)
             .receive(on: DispatchQueue.main)
             .sink(receiveCompletion: { [weak self] completion in
                 guard let self else { return }
                 self.isLoading = false
-                if case let .failure(error) = completion {
+                switch completion {
+                case .failure(let error):
                     self.errorMessage = "Erro: \(error.localizedDescription)"
+                case .finished:
+                    // If no non-nil value was received, treat as not found
+                    if !receivedNonNilValue {
+                        self.breed = nil
+                        self.errorMessage = "Erro: Raça não encontrada."
+                    }
                 }
             }, receiveValue: { [weak self] fetchedBreed in
                 guard let self else { return }
-                self.breed = fetchedBreed
-                // If the main image changed, rebuild items
-                self.rebuildImageItems()
+                if let fetchedBreed {
+                    receivedNonNilValue = true
+                    self.breed = fetchedBreed
+                    self.errorMessage = nil
+                    // If the main image changed, rebuild items
+                    self.rebuildImageItems()
+                } else {
+                    // Keep flag false; completion will set the not-found error
+                }
             })
             .store(in: &cancellables)
     }

@@ -78,13 +78,8 @@ class CatBreedsViewModel: ObservableObject {
                 self.currentPage = page
                 if page == 0 { self.hasLoadedFirstPage = true }
 
-                // Prefetch de imagens
-                let urls = pageSlice
-                    .compactMap { $0.image?.url ?? $0.referenceImageUrl }
-                    .compactMap(URL.init(string:))
-                if !urls.isEmpty {
-                    Task { await ImageCache.shared.prefetch(urls: urls) }
-                }
+                // Removido: prefetch de imagens.
+                // A imagem é carregada sob demanda na UI (CatImageView).
 
                 self.isLoadingPage = false
             })
@@ -155,4 +150,3 @@ class CatBreedsViewModel: ObservableObject {
         }
     }
 }
-

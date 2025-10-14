@@ -23,6 +23,9 @@ actor ImageCache {
 
     /// Obtém dados da imagem (memória → disco → rede).
     func imageData(for url: URL) async throws -> Data {
+        // Respeita cancelamento cedo
+        if Task.isCancelled { throw CancellationError() }
+
         let key = url.absoluteString as NSString
 
         // 1) Tenta memória
@@ -38,7 +41,10 @@ actor ImageCache {
         }
 
         // 3) Faz download e guarda
+        if Task.isCancelled { throw CancellationError() }
         let (data, _) = try await URLSession.shared.data(from: url)
+        if Task.isCancelled { throw CancellationError() }
+
         memoryCache.setObject(data as NSData, forKey: key, cost: data.count)
         try? data.write(to: fileURL, options: .atomic)
         return data
@@ -50,6 +56,8 @@ actor ImageCache {
         await withTaskGroup(of: Void.self) { group in
             for url in urls {
                 group.addTask {
+                    // Ignora erros e respeita cancelamento
+                    if Task.isCancelled { return }
                     _ = try? await self.imageData(for: url)
                 }
             }

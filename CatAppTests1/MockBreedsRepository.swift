@@ -3,6 +3,9 @@ import Combine
 @testable import CatApp
 
 class MockBreedsRepository: BreedsRepositoryProtocol {
+    // Permite configurar um erro para simular falhas de rede
+    var error: Error?
+
     // Permite configurar resultados por página
     var mockBreedsByPage: [Int: [CatBreed]] = [:]
 
@@ -13,7 +16,7 @@ class MockBreedsRepository: BreedsRepositoryProtocol {
     }
 
     func fetchBreeds(page: Int, limit: Int) -> AnyPublisher<[CatBreed], Error> {
-        if let error {
+        if let error = self.error {
             return Fail(error: error).eraseToAnyPublisher()
         }
         let result = mockBreedsByPage[page] ?? []

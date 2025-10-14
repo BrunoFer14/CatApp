@@ -11,13 +11,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		AF7B3B2F2E43AEAD005F7801 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = AF7B3B182E43AEAB005F7801 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = AF7B3B1F2E43AEAB005F7801;
-			remoteInfo = CatApp;
-		};
 		AF7B3B392E43AEAD005F7801 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = AF7B3B182E43AEAB005F7801 /* Project object */;
@@ -36,7 +29,6 @@
 
 /* Begin PBXFileReference section */
 		AF7B3B202E43AEAB005F7801 /* CatApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CatApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		AF7B3B2E2E43AEAD005F7801 /* CatAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CatAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF7B3B382E43AEAD005F7801 /* CatAppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CatAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B38B17F22E8C276C00F2B693 /* CatAppTests1.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CatAppTests1.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B3B318422E99345900E3BA47 /* ConfigDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigDecoder.swift; sourceTree = "<group>"; };
@@ -106,13 +98,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		AF7B3B2B2E43AEAD005F7801 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		AF7B3B352E43AEAD005F7801 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -150,7 +135,6 @@
 			isa = PBXGroup;
 			children = (
 				AF7B3B202E43AEAB005F7801 /* CatApp.app */,
-				AF7B3B2E2E43AEAD005F7801 /* CatAppTests.xctest */,
 				AF7B3B382E43AEAD005F7801 /* CatAppUITests.xctest */,
 				B38B17F22E8C276C00F2B693 /* CatAppTests1.xctest */,
 			);
@@ -188,29 +172,6 @@
 			productReference = AF7B3B202E43AEAB005F7801 /* CatApp.app */;
 			productType = "com.apple.product-type.application";
 		};
-		AF7B3B2D2E43AEAD005F7801 /* CatAppTests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = AF7B3B452E43AEAD005F7801 /* Build configuration list for PBXNativeTarget "CatAppTests" */;
-			buildPhases = (
-				AF7B3B2A2E43AEAD005F7801 /* Sources */,
-				AF7B3B2B2E43AEAD005F7801 /* Frameworks */,
-				AF7B3B2C2E43AEAD005F7801 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				AF7B3B302E43AEAD005F7801 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				B38B17F32E8C276C00F2B693 /* CatAppTests1 */,
-			);
-			name = CatAppTests;
-			packageProductDependencies = (
-			);
-			productName = CatAppTests;
-			productReference = AF7B3B2E2E43AEAD005F7801 /* CatAppTests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
-		};
 		AF7B3B372E43AEAD005F7801 /* CatAppUITests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = AF7B3B482E43AEAD005F7801 /* Build configuration list for PBXNativeTarget "CatAppUITests" */;
@@ -244,6 +205,9 @@
 			dependencies = (
 				B38B17F72E8C276C00F2B693 /* PBXTargetDependency */,
 			);
+			fileSystemSynchronizedGroups = (
+				B38B17F32E8C276C00F2B693 /* CatAppTests1 */,
+			);
 			name = CatAppTests1;
 			packageProductDependencies = (
 			);
@@ -263,10 +227,6 @@
 				TargetAttributes = {
 					AF7B3B1F2E43AEAB005F7801 = {
 						CreatedOnToolsVersion = 16.4;
-					};
-					AF7B3B2D2E43AEAD005F7801 = {
-						CreatedOnToolsVersion = 16.4;
-						TestTargetID = AF7B3B1F2E43AEAB005F7801;
 					};
 					AF7B3B372E43AEAD005F7801 = {
 						CreatedOnToolsVersion = 16.4;
@@ -293,7 +253,6 @@
 			projectRoot = "";
 			targets = (
 				AF7B3B1F2E43AEAB005F7801 /* CatApp */,
-				AF7B3B2D2E43AEAD005F7801 /* CatAppTests */,
 				AF7B3B372E43AEAD005F7801 /* CatAppUITests */,
 				B38B17F12E8C276C00F2B693 /* CatAppTests1 */,
 			);
@@ -302,13 +261,6 @@
 
 /* Begin PBXResourcesBuildPhase section */
 		AF7B3B1E2E43AEAB005F7801 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF7B3B2C2E43AEAD005F7801 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -340,13 +292,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		AF7B3B2A2E43AEAD005F7801 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		AF7B3B342E43AEAD005F7801 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -364,11 +309,6 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		AF7B3B302E43AEAD005F7801 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = AF7B3B1F2E43AEAB005F7801 /* CatApp */;
-			targetProxy = AF7B3B2F2E43AEAD005F7801 /* PBXContainerItemProxy */;
-		};
 		AF7B3B3A2E43AEAD005F7801 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = AF7B3B1F2E43AEAB005F7801 /* CatApp */;
@@ -580,50 +520,6 @@
 			};
 			name = Release;
 		};
-		AF7B3B462E43AEAD005F7801 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
-				MACOSX_DEPLOYMENT_TARGET = 15.5;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.bruno.CatAppTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = auto;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2,7";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CatApp.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/CatApp";
-				XROS_DEPLOYMENT_TARGET = 2.5;
-			};
-			name = Debug;
-		};
-		AF7B3B472E43AEAD005F7801 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
-				MACOSX_DEPLOYMENT_TARGET = 15.5;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.bruno.CatAppTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = auto;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2,7";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CatApp.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/CatApp";
-				XROS_DEPLOYMENT_TARGET = 2.5;
-			};
-			name = Release;
-		};
 		AF7B3B492E43AEAD005F7801 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -728,15 +624,6 @@
 			buildConfigurations = (
 				AF7B3B432E43AEAD005F7801 /* Debug */,
 				AF7B3B442E43AEAD005F7801 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		AF7B3B452E43AEAD005F7801 /* Build configuration list for PBXNativeTarget "CatAppTests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				AF7B3B462E43AEAD005F7801 /* Debug */,
-				AF7B3B472E43AEAD005F7801 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
