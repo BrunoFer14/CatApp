@@ -56,30 +56,41 @@ class CatBreedsViewModel: ObservableObject {
             .sink(receiveCompletion: { [weak self] completion in
                 guard let self else { return }
                 self.isLoadingPage = false
-                if case .failure = completion {
-                    // Fallback: tenta ler a página pedida do SwiftData (não atualiza arrays em memória)
+                switch completion {
+                case .failure:
+                    // Allow retrying this page later
+                    self.pagesRequested.remove(page)
+
+                    // Fallback: try to read the requested page from cache
                     do {
-                        let _ = try self.breedsCacheDB.fetchCachedPage(page: page, limit: self.limit)
-                        // Mesmo em erro de rede, consideramos a "navegação" de página para manter UX consistente
-                        self.currentPage = page
-                        if page == 0 { self.hasLoadedFirstPage = true }
+                        let cached = try self.breedsCacheDB.fetchCachedPage(page: page, limit: self.limit)
+                        if !cached.isEmpty {
+                            // Only advance paging if we actually have something for that page
+                            self.currentPage = page
+                            if page == 0 { self.hasLoadedFirstPage = true }
+                        } else if page == 0 {
+                            // Ensure first page is marked attempted to avoid stuck loading state
+                            self.hasLoadedFirstPage = true
+                        }
                     } catch {
                         print("❌ Cache load error page \(page): \(error)")
+                        if page == 0 {
+                            self.hasLoadedFirstPage = true
+                        }
                     }
+                case .finished:
+                    break
                 }
             }, receiveValue: { [weak self] newBreeds in
                 guard let self else { return }
                 let pageSlice = Array(newBreeds.prefix(self.limit))
 
-                // Escreve no SwiftData; as Views com @Query atualizam automaticamente
+                // Write to cache; Views with @Query update automatically
                 self.saveToCache(pageSlice, page: page)
 
-                // Atualiza estado de paginação
+                // Update pagination state
                 self.currentPage = page
                 if page == 0 { self.hasLoadedFirstPage = true }
-
-                // Removido: prefetch de imagens.
-                // A imagem é carregada sob demanda na UI (CatImageView).
 
                 self.isLoadingPage = false
             })
@@ -102,7 +113,7 @@ class CatBreedsViewModel: ObservableObject {
             hasLoadedFirstPage = false
 
             refreshFavorites()
-            // Recarrega a primeira página para repovoar o store
+            // Reload first page to repopulate the store
             fetchPage(page: 0)
         } catch {
             print("❌ Error clearing cache: \(error)")
@@ -129,8 +140,8 @@ class CatBreedsViewModel: ObservableObject {
         favoriteIDs.contains(breed.id)
     }
 
-    func toggleFavorite(for breed: CatBreed) {
-        let id = breed.id
+    func toggleFavorite(for: CatBreed) {
+        let id = `for`.id
         if favoriteIDs.contains(id) {
             do {
                 try favoritesRepository.removeFavorite(id: id)
@@ -142,7 +153,7 @@ class CatBreedsViewModel: ObservableObject {
         } else {
             do {
                 try favoritesRepository.addFavorite(id: id)
-                try favoritesRepository.upsertFavoriteDetail(from: breed)
+                try favoritesRepository.upsertFavoriteDetail(from: `for`)
                 favoriteIDs.insert(id)
             } catch {
                 print("❌ Error adding favorite: \(error)")
