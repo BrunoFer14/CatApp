@@ -155,7 +155,7 @@ class BreedDetailViewModel: ObservableObject {
                 guard let self else { return }
                 self.isLoadingGallery = false
                 if case let .failure(error) = completion {
-                    self.galleryError = "Error: \(error.localizedDescription)"
+                    self.galleryError = "Erro: \(error.localizedDescription)"
                 }
             }, receiveValue: { [weak self] images in
                 guard let self else { return }
