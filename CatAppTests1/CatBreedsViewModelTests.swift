@@ -52,7 +52,7 @@ final class CatBreedsViewModelTests: XCTestCase {
 
     func testFetchFirstPagePersistsBreedsInSwiftData() throws {
         let page0 = (0..<3).map { i in
-            CatBreed(id: "id\(i)", name: "Breed \(i)", origin: nil, description: nil, temperament: nil, life_span: nil, image: nil, referenceImageId: nil)
+            CatBreed(id: "id\(i)", name: "Breed \(i)", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil)
         }
         mockRepo.mockBreedsByPage[0] = page0
 
@@ -68,7 +68,7 @@ final class CatBreedsViewModelTests: XCTestCase {
 
     func testPaginationAppendsToSwiftDataWithoutDuplicates() throws {
         let page0 = (0..<3).map { i in
-            CatBreed(id: "id\(i)", name: "Breed \(i)", origin: nil, description: nil, temperament: nil, life_span: nil, image: nil, referenceImageId: nil)
+            CatBreed(id: "id\(i)", name: "Breed \(i)", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil)
         }
         mockRepo.mockBreedsByPage[0] = page0
         viewModel.fetchPage(page: 0)
@@ -78,9 +78,9 @@ final class CatBreedsViewModelTests: XCTestCase {
         XCTAssertEqual(cached.count, 3, "cached after page 0: \(cached.map { $0.id })")
 
         let page1 = [
-            CatBreed(id: "id2", name: "Breed 2 DUP", origin: nil, description: nil, temperament: nil, life_span: nil, image: nil, referenceImageId: nil),
-            CatBreed(id: "id3", name: "Breed 3", origin: nil, description: nil, temperament: nil, life_span: nil, image: nil, referenceImageId: nil),
-            CatBreed(id: "id4", name: "Breed 4", origin: nil, description: nil, temperament: nil, life_span: nil, image: nil, referenceImageId: nil)
+            CatBreed(id: "id2", name: "Breed 2 DUP", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil),
+            CatBreed(id: "id3", name: "Breed 3", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil),
+            CatBreed(id: "id4", name: "Breed 4", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil)
         ]
         mockRepo.mockBreedsByPage[1] = page1
         viewModel.fetchPage(page: 1)
@@ -93,7 +93,7 @@ final class CatBreedsViewModelTests: XCTestCase {
     }
 
     func testToggleFavoriteAddsAndRemovesPersistedSnapshot() throws {
-        let breed = CatBreed(id: "fav1", name: "Fav Breed", origin: nil, description: "desc", temperament: nil, life_span: "10 - 12", image: nil, referenceImageId: nil)
+        let breed = CatBreed(id: "fav1", name: "Fav Breed", origin: nil, description: "desc", temperament: nil, lifeSpan: "10 - 12", image: nil, referenceImageId: nil)
 
         XCTAssertFalse(viewModel.favoriteIDs.contains(breed.id))
         viewModel.toggleFavorite(for: breed)
@@ -111,10 +111,10 @@ final class CatBreedsViewModelTests: XCTestCase {
 
     func testRequestNextPageIfNeededAdvancesPage() {
         mockRepo.mockBreedsByPage[0] = (0..<2).map { i in
-            CatBreed(id: "p0-\(i)", name: "P0-\(i)", origin: nil, description: nil, temperament: nil, life_span: nil, image: nil, referenceImageId: nil)
+            CatBreed(id: "p0-\(i)", name: "P0-\(i)", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil)
         }
         mockRepo.mockBreedsByPage[1] = (0..<2).map { i in
-            CatBreed(id: "p1-\(i)", name: "P1-\(i)", origin: nil, description: nil, temperament: nil, life_span: nil, image: nil, referenceImageId: nil)
+            CatBreed(id: "p1-\(i)", name: "P1-\(i)", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil)
         }
 
         viewModel.fetchPage(page: 0)
@@ -134,7 +134,7 @@ final class CatBreedsViewModelTests: XCTestCase {
                 name: "C\(offset)",
                 origin: nil,
                 temperament: nil,
-                life_span: nil,
+                lifeSpan: nil,
                 breedDescription: nil,
                 imageUrl: nil,
                 orderIndex: offset
@@ -156,7 +156,7 @@ final class CatBreedsViewModelTests: XCTestCase {
 
     func testClearCacheResetsStateAndReloadsFirstPage() {
         mockRepo.mockBreedsByPage[0] = (0..<1).map { i in
-            CatBreed(id: "id\(i)", name: "Breed \(i)", origin: nil, description: nil, temperament: nil, life_span: nil, image: nil, referenceImageId: nil)
+            CatBreed(id: "id\(i)", name: "Breed \(i)", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil)
         }
 
         viewModel.fetchPage(page: 0)

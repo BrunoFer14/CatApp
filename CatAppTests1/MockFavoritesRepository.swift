@@ -37,7 +37,7 @@ final class MockFavoritesRepository: FavoritesRepositoryProtocol {
             name: breed.name,
             origin: breed.origin,
             temperament: breed.temperament,
-            life_span: breed.life_span,
+            lifeSpan: breed.lifeSpan,
             breedDescription: breed.description,
             imageUrl: breed.image?.url ?? breed.referenceImageUrl
         )

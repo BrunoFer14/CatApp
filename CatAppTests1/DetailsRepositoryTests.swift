@@ -11,8 +11,8 @@ final class DetailsRepositoryTests: XCTestCase {
 
         let url = URL(string: "https://api.thecatapi.com/v1/breeds")!
         let breeds: [CatBreed] = [
-            CatBreed(id: "a", name: "A", origin: nil, description: nil, temperament: nil, life_span: nil, image: nil, referenceImageId: nil),
-            CatBreed(id: "b", name: "B", origin: nil, description: nil, temperament: nil, life_span: nil, image: nil, referenceImageId: nil)
+            CatBreed(id: "a", name  : "A", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil),
+            CatBreed(id: "b", name: "B", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil)
         ]
         try mockService.setJSONResponse(breeds, for: url)
 

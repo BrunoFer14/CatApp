@@ -14,7 +14,7 @@ final class SearchRepositoryTests: XCTestCase {
         let url = URL(string: "https://api.thecatapi.com/v1/breeds/search?q=\(encoded)")!
 
         let payload: [CatBreed] = [
-            CatBreed(id: "bri", name: "British Shorthair", origin: "GB", description: "desc", temperament: "calm", life_span: "12 - 17", image: nil, referenceImageId: "abc")
+            CatBreed(id: "bri", name: "British Shorthair", origin: "GB", description: "desc", temperament: "calm", lifeSpan: "12 - 17", image: nil, referenceImageId: "abc")
         ]
         try mockService.setJSONResponse(payload, for: url)
 

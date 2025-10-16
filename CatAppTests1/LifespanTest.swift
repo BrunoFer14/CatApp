@@ -13,7 +13,7 @@ final class LifeSpanAverageTests: XCTestCase {
                 origin: nil,
                 description: nil,
                 temperament: nil,
-                life_span: "10 - 12",
+                lifeSpan: "10 - 12",
                 image: nil,
                 referenceImageId: nil
             ),
@@ -23,7 +23,7 @@ final class LifeSpanAverageTests: XCTestCase {
                 origin: nil,
                 description: nil,
                 temperament: nil,
-                life_span: "8 - 14",
+                lifeSpan: "8 - 14",
                 image: nil,
                 referenceImageId: nil
             )
@@ -31,7 +31,7 @@ final class LifeSpanAverageTests: XCTestCase {
 
         // Extrair valores numéricos dos life_span
         let spans = breeds.compactMap { breed -> Double? in
-            guard let life = breed.life_span else { return nil }
+            guard let life = breed.lifeSpan else { return nil }
             let parts = life
                 .components(separatedBy: " - ")
                 .compactMap { Double($0.trimmingCharacters(in: .whitespaces)) }

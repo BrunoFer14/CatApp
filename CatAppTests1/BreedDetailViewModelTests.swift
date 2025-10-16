@@ -23,7 +23,7 @@ final class BreedDetailViewModelTests: XCTestCase {
 
     func testDoesNotFetchWhenBreedProvided() {
         // Dado: já temos um breed completo
-        let provided = CatBreed(id: "abc", name: "Provided", origin: nil, description: "desc", temperament: nil, life_span: nil, image: nil, referenceImageId: nil)
+        let provided = CatBreed(id: "abc", name: "Provided", origin: nil, description: "desc", temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil)
         viewModel = BreedDetailViewModel(breed: provided, repository: mockRepo)
 
         // Quando: pedimos load por ID
@@ -40,7 +40,7 @@ final class BreedDetailViewModelTests: XCTestCase {
 
     func testFetchesWhenBreedNotProvided() {
         // Dado: não fornecemos breed; mock devolve um breed para o ID pedido
-        let fetched = CatBreed(id: "xyz", name: "Fetched", origin: "Origin", description: "Desc", temperament: "Calm", life_span: "10 - 12", image: nil, referenceImageId: nil)
+        let fetched = CatBreed(id: "xyz", name: "Fetched", origin: "Origin", description: "Desc", temperament: "Calm", lifeSpan: "10 - 12", image: nil, referenceImageId: nil)
         mockRepo.breedsById["xyz"] = fetched
 
         viewModel = BreedDetailViewModel(breed: nil, repository: mockRepo)
@@ -131,7 +131,7 @@ final class BreedDetailViewModelTests: XCTestCase {
 
     func testLoadGalleryImagesUpdatesImageItemsAndResetsSelection() {
         // Dado: breed com imagem principal e galeria com imagens (inclui duplicada da principal)
-        let breed = CatBreed(id: "gal", name: "WithGallery", origin: nil, description: nil, temperament: nil, life_span: nil, image: BreedImage(url: "https://main.img/1.jpg"), referenceImageId: nil)
+        let breed = CatBreed(id: "gal", name: "WithGallery", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: BreedImage(url: "https://main.img/1.jpg"), referenceImageId: nil)
         viewModel = BreedDetailViewModel(breed: breed, repository: mockRepo)
 
         let images = [
@@ -175,7 +175,7 @@ final class BreedDetailViewModelTests: XCTestCase {
         enum DummyError: Error { case galleryFailed }
         mockRepo.error = DummyError.galleryFailed
 
-        let breed = CatBreed(id: "galerr", name: "WithGallery", origin: nil, description: nil, temperament: nil, life_span: nil, image: nil, referenceImageId: "ref1")
+        let breed = CatBreed(id: "galerr", name: "WithGallery", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: "ref1")
         viewModel = BreedDetailViewModel(breed: breed, repository: mockRepo)
 
         let loadingExpectation = expectation(description: "Gallery loading toggled on error")

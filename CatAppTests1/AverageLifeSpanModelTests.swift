@@ -10,7 +10,7 @@ final class AverageLifeSpanModelTests: XCTestCase {
             origin: nil,
             description: nil,
             temperament: nil,
-            life_span: "10 - 12",
+            lifeSpan: "10 - 12",
             image: nil,
             referenceImageId: nil
         )
@@ -25,7 +25,7 @@ final class AverageLifeSpanModelTests: XCTestCase {
             origin: nil,
             description: nil,
             temperament: nil,
-            life_span: "8-14",
+            lifeSpan: "8-14",
             image: nil,
             referenceImageId: nil
         )
@@ -40,7 +40,7 @@ final class AverageLifeSpanModelTests: XCTestCase {
             origin: nil,
             description: nil,
             temperament: nil,
-            life_span: "15",
+            lifeSpan: "15",
             image: nil,
             referenceImageId: nil
         )
@@ -57,7 +57,7 @@ final class AverageLifeSpanModelTests: XCTestCase {
                 origin: nil,
                 description: nil,
                 temperament: nil,
-                life_span: life,
+                lifeSpan: life,
                 image: nil,
                 referenceImageId: nil
             )
