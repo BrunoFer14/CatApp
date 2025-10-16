@@ -5,14 +5,14 @@ struct FavoriteRowModel: Identifiable, Equatable {
     let id: String
     let name: String
     let imageURL: String?
-    // Mantemos um CatBreed pronto para navegação/reutilização de UI
+    // Keep a CatBreed ready for navigation/UI reuse
     let breed: CatBreed
-    // Flag derivada para a célula (sincronizada com CatBreedsViewModel.favoriteIDs)
+    // Derived flag for the cell (kept in sync with CatBreedsViewModel.favoriteIDs)
     var isFavorite: Bool
 }
 
-/// ViewModel do ecrã de Favoritos: agora também transforma dados para a View.
-/// A lista persistida continua a ser lida na View via @Query e passada para o VM.
+/// ViewModel for the Favorites screen: also transforms data for the View.
+/// The persisted list continues to be read in the View via @Query and passed to the VM.
 @MainActor
 final class FavoritesViewModel: ObservableObject {
     @Published private(set) var isEmpty: Bool = true
@@ -25,12 +25,12 @@ final class FavoritesViewModel: ObservableObject {
     init(catViewModel: CatBreedsViewModel) {
         self.catViewModel = catViewModel
 
-        // Observa IDs para refletir "vazio" e para atualizar flags isFavorite nas rows
+        // Observe IDs to reflect "empty" and update isFavorite flags in the rows
         catViewModel.$favoriteIDs
             .sink { [weak self] ids in
                 guard let self else { return }
                 self.isEmpty = ids.isEmpty
-                // Atualiza flags isFavorite nas rows atuais
+                // Update isFavorite flags in current rows
                 self.rows = self.rows.map { row in
                     var copy = row
                     copy.isFavorite = ids.contains(row.id)
@@ -40,9 +40,9 @@ final class FavoritesViewModel: ObservableObject {
             .store(in: &cancellables)
     }
 
-    /// A View passa os snapshots persistidos; o VM constrói rows e calcula derivados.
+    /// The View passes the persisted snapshots; the VM builds rows and computes derived values.
     func update(with details: [FavoriteBreedDetail]) {
-        // Construir rows prontos
+        // Build ready-to-use rows
         let ids = catViewModel.favoriteIDs
         self.rows = details.map { detail in
             let breed = CatBreed(
@@ -51,7 +51,7 @@ final class FavoritesViewModel: ObservableObject {
                 origin: detail.origin,
                 description: detail.breedDescription,
                 temperament: detail.temperament,
-                life_span: detail.life_span,
+                lifeSpan: detail.lifeSpan,
                 image: BreedImage(url: detail.imageUrl),
                 referenceImageId: nil
             )
@@ -64,11 +64,11 @@ final class FavoritesViewModel: ObservableObject {
             )
         }
 
-        // Média de life span formatada
+        // Formatted average life span
         self.averageLifeSpanText = Self.computeAverageLifeSpanText(from: details)
     }
 
-    /// Recarrega os IDs de favoritos (sincroniza com SwiftData)
+    /// Reload favorite IDs (sync with SwiftData)
     func refreshFavorites() {
         catViewModel.refreshFavorites()
     }
@@ -85,7 +85,7 @@ final class FavoritesViewModel: ObservableObject {
 
     private static func computeAverageLifeSpanText(from details: [FavoriteBreedDetail]) -> String? {
         let values: [Double] = details.compactMap { detail in
-            guard let life = detail.life_span else { return nil }
+            guard let life = detail.lifeSpan else { return nil }
             let parts = life
                 .components(separatedBy: "-")
                 .map { $0.trimmingCharacters(in: .whitespaces) }

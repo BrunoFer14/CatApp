@@ -8,7 +8,7 @@ struct CatBreed: Identifiable, Codable, Equatable {
     let origin: String?
     let description: String?
     let temperament: String?
-    let life_span: String?
+    let lifeSpan: String?
     let image: BreedImage?
     let referenceImageId: String?
 
@@ -18,7 +18,7 @@ struct CatBreed: Identifiable, Codable, Equatable {
         case origin
         case description
         case temperament
-        case life_span
+        case lifeSpan = "life_span" // map JSON snake_case to Swift camelCase
         case image
         case referenceImageId = "reference_image_id"
     }
@@ -35,10 +35,10 @@ struct CatBreed: Identifiable, Codable, Equatable {
 
     // Vida média como Double
     var averageLifeSpan: Double? {
-        guard let life_span else { return nil }
+        guard let lifeSpan else { return nil }
 
         // Normalize whitespace around hyphen, but keep components to validate both sides
-        let components = life_span.split(separator: "-", maxSplits: 1, omittingEmptySubsequences: false)
+        let components = lifeSpan.split(separator: "-", maxSplits: 1, omittingEmptySubsequences: false)
         if components.count == 2 {
             // Range form: require both sides to be valid numbers
             let leftString = components[0].trimmingCharacters(in: .whitespaces)
@@ -54,7 +54,7 @@ struct CatBreed: Identifiable, Codable, Equatable {
             return (left + right) / 2.0
         } else {
             // Single value form: require it to be a valid number
-            let single = life_span.trimmingCharacters(in: .whitespaces)
+            let single = lifeSpan.trimmingCharacters(in: .whitespaces)
             guard !single.isEmpty, let value = Double(single) else { return nil }
             return value
         }
@@ -65,3 +65,4 @@ struct CatBreed: Identifiable, Codable, Equatable {
 struct BreedImage: Codable, Equatable {
     let url: String?
 }
+

@@ -70,7 +70,7 @@ struct HomeListView: View {
                                 origin: cached.origin,
                                 description: cached.breedDescription,
                                 temperament: cached.temperament,
-                                life_span: cached.life_span,
+                                lifeSpan: cached.lifeSpan,
                                 image: BreedImage(url: cached.imageUrl),
                                 referenceImageId: nil
                             )

@@ -6,7 +6,7 @@ import UIKit
 import AppKit
 #endif
 
-/// Vista que carrega e mostra uma imagem por URL, com cache (memória + disco).
+/// View that loads and displays an image by URL, with cache (memory + disk).
 struct CatImageView: View {
     enum ContentMode {
         case fit
@@ -19,7 +19,7 @@ struct CatImageView: View {
     let cornerRadius: CGFloat
     let contentMode: ContentMode
 
-    // Expor a imagem carregada para o exterior (opcional)
+    // Expose the loaded image to the outside (optional)
     private var loadedImageBinding: Binding<Image?>?
 
     @State private var image: Image?
@@ -62,7 +62,7 @@ struct CatImageView: View {
                         view.clipped()
                     }
                     .onAppear {
-                        // placeholder => limpar binding
+                        // placeholder => clear binding
                         loadedImageBinding?.wrappedValue = nil
                     }
             }
@@ -70,14 +70,14 @@ struct CatImageView: View {
         .frame(width: width, height: height)
         .cornerRadius(cornerRadius)
         .task(id: urlString) {
-            // Quando a URL muda, tenta carregar a imagem
+            // When the URL changes, try to load the image
             await loadImage()
         }
     }
 
     @MainActor
     private func setImage(from data: Data) {
-        // Converte Data → Image (compatível com UIKit/AppKit)
+        // Convert Data → Image (compatible with UIKit/AppKit)
         #if canImport(UIKit)
         if let uiImage = UIImage(data: data) {
             let swiftUIImage = Image(uiImage: uiImage)
@@ -96,23 +96,23 @@ struct CatImageView: View {
     @MainActor
     private func loadImage() async {
         guard let urlString, let url = URL(string: urlString) else { return }
-        if image != nil { return } // evita recarregar
+        if image != nil { return } // avoid reloading
         isLoading = true
         defer { isLoading = false }
 
         do {
-            // Usa o ImageCache (actor) para obter dados (com cache memória+disco)
+            // Use ImageCache (actor) to obtain data (with memory+disk cache)
             let data = try await ImageCache.shared.imageData(for: url)
             setImage(from: data)
         } catch {
-            // Mantém placeholder se falhar
-            // Limpa binding se não conseguimos carregar
+            // Keep placeholder on failure
+            // Clear binding if we couldn't load
             loadedImageBinding?.wrappedValue = nil
         }
     }
 }
 
-// Pequeno helper para aplicar modificadores condicionalmente
+// Small helper to apply modifiers conditionally
 private extension View {
     @ViewBuilder
     func `if`<Content: View>(_ condition: Bool, transform: (Self) -> Content) -> some View {

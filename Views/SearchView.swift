@@ -1,17 +1,17 @@
 import SwiftUI
 import SwiftData
 
-/// Ecrã de pesquisa local sobre o armazenamento SwiftData (CachedBreed),
-/// com filtro por texto e paginação igual à Home.
+/// Local search screen over SwiftData storage (CachedBreed),
+/// with text filtering and pagination like Home.
 struct SearchView: View {
     @ObservedObject var viewModel: CatBreedsViewModel
     @State private var searchText = ""
 
-    // Lê diretamente do SwiftData, ordenado pelo orderIndex
+    // Read directly from SwiftData, ordered by orderIndex
     @Query(sort: [SortDescriptor(\CachedBreed.orderIndex, order: .forward)])
     private var cachedBreeds: [CachedBreed]
 
-    // Filtra por nome, ignorando maiúsculas/minúsculas, sobre o array vindo do @Query
+    // Filter by name, case-insensitive, over the array coming from @Query
     private var filteredBreeds: [CachedBreed] {
         guard !searchText.isEmpty else { return cachedBreeds }
         return cachedBreeds.filter { cached in
@@ -22,14 +22,14 @@ struct SearchView: View {
     var body: some View {
         List {
             ForEach(filteredBreeds, id: \.id) { cached in
-                // Mapeia para CatBreed apenas para navegação e widgets existentes
+                // Map to CatBreed only for navigation and existing widgets
                 let breed = CatBreed(
                     id: cached.id,
                     name: cached.name,
                     origin: cached.origin,
                     description: cached.breedDescription,
                     temperament: cached.temperament,
-                    life_span: cached.life_span,
+                    lifeSpan: cached.lifeSpan,
                     image: BreedImage(url: cached.imageUrl),
                     referenceImageId: nil
                 )
@@ -61,7 +61,7 @@ struct SearchView: View {
                     .padding(.vertical, 4)
                 }
                 .onAppear {
-                    // Paginação: quando o último item filtrado aparece, pede próxima página
+                    // Pagination: when the last filtered item appears, request next page
                     if cached.id == filteredBreeds.last?.id {
                         viewModel.fetchPage(page: viewModel.currentPage + 1)
                     }
@@ -80,7 +80,7 @@ struct SearchView: View {
         .navigationTitle("Search Breeds")
         .searchable(text: $searchText, prompt: "Search breeds...")
         .onAppear {
-            // Garante que existe conteúdo inicial
+            // Ensure initial content exists
             if cachedBreeds.isEmpty && !viewModel.isLoadingPage && !viewModel.hasLoadedFirstPage {
                 viewModel.fetchPage(page: 0)
             }

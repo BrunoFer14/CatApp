@@ -1,7 +1,7 @@
 import Foundation
 import SwiftData
 
-/// Repositório para gerir favoritos no SwiftData.
+/// Repository to manage favorites in SwiftData.
 @MainActor
 protocol FavoritesRepositoryProtocol {
     // Favorite (IDs)
@@ -68,7 +68,7 @@ class FavoritesRepository: FavoritesRepositoryProtocol {
             existing.name = breed.name
             existing.origin = breed.origin
             existing.temperament = breed.temperament
-            existing.life_span = breed.life_span
+            existing.lifeSpan = breed.lifeSpan
             existing.breedDescription = breed.description
             existing.imageUrl = breed.image?.url ?? breed.referenceImageUrl
             try db.saveIfNeeded()
@@ -78,7 +78,7 @@ class FavoritesRepository: FavoritesRepositoryProtocol {
                 name: breed.name,
                 origin: breed.origin,
                 temperament: breed.temperament,
-                life_span: breed.life_span,
+                lifeSpan: breed.lifeSpan,
                 breedDescription: breed.description,
                 imageUrl: breed.image?.url ?? breed.referenceImageUrl
             )

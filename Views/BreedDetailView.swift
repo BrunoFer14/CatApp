@@ -133,7 +133,7 @@ struct BreedDetailView: View {
                         .font(.subheadline)
                 }
 
-                if let lifeSpan = breed.life_span {
+                if let lifeSpan = breed.lifeSpan {
                     Text("⏳ Life span: \(lifeSpan) years")
                         .font(.subheadline)
                 }

@@ -74,7 +74,7 @@ struct BreedSquareTile: View {
         origin: "Egypt",
         description: "Active, Energetic, Independent, Intelligent, Gentle",
         temperament: "Active, Energetic",
-        life_span: "14 - 15",
+        lifeSpan: "14 - 15",
         image: BreedImage(url: "https://cdn2.thecatapi.com/images/0XYvRd7oD.jpg"),
         referenceImageId: "0XYvRd7oD"
     )

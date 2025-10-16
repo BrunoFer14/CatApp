@@ -26,7 +26,7 @@ class BreedSearchViewModel: ObservableObject {
 
     // Faz a pesquisa na API
     func search() {
-        // Se a query estiver vazia, limpa resultados e não faz pedido
+        // If the query is empty, clear results and do not make a request
         guard !query.isEmpty else {
             results = []
             return
@@ -35,18 +35,18 @@ class BreedSearchViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
 
-        // Pede ao repositório para pesquisar; recebe no main thread para atualizar UI
+        // Ask the repository to search; receive on main thread to update UI
         repository.searchBreeds(query: query)
             .receive(on: DispatchQueue.main)
             .sink(receiveCompletion: { [weak self] completion in
-                // Quando acaba (com sucesso ou erro), desliga o loading
+                // When completed (success or failure), turn off loading
                 self?.isLoading = false
-                // Se deu erro, guarda a mensagem para a UI mostrar
+                // If it failed, save the message for the UI to show
                 if case let .failure(error) = completion {
                     self?.errorMessage = "Error: \(error.localizedDescription)"
                 }
             }, receiveValue: { [weak self] breeds in
-                // Se correu bem, atualiza os resultados
+                // On success, update results
                 self?.results = breeds
             })
             .store(in: &cancellables)

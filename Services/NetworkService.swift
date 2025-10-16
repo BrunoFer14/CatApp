@@ -4,6 +4,7 @@ import Combine
 /// Protocolo para um serviço de rede genérico.
 protocol NetworkServiceProtocol {
     func fetch<T: Decodable>(_ type: T.Type, from url: URL) -> AnyPublisher<T, Error>
+    func fetch<T: Decodable>(_ type: T.Type, from request: URLRequest) -> AnyPublisher<T, Error>
 }
 
 /// Implementação baseada em URLSession + Combine, com suporte a API key.
@@ -15,14 +16,19 @@ class NetworkService: NetworkServiceProtocol {
         self.apiKey = apiKey
     }
 
+    // Legacy URL-based overload (kept for compatibility)
     func fetch<T: Decodable>(_ type: T.Type, from url: URL) -> AnyPublisher<T, Error> {
         var request = URLRequest(url: url)
-        // Adiciona header da TheCatAPI se existir key
+        // Adiciona header da TheCatAPI se existir key (kept here for URL-based paths)
         if let apiKey, !apiKey.isEmpty {
             request.addValue(apiKey, forHTTPHeaderField: "x-api-key")
         }
+        return fetch(type, from: request)
+    }
 
-        return URLSession.shared.dataTaskPublisher(for: request)
+    // New request-based overload
+    func fetch<T: Decodable>(_ type: T.Type, from request: URLRequest) -> AnyPublisher<T, Error> {
+        URLSession.shared.dataTaskPublisher(for: request)
             .map(\.data)
             .decode(type: T.self, decoder: JSONDecoder())
             .eraseToAnyPublisher()

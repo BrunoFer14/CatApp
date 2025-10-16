@@ -1,13 +1,13 @@
 import Foundation
 import Combine
 
-/// Repositório para obter detalhes de uma raça por ID.
+/// Repository to fetch details of a breed by ID.
 protocol DetailsRepositoryProtocol {
     func fetchBreedDetail(by id: String) -> AnyPublisher<CatBreed?, Error>
     func fetchBreedImages(by id: String, limit: Int) -> AnyPublisher<[BreedGalleryImage], Error>
 }
 
-/// Implementação simples: busca todas as raças e filtra localmente pelo ID.
+/// Simple implementation: fetches all breeds and filters locally by ID.
 class DetailsRepository: DetailsRepositoryProtocol {
     private let networkService: NetworkServiceProtocol
 
@@ -16,12 +16,12 @@ class DetailsRepository: DetailsRepositoryProtocol {
     }
 
     func fetchBreedDetail(by id: String) -> AnyPublisher<CatBreed?, Error> {
-        // API não tem endpoint por ID aqui, por isso busca todas e filtra
-        guard let url = URL(string: "https://api.thecatapi.com/v1/breeds") else {
+        // The API does not provide an endpoint by ID here, so we fetch all and filter
+        guard let request = Endpoint.breeds(page: nil, limit: nil).request() else {
             return Fail(error: URLError(.badURL)).eraseToAnyPublisher()
         }
 
-        return networkService.fetch([CatBreed].self, from: url)
+        return networkService.fetch([CatBreed].self, from: request)
             .map { breeds in
                 breeds.first(where: { $0.id == id })
             }
@@ -29,10 +29,11 @@ class DetailsRepository: DetailsRepositoryProtocol {
     }
 
     func fetchBreedImages(by id: String, limit: Int) -> AnyPublisher<[BreedGalleryImage], Error> {
-        // Endpoint oficial: /v1/images/search?breed_ids={id}&limit={limit}
-        guard let url = URL(string: "https://api.thecatapi.com/v1/images/search?breed_ids=\(id)&limit=\(limit)") else {
+        // Official endpoint: /v1/images/search?breed_ids={id}&limit={limit}
+        guard let request = Endpoint.breedImages(breedId: id, limit: limit).request() else {
             return Fail(error: URLError(.badURL)).eraseToAnyPublisher()
         }
-        return networkService.fetch([BreedGalleryImage].self, from: url)
+        return networkService.fetch([BreedGalleryImage].self, from: request)
     }
 }
+

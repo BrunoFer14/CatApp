@@ -15,13 +15,10 @@ class SearchRepository: SearchRepositoryProtocol {
     }
 
     func searchBreeds(query: String) -> AnyPublisher<[CatBreed], Error> {
-        // Codifica a query e constrói o URL
-        guard let encoded = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-              let url = URL(string: "https://api.thecatapi.com/v1/breeds/search?q=\(encoded)") else {
+        guard let request = Endpoint.breedSearch(query: query).request() else {
             return Fail(error: URLError(.badURL)).eraseToAnyPublisher()
         }
-        // Faz o pedido e decodifica para [CatBreed]
-        return networkService.fetch([CatBreed].self, from: url)
+        return networkService.fetch([CatBreed].self, from: request)
     }
 }
 
