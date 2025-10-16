@@ -4,7 +4,7 @@ import SwiftData
 
 @MainActor
 class CatBreedsViewModel: ObservableObject {
-    // Removido: @Published var breeds
+   
     @Published var favoriteIDs: Set<String> = []
     @Published var isLoadingPage = false
     @Published var currentPage = 0
@@ -16,7 +16,7 @@ class CatBreedsViewModel: ObservableObject {
     private let favoritesRepository: FavoritesRepositoryProtocol
     private let breedsCacheDB: BreedsCacheDatabaseServiceProtocol
 
-    private let limit = 20
+    private let limit = APIConstants.defaultPageLimit
     private var pagesRequested: Set<Int> = []
 
     init(
@@ -161,3 +161,4 @@ class CatBreedsViewModel: ObservableObject {
         }
     }
 }
+

@@ -88,6 +88,11 @@
 			path = Secrets;
 			sourceTree = "<group>";
 		};
+		B3B31A0E2EA128B800E3BA47 /* Constants */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Constants;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -118,6 +123,7 @@
 		AF7B3B172E43AEAB005F7801 = {
 			isa = PBXGroup;
 			children = (
+				B3B31A0E2EA128B800E3BA47 /* Constants */,
 				B3B318422E99345900E3BA47 /* ConfigDecoder.swift */,
 				B3B318462E993EE500E3BA47 /* Secrets */,
 				B38B17C82E8A879C00F2B693 /* Repositories */,
@@ -164,6 +170,7 @@
 				B38B17C42E8A860A00F2B693 /* Services */,
 				B38B17C82E8A879C00F2B693 /* Repositories */,
 				B3B318462E993EE500E3BA47 /* Secrets */,
+				B3B31A0E2EA128B800E3BA47 /* Constants */,
 			);
 			name = CatApp;
 			packageProductDependencies = (

@@ -19,7 +19,7 @@ class BreedDetailViewModel: ObservableObject {
 
     // UI-driven state moved from the View
     @Published var imageItems: [ImageItem] = []
-    @Published var selectedIndex: Int = 0
+    @Published var selectedIndex: Int = UIDimensions.initialPageIndex
 
     // Fullscreen state
     @Published var isPresentingFullscreen: Bool = false
@@ -48,11 +48,11 @@ class BreedDetailViewModel: ObservableObject {
         loadBreedDetail(id: initialBreed.id)
 
         // Load gallery; when it arrives, rebuild image list
-        loadGalleryImages(breedId: initialBreed.id, limit: 10)
+        loadGalleryImages(breedId: initialBreed.id, limit: APIConstants.defaultGalleryLimit)
     }
 
     func goPrev() {
-        selectedIndex = max(0, selectedIndex - 1)
+        selectedIndex = max(UIDimensions.initialPageIndex, selectedIndex - 1)
     }
 
     func goNext() {
@@ -101,7 +101,7 @@ class BreedDetailViewModel: ObservableObject {
         // update items and keep selection safe
         imageItems = result
         if selectedIndex >= imageItems.count {
-            selectedIndex = max(0, imageItems.count - 1)
+            selectedIndex = max(UIDimensions.initialPageIndex, imageItems.count - 1)
         }
     }
 
@@ -146,7 +146,7 @@ class BreedDetailViewModel: ObservableObject {
             .store(in: &cancellables)
     }
 
-    func loadGalleryImages(breedId: String, limit: Int = 10) {
+    func loadGalleryImages(breedId: String, limit: Int = APIConstants.defaultGalleryLimit) {
         isLoadingGallery = true
         galleryError = nil
         repository?.fetchBreedImages(by: breedId, limit: limit)
@@ -160,8 +160,8 @@ class BreedDetailViewModel: ObservableObject {
             }, receiveValue: { [weak self] images in
                 guard let self else { return }
                 self.galleryImages = images
-                // Whenever gallery updates, keep selectedIndex at 0 (main image)
-                self.selectedIndex = 0
+                // Whenever gallery updates, keep selectedIndex at initial page (main image)
+                self.selectedIndex = UIDimensions.initialPageIndex
                 self.rebuildImageItems()
             })
             .store(in: &cancellables)

@@ -19,7 +19,7 @@ struct SearchBar: View {
         #elseif canImport(AppKit)
         return Color(NSColor.windowBackgroundColor)
         #else
-        return Color.gray.opacity(0.12)
+        return Color.gray.opacity(UILayout.searchBarFallbackBackgroundOpacity)
         #endif
     }
 
@@ -37,9 +37,9 @@ struct SearchBar: View {
                 }
             }
         }
-        .padding(8)
+        .padding(UILayout.buttonPadding)
         .background(backgroundColor)
-        .cornerRadius(8)
-        .padding(.horizontal)
+        .cornerRadius(UILayout.defaultCornerRadius)
+        .padding(.horizontal, UILayout.listPadding)
     }
 }

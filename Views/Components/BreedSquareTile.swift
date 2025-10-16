@@ -8,12 +8,12 @@ struct BreedSquareTile: View {
     let shadowColor: Color
 
     // Tile layout constants
-    private let cornerRadius: CGFloat = 14
-    private let imageCornerRadius: CGFloat = 12
-    private let imageHeight: CGFloat = 120
+    private let cornerRadius: CGFloat = UILayout.cardCornerRadius
+    private let imageCornerRadius: CGFloat = UILayout.imageCornerRadius
+    private let imageHeight: CGFloat = UIDimensions.tileImageHeight
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: UILayout.tileContentSpacing) {
             ZStack(alignment: .topTrailing) {
                 // Image (uses URL from breed model)
                 CatImageView(
@@ -27,13 +27,18 @@ struct BreedSquareTile: View {
                 Button(action: favoriteAction) {
                     Image(systemName: isFavorite ? "heart.fill" : "heart")
                         .foregroundColor(.red)
-                        .padding(8)
+                        .padding(UILayout.iconButtonPadding)
                         .background(
                             Circle()
-                                .fill(Color.white.opacity(0.9))
-                                .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
+                                .fill(Color.white.opacity(UILayout.circleButtonFillOpacity))
+                                .shadow(
+                                    color: Color.black.opacity(UILayout.circleButtonShadowOpacity),
+                                    radius: UILayout.circleButtonShadowRadius,
+                                    x: UILayout.circleButtonShadowOffsetX,
+                                    y: UILayout.circleButtonShadowOffsetY
+                                )
                         )
-                        .padding(8)
+                        .padding(UILayout.iconButtonPadding)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(isFavorite ? "Remove from Favorites" : "Add to Favorites")
@@ -43,7 +48,7 @@ struct BreedSquareTile: View {
             Text(breed.name)
                 .font(.headline)
                 .foregroundColor(.primary)
-                .lineLimit(2)
+                .lineLimit(UILayout.titleLineLimit)
                 .multilineTextAlignment(.leading)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -52,17 +57,22 @@ struct BreedSquareTile: View {
                 Text(origin)
                     .font(.subheadline)
                     .foregroundColor(.secondary)
-                    .lineLimit(1)
+                    .lineLimit(UILayout.subtitleLineLimit)
             }
 
             Spacer(minLength: 0)
         }
-        .padding(10)
+        .padding(UILayout.cardContentPadding)
         .frame(maxWidth: .infinity)
-        .frame(height: 180) // matches HomeListView placeholder height
+        .frame(height: UIDimensions.breedCardHeight) // matches HomeListView placeholder height
         .background(cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-        .shadow(color: shadowColor, radius: 6, x: 0, y: 2)
+        .shadow(
+            color: shadowColor,
+            radius: UILayout.cardShadowRadius,
+            x: UILayout.cardShadowOffsetX,
+            y: UILayout.cardShadowOffsetY
+        )
         .contentShape(Rectangle())
     }
 }
@@ -83,8 +93,8 @@ struct BreedSquareTile: View {
         breed: sample,
         isFavorite: true,
         favoriteAction: {},
-        cardBackground: Color.gray.opacity(0.15),
-        shadowColor: Color.black.opacity(0.08)
+        cardBackground: Color.gray.opacity(UILayout.previewCardBackgroundOpacity),
+        shadowColor: Color.black.opacity(UILayout.previewShadowOpacity)
     )
     .padding()
 }

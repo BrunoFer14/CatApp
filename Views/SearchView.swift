@@ -37,14 +37,14 @@ struct SearchView: View {
                 NavigationLink(
                     destination: BreedDetailView(breed: breed, viewModel: viewModel)
                 ) {
-                    HStack(spacing: 12) {
+                    HStack(spacing: UILayout.searchRowHorizontalSpacing) {
                         CatImageView(
                             urlString: breed.image?.url ?? breed.referenceImageUrl,
-                            width: 60,
-                            height: 60,
-                            cornerRadius: 8
+                            width: UIDimensions.searchThumbnailSize,
+                            height: UIDimensions.searchThumbnailSize,
+                            cornerRadius: UILayout.searchThumbnailCornerRadius
                         )
-                        VStack(alignment: .leading, spacing: 4) {
+                        VStack(alignment: .leading, spacing: UILayout.searchRowVerticalSpacing) {
                             Text(breed.name)
                                 .font(.headline)
                             if let origin = breed.origin, !origin.isEmpty {
@@ -58,7 +58,7 @@ struct SearchView: View {
                             viewModel.toggleFavorite(for: breed)
                         }
                     }
-                    .padding(.vertical, 4)
+                    .padding(.vertical, UILayout.searchRowVerticalPadding)
                 }
                 .onAppear {
                     // Pagination: when the last filtered item appears, request next page
@@ -82,7 +82,7 @@ struct SearchView: View {
         .onAppear {
             // Ensure initial content exists
             if cachedBreeds.isEmpty && !viewModel.isLoadingPage && !viewModel.hasLoadedFirstPage {
-                viewModel.fetchPage(page: 0)
+                viewModel.fetchPage(page: UIDimensions.initialPageIndex)
             }
         }
     }

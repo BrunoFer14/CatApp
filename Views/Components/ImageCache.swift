@@ -14,10 +14,10 @@ actor ImageCache {
 
     init() {
         // Limite aproximado de 50 MB em memória
-        memoryCache.totalCostLimit = 50 * 1024 * 1024
+        memoryCache.totalCostLimit = ImageCacheConstants.memoryLimitBytes
         // Pasta de cache no disco
         let base = fm.urls(for: .cachesDirectory, in: .userDomainMask).first!
-        directoryURL = base.appendingPathComponent("ImageCache", isDirectory: true)
+        directoryURL = base.appendingPathComponent(ImageCacheConstants.directoryName, isDirectory: true)
         try? fm.createDirectory(at: directoryURL, withIntermediateDirectories: true)
     }
 
@@ -81,3 +81,4 @@ actor ImageCache {
         #endif
     }
 }
+

@@ -20,13 +20,13 @@ struct BreedDetailView: View {
         #elseif canImport(AppKit)
         return Color(NSColor.windowBackgroundColor)
         #else
-        return Color.gray.opacity(0.12)
+        return Color.gray.opacity(UILayout.searchBarFallbackBackgroundOpacity)
         #endif
     }
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: UILayout.sectionSpacing) {
 
                 // Carrossel de imagens já pronto (main + galeria deduplicada)
                 if !detailVM.imageItems.isEmpty {
@@ -35,8 +35,8 @@ struct BreedDetailView: View {
                             ForEach(Array(detailVM.imageItems.enumerated()), id: \.offset) { index, item in
                                 CatImageView(
                                     urlString: item.url,
-                                    height: 260,
-                                    cornerRadius: 12,
+                                    height: UIDimensions.detailImageHeightPrimary,
+                                    cornerRadius: UILayout.imageCornerRadius,
                                     contentMode: .fill
                                 )
                                 .contentShape(Rectangle())
@@ -48,7 +48,7 @@ struct BreedDetailView: View {
                             }
                         }
                         .tabViewStyle(.page(indexDisplayMode: .automatic))
-                        .frame(height: 260)
+                        .frame(height: UIDimensions.detailImageHeightPrimary)
 
                         HStack {
                             Button {
@@ -59,14 +59,14 @@ struct BreedDetailView: View {
                                 Image(systemName: "chevron.left")
                                     .font(.title2)
                                     .foregroundColor(.primary)
-                                    .padding(10)
+                                    .padding(UILayout.buttonPadding)
                                     .background(
                                         Circle()
-                                            .fill(Color.black.opacity(0.08))
+                                            .fill(Color.black.opacity(UILayout.circleButtonBackgroundOpacity))
                                     )
                             }
                             .buttonStyle(.plain)
-                            .disabled(detailVM.selectedIndex == 0)
+                            .disabled(detailVM.selectedIndex == UIDimensions.initialPageIndex)
 
                             Spacer()
 
@@ -86,24 +86,24 @@ struct BreedDetailView: View {
                                 Image(systemName: "chevron.right")
                                     .font(.title2)
                                     .foregroundColor(.primary)
-                                    .padding(10)
+                                    .padding(UILayout.buttonPadding)
                                     .background(
                                         Circle()
-                                            .fill(Color.black.opacity(0.08))
+                                            .fill(Color.black.opacity(UILayout.circleButtonBackgroundOpacity))
                                     )
                             }
                             .buttonStyle(.plain)
                             .disabled(detailVM.selectedIndex >= detailVM.imageItems.count - 1)
                         }
                         .padding(.horizontal)
-                        .padding(.top, 12)
+                        .padding(.top, UILayout.gridSpacing)
                     }
                 } else {
                     // Fallback se não houver imagem nenhuma
                     CatImageView(
                         urlString: breed.image?.url ?? breed.referenceImageUrl,
-                        height: 200,
-                        cornerRadius: 12,
+                        height: UIDimensions.detailImageHeightFallback,
+                        cornerRadius: UILayout.imageCornerRadius,
                         contentMode: .fill
                     )
                     .contentShape(Rectangle())
@@ -140,7 +140,7 @@ struct BreedDetailView: View {
 
                 if let description = breed.description {
                     Text(description)
-                        .padding(.top, 8)
+                        .padding(.top, UILayout.textTopPaddingSmall)
                 }
 
                 // Botão para marcar/desmarcar favorito
@@ -155,9 +155,9 @@ struct BreedDetailView: View {
                     .padding()
                     .frame(maxWidth: .infinity)
                     .background(buttonBackground)
-                    .cornerRadius(8)
+                    .cornerRadius(UILayout.defaultCornerRadius)
                 }
-                .padding(.top, 16)
+                .padding(.top, UILayout.textTopPaddingMedium)
             }
             .padding()
         }
@@ -192,7 +192,7 @@ private struct FullscreenImageView: View {
                     urlString: urlString,
                     width: side,
                     height: side,
-                    cornerRadius: 0,
+                    cornerRadius: UILayout.fullscreenImageCornerRadius,
                     contentMode: .fit
                 )
                 .id(urlString) // força reload quando a URL muda
@@ -204,7 +204,7 @@ private struct FullscreenImageView: View {
                         Button(action: onClose) {
                             Image(systemName: "xmark.circle.fill")
                                 .font(.largeTitle)
-                                .foregroundColor(.white.opacity(0.9))
+                                .foregroundColor(.white.opacity(UILayout.fullscreenCloseButtonOpacity))
                                 .padding()
                         }
                         .buttonStyle(.plain)

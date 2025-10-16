@@ -29,7 +29,7 @@ struct CatImageView: View {
         urlString: String?,
         width: CGFloat? = nil,
         height: CGFloat? = nil,
-        cornerRadius: CGFloat = 8,
+        cornerRadius: CGFloat = UILayout.defaultCornerRadius,
         contentMode: ContentMode = .fit,
         loadedImage: Binding<Image?>? = nil
     ) {
@@ -123,3 +123,4 @@ private extension View {
         }
     }
 }
+

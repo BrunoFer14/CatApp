@@ -29,9 +29,9 @@ struct FavoritesView: View {
                             // Miniatura
                             CatImageView(
                                 urlString: row.imageURL ?? row.breed.referenceImageUrl,
-                                width: 40,
-                                height: 40,
-                                cornerRadius: 6
+                                width: UIDimensions.favoriteThumbnailSize,
+                                height: UIDimensions.favoriteThumbnailSize,
+                                cornerRadius: UILayout.favoriteThumbnailCornerRadius
                             )
                             Text(row.name)
                                 .font(.headline)

@@ -11,7 +11,7 @@ class CachedBreed {
     var breedDescription: String?
     var imageUrl: String?
     // Índice para manter a ordem de carregamento/paginação
-    var orderIndex: Int = 0
+    var orderIndex: Int = UIDimensions.initialPageIndex
 
     init(
         id: String,
@@ -21,7 +21,7 @@ class CachedBreed {
         lifeSpan: String?,
         breedDescription: String?,
         imageUrl: String?,
-        orderIndex: Int = 0
+        orderIndex: Int = UIDimensions.initialPageIndex
     ) {
         self.id = id
         self.name = name

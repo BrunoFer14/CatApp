@@ -12,11 +12,10 @@ import SwiftData
 struct HomeListView: View {
     @ObservedObject var viewModel: CatBreedsViewModel
 
-    // 2 colunas flexíveis para manter pares simétricos
-    private let columns: [GridItem] = [
-        GridItem(.flexible(), spacing: 12),
-        GridItem(.flexible(), spacing: 12)
-    ]
+    // Colunas flexíveis para manter pares simétricos
+    private var columns: [GridItem] {
+        Array(repeating: GridItem(.flexible(), spacing: UILayout.gridSpacing), count: UIDimensions.homeGridColumnCount)
+    }
 
     // Cores adaptadas à plataforma
     private var cardBackground: Color {
@@ -25,15 +24,15 @@ struct HomeListView: View {
         #elseif canImport(AppKit)
         return Color(NSColor.windowBackgroundColor)
         #else
-        return Color.gray.opacity(0.15)
+        return Color.gray.opacity(UILayout.previewCardBackgroundOpacity)
         #endif
     }
 
     private var shadowColor: Color {
         #if canImport(UIKit)
-        return Color.black.opacity(0.08)
+        return Color.black.opacity(UILayout.previewShadowOpacity)
         #else
-        return Color.black.opacity(0.12)
+        return Color.black.opacity(UILayout.macOSShadowOpacity)
         #endif
     }
 
@@ -48,21 +47,21 @@ struct HomeListView: View {
                     ProgressView("Loading breeds…")
                         .progressViewStyle(.circular)
                         .padding()
-                    LazyVGrid(columns: columns, spacing: 12) {
-                        ForEach(0..<6, id: \.self) { _ in
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    LazyVGrid(columns: columns, spacing: UILayout.gridSpacing) {
+                        ForEach(0..<UIDimensions.placeholderItemsCount, id: \.self) { _ in
+                            RoundedRectangle(cornerRadius: UILayout.cardCornerRadius, style: .continuous)
                                 .fill(cardBackground)
-                                .frame(height: 180)
+                                .frame(height: UIDimensions.breedCardHeight)
                                 .redacted(reason: .placeholder)
                                 .shimmer()
                         }
                     }
-                    .padding(.all, 12)
+                    .padding(.all, UILayout.listPadding)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 ScrollView {
-                    LazyVGrid(columns: columns, spacing: 12) {
+                    LazyVGrid(columns: columns, spacing: UILayout.gridSpacing) {
                         ForEach(Array(cachedBreeds.enumerated()), id: \.element.id) { index, cached in
                             let breed = CatBreed(
                                 id: cached.id,
@@ -86,8 +85,8 @@ struct HomeListView: View {
                             }
                             .buttonStyle(.plain)
                             .onAppear {
-                                // Prefetch when reaching near the end (last 4 items)
-                                let threshold = max(0, cachedBreeds.count - 4)
+                                // Prefetch when reaching near the end
+                                let threshold = max(0, cachedBreeds.count - UILayout.homePrefetchThresholdFromEnd)
                                 if index >= threshold {
                                     viewModel.requestNextPageIfNeeded()
                                 }
@@ -97,17 +96,17 @@ struct HomeListView: View {
                         if viewModel.isLoadingPage {
                             ProgressView()
                                 .padding()
-                                .gridCellColumns(2)
+                                .gridCellColumns(UIDimensions.homeGridColumnCount)
                         }
                     }
-                    .padding(.all, 12)
+                    .padding(.all, UILayout.listPadding)
                 }
             }
         }
         .navigationTitle("Cat Breeds")
         .onAppear {
             if cachedBreeds.isEmpty && !viewModel.isLoadingPage && !viewModel.hasLoadedFirstPage {
-                viewModel.fetchPage(page: 0)
+                viewModel.fetchPage(page: UIDimensions.initialPageIndex)
             }
         }
     }
