@@ -8,11 +8,17 @@ struct ImageItem: Identifiable, Equatable {
 
 @MainActor
 class BreedDetailViewModel: ObservableObject {
-    @Published var breed: CatBreed?
-    @Published var isLoading = false
-    @Published var errorMessage: String?
 
-    // Galeria de imagens adicionais
+    enum State: Equatable {
+        case idle
+        case loading
+        case content(CatBreed)
+        case error(String)
+    }
+
+    @Published var state: State
+
+    // Galeria de imagens adicionais (mantida separada, pois carrega independentemente)
     @Published var galleryImages: [BreedGalleryImage] = []
     @Published var isLoadingGallery = false
     @Published var galleryError: String?
@@ -30,21 +36,42 @@ class BreedDetailViewModel: ObservableObject {
 
     /// Se já tens a raça completa, passas aqui e não faz request
     init(breed: CatBreed? = nil, repository: DetailsRepositoryProtocol? = DetailsRepository()) {
-        self.breed = breed
+        if let breed {
+            self.state = .content(breed)
+        } else {
+            self.state = .idle
+        }
         self.repository = repository
+    }
+
+    // Computed accessors for convenience
+    var breed: CatBreed? {
+        if case let .content(b) = state { return b }
+        return nil
+    }
+
+    var isLoading: Bool {
+        if case .loading = state { return true }
+        return false
+    }
+
+    var errorMessage: String? {
+        if case let .error(msg) = state { return msg }
+        return nil
     }
 
     // MARK: - Public API for the View
 
     func prepare(for initialBreed: CatBreed) {
-        // Set initial breed if not present
-        if breed == nil {
-            breed = initialBreed
+        // If we don't have content yet, set it
+        if case .idle = state {
+            state = .content(initialBreed)
         }
+
         // Build images with whatever we have now (main image only)
         rebuildImageItems()
 
-        // Load details if needed (only when breed is not fully loaded)
+        // Load details if needed (only when we don't have a fully loaded breed)
         loadBreedDetail(id: initialBreed.id)
 
         // Load gallery; when it arrives, rebuild image list
@@ -109,10 +136,11 @@ class BreedDetailViewModel: ObservableObject {
 
     func loadBreedDetail(id: String) {
         // Só faz request se ainda não houver a raça completa
-        guard breed == nil else { return }
+        if case .content = state {
+            return
+        }
 
-        isLoading = true
-        errorMessage = nil
+        state = .loading
 
         var receivedNonNilValue = false
 
@@ -120,23 +148,20 @@ class BreedDetailViewModel: ObservableObject {
             .receive(on: DispatchQueue.main)
             .sink(receiveCompletion: { [weak self] completion in
                 guard let self else { return }
-                self.isLoading = false
                 switch completion {
                 case .failure(let error):
-                    self.errorMessage = "Erro: \(error.localizedDescription)"
+                    self.state = .error("Erro: \(error.localizedDescription)")
                 case .finished:
                     // If no non-nil value was received, treat as not found
                     if !receivedNonNilValue {
-                        self.breed = nil
-                        self.errorMessage = "Erro: Raça não encontrada."
+                        self.state = .error("Erro: Raça não encontrada.")
                     }
                 }
             }, receiveValue: { [weak self] fetchedBreed in
                 guard let self else { return }
                 if let fetchedBreed {
                     receivedNonNilValue = true
-                    self.breed = fetchedBreed
-                    self.errorMessage = nil
+                    self.state = .content(fetchedBreed)
                     // If the main image changed, rebuild items
                     self.rebuildImageItems()
                 } else {

@@ -2,7 +2,6 @@ import XCTest
 @testable import CatApp
 
 final class AverageLifeSpanModelTests: XCTestCase {
-
     func testAverageLifeSpanWithRangeWithSpaces() throws {
         let breed = CatBreed(
             id: "a",
@@ -15,7 +14,7 @@ final class AverageLifeSpanModelTests: XCTestCase {
             referenceImageId: nil
         )
         let value = try XCTUnwrap(breed.averageLifeSpan)
-        XCTAssertEqual(value, 11.0, accuracy: 0.001)
+        XCTAssertEqual(value, 11.0)
     }
 
     func testAverageLifeSpanWithRangeNoSpaces() throws {
@@ -30,7 +29,7 @@ final class AverageLifeSpanModelTests: XCTestCase {
             referenceImageId: nil
         )
         let value = try XCTUnwrap(breed.averageLifeSpan)
-        XCTAssertEqual(value, 11.0, accuracy: 0.001)
+        XCTAssertEqual(value, 11.0)
     }
 
     func testAverageLifeSpanWithSingleValue() throws {
@@ -45,7 +44,7 @@ final class AverageLifeSpanModelTests: XCTestCase {
             referenceImageId: nil
         )
         let value = try XCTUnwrap(breed.averageLifeSpan)
-        XCTAssertEqual(value, 15.0, accuracy: 0.001)
+        XCTAssertEqual(value, 15.0)
     }
 
     func testAverageLifeSpanInvalidStringReturnsNil() {

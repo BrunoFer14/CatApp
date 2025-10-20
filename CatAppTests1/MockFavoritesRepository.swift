@@ -2,7 +2,6 @@ import Foundation
 import SwiftData
 @testable import CatApp
 
-@MainActor
 final class MockFavoritesRepository: FavoritesRepositoryProtocol {
     private(set) var favorites: Set<String> = []
     private(set) var details: [String: FavoriteBreedDetail] = [:]
@@ -13,25 +12,25 @@ final class MockFavoritesRepository: FavoritesRepositoryProtocol {
     private(set) var upsertDetailCalls: [String] = []
     private(set) var deleteDetailCalls: [String] = []
 
-    func fetchFavorites() throws -> [Favorite] {
+    func fetchFavorites() async throws -> [Favorite] {
         favorites.map { Favorite(breedId: $0) }
     }
 
-    func addFavorite(id: String) throws {
+    func addFavorite(id: String) async throws {
         favorites.insert(id)
         addCalls.append(id)
     }
 
-    func removeFavorite(id: String) throws {
+    func removeFavorite(id: String) async throws {
         favorites.remove(id)
         removeCalls.append(id)
     }
 
-    func isFavorite(id: String) -> Bool {
+    func isFavorite(id: String) async -> Bool {
         favorites.contains(id)
     }
 
-    func upsertFavoriteDetail(from breed: CatBreed) throws {
+    func upsertFavoriteDetail(from breed: CatBreed) async throws {
         let detail = FavoriteBreedDetail(
             id: breed.id,
             name: breed.name,
@@ -45,12 +44,12 @@ final class MockFavoritesRepository: FavoritesRepositoryProtocol {
         upsertDetailCalls.append(breed.id)
     }
 
-    func deleteFavoriteDetail(id: String) throws {
+    func deleteFavoriteDetail(id: String) async throws {
         details[id] = nil
         deleteDetailCalls.append(id)
     }
 
-    func fetchFavoriteDetailsByIDs(_ ids: Set<String>) throws -> [FavoriteBreedDetail] {
+    func fetchFavoriteDetailsByIDs(_ ids: Set<String>) async throws -> [FavoriteBreedDetail] {
         ids.compactMap { details[$0] }
     }
 }

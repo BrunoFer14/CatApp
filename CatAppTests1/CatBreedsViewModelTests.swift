@@ -57,7 +57,7 @@ final class CatBreedsViewModelTests: XCTestCase {
         mockRepo.mockBreedsByPage[0] = page0
 
         viewModel.fetchPage(page: 0)
-        RunLoop.main.run(until: Date().addingTimeInterval(0.2))
+        RunLoop.main.run(until: Date().addingTimeInterval(TestConstants.longDelay))
 
         let cached = try fetchAllCached()
         XCTAssertEqual(cached.count, 3, "cached: \(cached.map { $0.id })")
@@ -72,7 +72,7 @@ final class CatBreedsViewModelTests: XCTestCase {
         }
         mockRepo.mockBreedsByPage[0] = page0
         viewModel.fetchPage(page: 0)
-        RunLoop.main.run(until: Date().addingTimeInterval(0.2))
+        RunLoop.main.run(until: Date().addingTimeInterval(TestConstants.longDelay))
 
         var cached = try fetchAllCached()
         XCTAssertEqual(cached.count, 3, "cached after page 0: \(cached.map { $0.id })")
@@ -84,7 +84,7 @@ final class CatBreedsViewModelTests: XCTestCase {
         ]
         mockRepo.mockBreedsByPage[1] = page1
         viewModel.fetchPage(page: 1)
-        RunLoop.main.run(until: Date().addingTimeInterval(0.2))
+        RunLoop.main.run(until: Date().addingTimeInterval(TestConstants.longDelay))
 
         cached = try fetchAllCached()
         XCTAssertEqual(cached.count, 5, "cached after page 1: \(cached.map { $0.id })")
@@ -118,11 +118,11 @@ final class CatBreedsViewModelTests: XCTestCase {
         }
 
         viewModel.fetchPage(page: 0)
-        RunLoop.main.run(until: Date().addingTimeInterval(0.05))
+        RunLoop.main.run(until: Date().addingTimeInterval(TestConstants.shortDelay))
         XCTAssertEqual(viewModel.currentPage, 0)
 
         viewModel.requestNextPageIfNeeded()
-        RunLoop.main.run(until: Date().addingTimeInterval(0.05))
+        RunLoop.main.run(until: Date().addingTimeInterval(TestConstants.shortDelay))
         XCTAssertEqual(viewModel.currentPage, 1)
     }
 
@@ -148,7 +148,7 @@ final class CatBreedsViewModelTests: XCTestCase {
         mockRepo.error = Dummy()
 
         viewModel.fetchPage(page: 0)
-        RunLoop.main.run(until: Date().addingTimeInterval(0.05))
+        RunLoop.main.run(until: Date().addingTimeInterval(TestConstants.shortDelay))
 
         XCTAssertTrue(viewModel.hasLoadedFirstPage, "Should mark first page as loaded even on error with cache")
         XCTAssertEqual(viewModel.currentPage, 0)
@@ -160,11 +160,11 @@ final class CatBreedsViewModelTests: XCTestCase {
         }
 
         viewModel.fetchPage(page: 0)
-        RunLoop.main.run(until: Date().addingTimeInterval(0.05))
+        RunLoop.main.run(until: Date().addingTimeInterval(TestConstants.shortDelay))
         XCTAssertTrue(viewModel.hasLoadedFirstPage)
 
         viewModel.clearCache()
-        RunLoop.main.run(until: Date().addingTimeInterval(0.1))
+        RunLoop.main.run(until: Date().addingTimeInterval(TestConstants.mediumDelay))
 
         XCTAssertEqual(viewModel.currentPage, 0)
         XCTAssertTrue(viewModel.hasLoadedFirstPage, "After clearCache, it should refetch first page")

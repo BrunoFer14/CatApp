@@ -61,7 +61,7 @@ final class BreedDetailViewModelTests: XCTestCase {
         viewModel.loadBreedDetail(id: "xyz")
 
         // Espera o pipeline terminar
-        wait(for: [loadingExpectation], timeout: 2.0)
+        wait(for: [loadingExpectation], timeout: TestConstants.defaultExpectationTimeout)
 
         // Então
         XCTAssertEqual(viewModel.breed?.id, "xyz")
@@ -92,7 +92,7 @@ final class BreedDetailViewModelTests: XCTestCase {
         viewModel.loadBreedDetail(id: "any")
 
         // Espera
-        wait(for: [loadingExpectation], timeout: 2.0)
+        wait(for: [loadingExpectation], timeout: TestConstants.defaultExpectationTimeout)
 
         // Então
         XCTAssertNil(viewModel.breed)
@@ -120,7 +120,7 @@ final class BreedDetailViewModelTests: XCTestCase {
         viewModel.loadBreedDetail(id: "missing")
 
         // Espera
-        wait(for: [loadingExpectation], timeout: 2.0)
+        wait(for: [loadingExpectation], timeout: TestConstants.defaultExpectationTimeout)
 
         // Então
         XCTAssertNil(viewModel.breed)
@@ -156,7 +156,7 @@ final class BreedDetailViewModelTests: XCTestCase {
         mockRepo.resetCounters()
         viewModel.loadGalleryImages(breedId: "gal", limit: 10)
 
-        wait(for: [loadingExpectation], timeout: 2.0)
+        wait(for: [loadingExpectation], timeout: TestConstants.defaultExpectationTimeout)
 
         // Então: imageItems deve conter principal + únicas da galeria, sem duplicados, e selectedIndex reset a 0
         let urls = viewModel.imageItems.map { $0.url }
@@ -192,7 +192,7 @@ final class BreedDetailViewModelTests: XCTestCase {
         mockRepo.resetCounters()
         viewModel.loadGalleryImages(breedId: "galerr", limit: 10)
 
-        wait(for: [loadingExpectation], timeout: 2.0)
+        wait(for: [loadingExpectation], timeout: TestConstants.defaultExpectationTimeout)
 
         // Então
         XCTAssertFalse(viewModel.isLoadingGallery)
@@ -200,4 +200,3 @@ final class BreedDetailViewModelTests: XCTestCase {
         XCTAssertEqual(mockRepo.fetchBreedImagesCallCount, 1)
     }
 }
-

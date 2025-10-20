@@ -25,144 +25,169 @@ struct BreedDetailView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: UILayout.sectionSpacing) {
-
-                // Carrossel de imagens já pronto (main + galeria deduplicada)
-                if !detailVM.imageItems.isEmpty {
-                    VStack(spacing: 0) {
-                        TabView(selection: $detailVM.selectedIndex) {
-                            ForEach(Array(detailVM.imageItems.enumerated()), id: \.offset) { index, item in
-                                CatImageView(
-                                    urlString: item.url,
-                                    height: UIDimensions.detailImageHeightPrimary,
-                                    cornerRadius: UILayout.imageCornerRadius,
-                                    contentMode: .fill
-                                )
-                                .contentShape(Rectangle())
-                                .onTapGesture {
-                                    detailVM.select(index: index)
-                                    detailVM.presentFullscreenForSelected()
-                                }
-                                .tag(index)
-                            }
-                        }
-                        .tabViewStyle(.page(indexDisplayMode: .automatic))
-                        .frame(height: UIDimensions.detailImageHeightPrimary)
-
-                        HStack {
-                            Button {
-                                withAnimation {
-                                    detailVM.goPrev()
-                                }
-                            } label: {
-                                Image(systemName: "chevron.left")
-                                    .font(.title2)
-                                    .foregroundColor(.primary)
-                                    .padding(UILayout.buttonPadding)
-                                    .background(
-                                        Circle()
-                                            .fill(Color.black.opacity(UILayout.circleButtonBackgroundOpacity))
-                                    )
-                            }
-                            .buttonStyle(.plain)
-                            .disabled(detailVM.selectedIndex == UIDimensions.initialPageIndex)
-
-                            Spacer()
-
-                            if detailVM.isLoadingGallery {
-                                ProgressView()
-                                    .progressViewStyle(.circular)
-                                    .padding(.horizontal)
-                            }
-
-                            Spacer()
-
-                            Button {
-                                withAnimation {
-                                    detailVM.goNext()
-                                }
-                            } label: {
-                                Image(systemName: "chevron.right")
-                                    .font(.title2)
-                                    .foregroundColor(.primary)
-                                    .padding(UILayout.buttonPadding)
-                                    .background(
-                                        Circle()
-                                            .fill(Color.black.opacity(UILayout.circleButtonBackgroundOpacity))
-                                    )
-                            }
-                            .buttonStyle(.plain)
-                            .disabled(detailVM.selectedIndex >= detailVM.imageItems.count - 1)
-                        }
-                        .padding(.horizontal)
-                        .padding(.top, UILayout.gridSpacing)
-                    }
-                } else {
-                    // Fallback se não houver imagem nenhuma
-                    CatImageView(
-                        urlString: breed.image?.url ?? breed.referenceImageUrl,
-                        height: UIDimensions.detailImageHeightFallback,
-                        cornerRadius: UILayout.imageCornerRadius,
-                        contentMode: .fill
-                    )
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        // Se houver URL válido, abrir fullscreen
-                        if let url = breed.image?.url ?? breed.referenceImageUrl {
-                            detailVM.fullscreenURL = url
-                            detailVM.isPresentingFullscreen = true
-                        }
-                    }
-                    .frame(maxWidth: .infinity)
+        Group {
+            switch detailVM.state {
+            case .idle, .loading:
+                VStack {
+                    ProgressView()
+                        .progressViewStyle(.circular)
+                        .padding()
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-                // Título
-                Text(breed.name)
-                    .font(.largeTitle)
-                    .bold()
-
-                // Campos informativos
-                if let origin = breed.origin {
-                    Text("🌍 Origin: \(origin)")
-                        .font(.subheadline)
-                }
-
-                if let temperament = breed.temperament {
-                    Text("😺 Temperament: \(temperament)")
-                        .font(.subheadline)
-                }
-
-                if let lifeSpan = breed.lifeSpan {
-                    Text("⏳ Life span: \(lifeSpan) years")
-                        .font(.subheadline)
-                }
-
-                if let description = breed.description {
-                    Text(description)
-                        .padding(.top, UILayout.textTopPaddingSmall)
-                }
-
-                // Botão para marcar/desmarcar favorito
-                Button(action: {
-                    viewModel.toggleFavorite(for: breed)
-                }) {
-                    HStack {
-                        Image(systemName: viewModel.isFavorite(breed) ? "heart.fill" : "heart")
-                            .foregroundColor(.red)
-                        Text(viewModel.isFavorite(breed) ? "Remove from Favorites" : "Add to Favorites")
+            case .error(let message):
+                ScrollView {
+                    VStack(spacing: UILayout.sectionSpacing) {
+                        Text("Error")
+                            .font(.title)
+                            .bold()
+                        Text(message)
+                            .foregroundColor(.secondary)
                     }
                     .padding()
-                    .frame(maxWidth: .infinity)
-                    .background(buttonBackground)
-                    .cornerRadius(UILayout.defaultCornerRadius)
                 }
-                .padding(.top, UILayout.textTopPaddingMedium)
+
+            case .content(let currentBreed):
+                ScrollView {
+                    VStack(alignment: .leading, spacing: UILayout.sectionSpacing) {
+
+                        // Carrossel de imagens já pronto (main + galeria deduplicada)
+                        if !detailVM.imageItems.isEmpty {
+                            VStack(spacing: 0) {
+                                TabView(selection: $detailVM.selectedIndex) {
+                                    ForEach(Array(detailVM.imageItems.enumerated()), id: \.offset) { index, item in
+                                        CatImageView(
+                                            urlString: item.url,
+                                            height: UIDimensions.detailImageHeightPrimary,
+                                            cornerRadius: UILayout.imageCornerRadius,
+                                            contentMode: .fill
+                                        )
+                                        .contentShape(Rectangle())
+                                        .onTapGesture {
+                                            detailVM.select(index: index)
+                                            detailVM.presentFullscreenForSelected()
+                                        }
+                                        .tag(index)
+                                    }
+                                }
+                                .tabViewStyle(.page(indexDisplayMode: .automatic))
+                                .frame(height: UIDimensions.detailImageHeightPrimary)
+
+                                HStack {
+                                    Button {
+                                        withAnimation {
+                                            detailVM.goPrev()
+                                        }
+                                    } label: {
+                                        Image(systemName: "chevron.left")
+                                            .font(.title2)
+                                            .foregroundColor(.primary)
+                                            .padding(UILayout.buttonPadding)
+                                            .background(
+                                                Circle()
+                                                    .fill(Color.black.opacity(UILayout.circleButtonBackgroundOpacity))
+                                            )
+                                    }
+                                    .buttonStyle(.plain)
+                                    .disabled(detailVM.selectedIndex == UIDimensions.initialPageIndex)
+
+                                    Spacer()
+
+                                    if detailVM.isLoadingGallery {
+                                        ProgressView()
+                                            .progressViewStyle(.circular)
+                                            .padding(.horizontal)
+                                    }
+
+                                    Spacer()
+
+                                    Button {
+                                        withAnimation {
+                                            detailVM.goNext()
+                                        }
+                                    } label: {
+                                        Image(systemName: "chevron.right")
+                                            .font(.title2)
+                                            .foregroundColor(.primary)
+                                            .padding(UILayout.buttonPadding)
+                                            .background(
+                                                Circle()
+                                                    .fill(Color.black.opacity(UILayout.circleButtonBackgroundOpacity))
+                                            )
+                                    }
+                                    .buttonStyle(.plain)
+                                    .disabled(detailVM.selectedIndex >= detailVM.imageItems.count - 1)
+                                }
+                                .padding(.horizontal)
+                                .padding(.top, UILayout.gridSpacing)
+                            }
+                        } else {
+                            // Fallback se não houver imagem nenhuma
+                            CatImageView(
+                                urlString: currentBreed.image?.url ?? currentBreed.referenceImageUrl,
+                                height: UIDimensions.detailImageHeightFallback,
+                                cornerRadius: UILayout.imageCornerRadius,
+                                contentMode: .fill
+                            )
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                // Se houver URL válido, abrir fullscreen
+                                if let url = currentBreed.image?.url ?? currentBreed.referenceImageUrl {
+                                    detailVM.fullscreenURL = url
+                                    detailVM.isPresentingFullscreen = true
+                                }
+                            }
+                            .frame(maxWidth: .infinity)
+                        }
+
+                        // Título
+                        Text(currentBreed.name)
+                            .font(.largeTitle)
+                            .bold()
+
+                        // Campos informativos
+                        if let origin = currentBreed.origin {
+                            Text("🌍 Origin: \(origin)")
+                                .font(.subheadline)
+                        }
+
+                        if let temperament = currentBreed.temperament {
+                            Text("😺 Temperament: \(temperament)")
+                                .font(.subheadline)
+                        }
+
+                        if let lifeSpan = currentBreed.lifeSpan {
+                            Text("⏳ Life span: \(lifeSpan) years")
+                                .font(.subheadline)
+                        }
+
+                        if let description = currentBreed.description {
+                            Text(description)
+                                .padding(.top, UILayout.textTopPaddingSmall)
+                        }
+
+                        // Botão para marcar/desmarcar favorito
+                        Button(action: {
+                            viewModel.toggleFavorite(for: currentBreed)
+                        }) {
+                            HStack {
+                                Image(systemName: viewModel.isFavorite(currentBreed) ? "heart.fill" : "heart")
+                                    .foregroundColor(.red)
+                                Text(viewModel.isFavorite(currentBreed) ? "Remove from Favorites" : "Add to Favorites")
+                            }
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(buttonBackground)
+                            .cornerRadius(UILayout.defaultCornerRadius)
+                        }
+                        .padding(.top, UILayout.textTopPaddingMedium)
+                    }
+                    .padding()
+                }
+                .navigationTitle(currentBreed.name)
+                .navigationBarTitleDisplayMode(.inline)
             }
-            .padding()
         }
-        .navigationTitle(breed.name)
-        .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             // VM decide o que carregar e como construir imagens
             detailVM.prepare(for: breed)

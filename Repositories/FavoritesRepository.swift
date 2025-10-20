@@ -1,101 +1,62 @@
 import Foundation
 import SwiftData
 
-/// Repository to manage favorites in SwiftData.
-@MainActor
+/// Repository to manage favorites in SwiftData (async, non-MainActor).
 protocol FavoritesRepositoryProtocol {
     // Favorite (IDs)
-    func fetchFavorites() throws -> [Favorite]
-    func addFavorite(id: String) throws
-    func removeFavorite(id: String) throws
-    func isFavorite(id: String) -> Bool
+    func fetchFavorites() async throws -> [Favorite]
+    func addFavorite(id: String) async throws
+    func removeFavorite(id: String) async throws
+    func isFavorite(id: String) async -> Bool
 
     // FavoriteBreedDetail (durable snapshots)
-    func upsertFavoriteDetail(from breed: CatBreed) throws
-    func deleteFavoriteDetail(id: String) throws
-    func fetchFavoriteDetailsByIDs(_ ids: Set<String>) throws -> [FavoriteBreedDetail]
+    func upsertFavoriteDetail(from breed: CatBreed) async throws
+    func deleteFavoriteDetail(id: String) async throws
+    func fetchFavoriteDetailsByIDs(_ ids: Set<String>) async throws -> [FavoriteBreedDetail]
 }
 
-@MainActor
-class FavoritesRepository: FavoritesRepositoryProtocol {
-    private let db: DatabaseServiceProtocol
+final class FavoritesRepository: FavoritesRepositoryProtocol {
+    private let actor: FavoritesPersistenceActor
 
-    init(db: DatabaseServiceProtocol) {
-        self.db = db
+    // Preferido: receber o ModelContainer para criar um contexto de background
+    init(container: ModelContainer) {
+        self.actor = FavoritesPersistenceActor(container: container)
     }
 
+    // Compat init para cenários onde já tens um DatabaseService principal (não recomendado para background)
     convenience init(context: ModelContext) {
-        self.init(db: SwiftDataDatabaseService(context: context))
+        self.init(container: context.container)
     }
 
     // MARK: - Favorite (IDs)
 
-    func fetchFavorites() throws -> [Favorite] {
-        try db.fetch(FetchDescriptor<Favorite>())
+    func fetchFavorites() async throws -> [Favorite] {
+        try await actor.fetchFavorites()
     }
 
-    func addFavorite(id: String) throws {
-        let favorite = Favorite(breedId: id)
-        try db.insert(favorite)
+    func addFavorite(id: String) async throws {
+        try await actor.addFavorite(id: id)
     }
 
-    func removeFavorite(id: String) throws {
-        let predicate = #Predicate<Favorite> { $0.breedId == id }
-        var descriptor = FetchDescriptor<Favorite>(predicate: predicate)
-        descriptor.fetchLimit = 0
-
-        let matches = try db.fetch(descriptor)
-        for fav in matches {
-            try db.delete(fav)
-        }
+    func removeFavorite(id: String) async throws {
+        try await actor.removeFavorite(id: id)
     }
 
-    func isFavorite(id: String) -> Bool {
-        let predicate = #Predicate<Favorite> { $0.breedId == id }
-        var descriptor = FetchDescriptor<Favorite>(predicate: predicate)
-        descriptor.fetchLimit = 1
-
-        let result = try? db.fetch(descriptor)
-        return (result?.isEmpty == false)
+    func isFavorite(id: String) async -> Bool {
+        await actor.isFavorite(id: id)
     }
 
-    // MARK: - FavoriteBreedDetail (durable snapshots)
+    // MARK: - FavoriteBreedDetail
 
-    func upsertFavoriteDetail(from breed: CatBreed) throws {
-        // Try to find existing detail
-        let all = try db.fetch(FetchDescriptor<FavoriteBreedDetail>())
-        if let existing = all.first(where: { $0.id == breed.id }) {
-            existing.name = breed.name
-            existing.origin = breed.origin
-            existing.temperament = breed.temperament
-            existing.lifeSpan = breed.lifeSpan
-            existing.breedDescription = breed.description
-            existing.imageUrl = breed.image?.url ?? breed.referenceImageUrl
-            try db.saveIfNeeded()
-        } else {
-            let detail = FavoriteBreedDetail(
-                id: breed.id,
-                name: breed.name,
-                origin: breed.origin,
-                temperament: breed.temperament,
-                lifeSpan: breed.lifeSpan,
-                breedDescription: breed.description,
-                imageUrl: breed.image?.url ?? breed.referenceImageUrl
-            )
-            try db.insert(detail)
-        }
+    func upsertFavoriteDetail(from breed: CatBreed) async throws {
+        try await actor.upsertFavoriteDetail(from: breed)
     }
 
-    func deleteFavoriteDetail(id: String) throws {
-        let all = try db.fetch(FetchDescriptor<FavoriteBreedDetail>())
-        for item in all where item.id == id {
-            try db.delete(item)
-        }
+    func deleteFavoriteDetail(id: String) async throws {
+        try await actor.deleteFavoriteDetail(id: id)
     }
 
-    func fetchFavoriteDetailsByIDs(_ ids: Set<String>) throws -> [FavoriteBreedDetail] {
-        guard !ids.isEmpty else { return [] }
-        let all = try db.fetch(FetchDescriptor<FavoriteBreedDetail>())
-        return all.filter { ids.contains($0.id) }
+    func fetchFavoriteDetailsByIDs(_ ids: Set<String>) async throws -> [FavoriteBreedDetail] {
+        try await actor.fetchFavoriteDetailsByIDs(ids)
     }
 }
