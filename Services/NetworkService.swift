@@ -21,7 +21,7 @@ class NetworkService: NetworkServiceProtocol {
         var request = URLRequest(url: url)
         // Adiciona header da TheCatAPI se existir key (kept here for URL-based paths)
         if let apiKey, !apiKey.isEmpty {
-            request.addValue(apiKey, forHTTPHeaderField: "x-api-key")
+            request.addValue(apiKey, forHTTPHeaderField: APIConstants.Headers.apiKey)
         }
         return fetch(type, from: request)
     }
@@ -34,4 +34,3 @@ class NetworkService: NetworkServiceProtocol {
             .eraseToAnyPublisher()
     }
 }
-

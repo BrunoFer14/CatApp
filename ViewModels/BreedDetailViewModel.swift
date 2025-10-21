@@ -28,7 +28,7 @@ class BreedDetailViewModel: ObservableObject {
 
     // UI-driven state moved from the View
     @Published var imageItems: [ImageItem] = []
-    @Published var selectedIndex: Int = UIDimensions.initialPageIndex
+    @Published var selectedIndex: Int = UIConfig.Pagination.initialPageIndex
 
     // Fullscreen state
     @Published var isPresentingFullscreen: Bool = false
@@ -77,7 +77,7 @@ class BreedDetailViewModel: ObservableObject {
     }
 
     func goPrev() {
-        selectedIndex = max(UIDimensions.initialPageIndex, selectedIndex - 1)
+        selectedIndex = max(UIConfig.Pagination.initialPageIndex, selectedIndex - 1)
     }
 
     func goNext() {
@@ -98,36 +98,6 @@ class BreedDetailViewModel: ObservableObject {
     func dismissFullscreen() {
         isPresentingFullscreen = false
         fullscreenURL = nil
-    }
-
-    // MARK: - Private helpers
-
-    private func rebuildImageItems() {
-        var urls: [String] = []
-
-        // main image (from breed)
-        if let main = breed?.image?.url ?? breed?.referenceImageUrl {
-            urls.append(main)
-        }
-
-        // gallery urls
-        let gallery = galleryImages.map { $0.url }
-
-        // deduplicate while preserving order (main first)
-        var seen = Set<String>()
-        var result: [ImageItem] = []
-        for url in urls + gallery {
-            if !seen.contains(url) {
-                seen.insert(url)
-                result.append(ImageItem(id: url, url: url))
-            }
-        }
-
-        // update items and keep selection safe
-        imageItems = result
-        if selectedIndex >= imageItems.count {
-            selectedIndex = max(UIDimensions.initialPageIndex, imageItems.count - 1)
-        }
     }
 
     // MARK: - Data loading
@@ -186,9 +156,39 @@ class BreedDetailViewModel: ObservableObject {
                 guard let self else { return }
                 self.galleryImages = images
                 // Whenever gallery updates, keep selectedIndex at initial page (main image)
-                self.selectedIndex = UIDimensions.initialPageIndex
+                self.selectedIndex = UIConfig.Pagination.initialPageIndex
                 self.rebuildImageItems()
             })
             .store(in: &cancellables)
+    }
+
+    // MARK: - Private helpers
+
+    private func rebuildImageItems() {
+        var urls: [String] = []
+
+        // main image (from breed)
+        if let main = breed?.image?.url ?? breed?.referenceImageUrl {
+            urls.append(main)
+        }
+
+        // gallery urls
+        let gallery = galleryImages.map { $0.url }
+
+        // deduplicate while preserving order (main first)
+        var seen = Set<String>()
+        var result: [ImageItem] = []
+        for url in urls + gallery {
+            if !seen.contains(url) {
+                seen.insert(url)
+                result.append(ImageItem(id: url, url: url))
+            }
+        }
+
+        // update items and keep selection safe
+        imageItems = result
+        if selectedIndex >= imageItems.count {
+            selectedIndex = max(UIConfig.Pagination.initialPageIndex, imageItems.count - 1)
+        }
     }
 }

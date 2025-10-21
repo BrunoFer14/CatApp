@@ -44,7 +44,7 @@ struct HomeListView: View {
         Group {
             if cachedBreeds.isEmpty && !viewModel.hasLoadedFirstPage {
                 VStack {
-                    ProgressView("Loading breeds…")
+                    ProgressView(UIStrings.Common.loadingBreeds)
                         .progressViewStyle(.circular)
                         .padding()
                     LazyVGrid(columns: columns, spacing: UILayout.gridSpacing) {
@@ -103,10 +103,10 @@ struct HomeListView: View {
                 }
             }
         }
-        .navigationTitle("Cat Breeds")
+        .navigationTitle(UIStrings.Home.title)
         .onAppear {
             if cachedBreeds.isEmpty && !viewModel.isLoadingPage && !viewModel.hasLoadedFirstPage {
-                viewModel.fetchPage(page: UIDimensions.initialPageIndex)
+                viewModel.fetchPage(page: UIConfig.Pagination.initialPageIndex)
             }
         }
     }

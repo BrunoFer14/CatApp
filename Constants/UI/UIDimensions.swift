@@ -15,9 +15,6 @@ enum UIDimensions {
     // Home grid
     static let homeGridColumnCount: Int = 2
 
-    // Pagination
-    static let initialPageIndex: Int = 0
-
     // Search
     static let searchThumbnailSize: CGFloat = 60
     static let searchGalleryLimit: Int = 10

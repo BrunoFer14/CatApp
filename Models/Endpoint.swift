@@ -40,16 +40,16 @@ enum Endpoint {
         switch self {
         case let .breeds(page, limit):
             var items: [URLQueryItem] = []
-            if let limit { items.append(URLQueryItem(name: "limit", value: String(limit))) }
-            if let page { items.append(URLQueryItem(name: "page", value: String(page))) }
+            if let limit { items.append(URLQueryItem(name: APIConstants.Query.limit, value: String(limit))) }
+            if let page { items.append(URLQueryItem(name: APIConstants.Query.page, value: String(page))) }
             return items
 
         case let .breedSearch(query):
-            return [URLQueryItem(name: "q", value: query)]
+            return [URLQueryItem(name: APIConstants.Query.search, value: query)]
 
         case let .breedImages(breedId, limit):
-            var items: [URLQueryItem] = [URLQueryItem(name: "breed_ids", value: breedId)]
-            if let limit { items.append(URLQueryItem(name: "limit", value: String(limit))) }
+            var items: [URLQueryItem] = [URLQueryItem(name: APIConstants.Query.breedIds, value: breedId)]
+            if let limit { items.append(URLQueryItem(name: APIConstants.Query.limit, value: String(limit))) }
             return items
         }
     }
@@ -78,7 +78,7 @@ enum Endpoint {
 
         // Common headers: API key if present
         if let apiKey = APIConfig.apiKey, !apiKey.isEmpty {
-            req.addValue(apiKey, forHTTPHeaderField: "x-api-key")
+            req.addValue(apiKey, forHTTPHeaderField: APIConstants.Headers.apiKey)
         }
 
         // Content-Type for JSON bodies could be set here if needed for POST/PUT
@@ -87,4 +87,3 @@ enum Endpoint {
         return req
     }
 }
-

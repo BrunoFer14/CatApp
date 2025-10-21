@@ -181,13 +181,13 @@ final class BreedDetailViewModelTests: XCTestCase {
 
         wait(for: [loadingExpectation], timeout: TestConstants.defaultExpectationTimeout)
 
-        // Então: imageItems deve conter principal + únicas da galeria, sem duplicados, e selectedIndex reset a 0
+        // Então: imageItems deve conter principal + únicas da galeria, sem duplicados, e selectedIndex reset ao índice inicial
         let urls = viewModel.imageItems.map { $0.url }
         XCTAssertEqual(urls.first, "https://main.img/1.jpg")
         XCTAssertTrue(urls.contains("https://gallery.img/2.jpg"))
         XCTAssertTrue(urls.contains("https://gallery.img/3.jpg"))
         XCTAssertEqual(Set(urls).count, urls.count, "Não deve haver URLs duplicadas")
-        XCTAssertEqual(viewModel.selectedIndex, 0)
+        XCTAssertEqual(viewModel.selectedIndex, UIConfig.Pagination.initialPageIndex)
         XCTAssertEqual(mockRepo.fetchBreedImagesCallCount, 1)
         XCTAssertFalse(viewModel.isLoadingGallery)
         XCTAssertNil(viewModel.galleryError)

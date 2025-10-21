@@ -69,7 +69,7 @@ struct SearchView: View {
             }
 
             if viewModel.isLoadingPage {
-                HStack {
+                HStack(spacing: UILayout.gridSpacing) {
                     Spacer()
                     ProgressView()
                         .padding()
@@ -77,12 +77,12 @@ struct SearchView: View {
                 }
             }
         }
-        .navigationTitle("Search Breeds")
-        .searchable(text: $searchText, prompt: "Search breeds...")
+        .navigationTitle(UIStrings.Search.title)
+        .searchable(text: $searchText, prompt: UIStrings.Common.searchPrompt)
         .onAppear {
             // Ensure initial content exists
             if cachedBreeds.isEmpty && !viewModel.isLoadingPage && !viewModel.hasLoadedFirstPage {
-                viewModel.fetchPage(page: UIDimensions.initialPageIndex)
+                viewModel.fetchPage(page: UIConfig.Pagination.initialPageIndex)
             }
         }
     }

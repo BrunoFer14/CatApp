@@ -1,30 +1,38 @@
 import SwiftData
 
+// MARK: - Async, non-MainActor protocol
+
 /// Service to store/read cached breeds (SwiftData).
-@MainActor
+/// These operations perform I/O and should not be main-thread bound.
 protocol BreedsCacheDatabaseServiceProtocol {
-    func upsertBreeds(_ breeds: [CatBreed], page: Int, limit: Int) throws
-    func fetchCachedBreedsSorted() throws -> [CachedBreed]
-    func fetchBreedsByIDs(_ ids: Set<String>) throws -> [CachedBreed]
-    func fetchCachedPage(page: Int, limit: Int) throws -> [CachedBreed] // NEW: fetch only one page
-    func clearCache() throws
+    func upsertBreeds(_ breeds: [CatBreed], page: Int, limit: Int) async throws
+    func fetchCachedBreedsSorted() async throws -> [CachedBreed]
+    func fetchBreedsByIDs(_ ids: Set<String>) async throws -> [CachedBreed]
+    /// Fetch only one page (based on orderIndex)
+    func fetchCachedPage(page: Int, limit: Int) async throws -> [CachedBreed]
+    func clearCache() async throws
 }
 
-@MainActor
-final class BreedsCacheDatabaseService: BreedsCacheDatabaseServiceProtocol {
-    private let db: DatabaseServiceProtocol
+// MARK: - Persistence actor owning a background ModelContext
 
-    init(db: DatabaseServiceProtocol) {
-        self.db = db
+actor BreedsCachePersistenceActor {
+    private let context: ModelContext
+
+    init(container: ModelContainer) {
+        // Create a background context for SwiftData operations
+        self.context = ModelContext(container)
     }
 
+    // Convenience for previous code paths that pass a context
     convenience init(context: ModelContext) {
-        self.init(db: SwiftDataDatabaseService(context: context))
+        self.init(container: context.container)
     }
+
+    // MARK: - Operations (use this actor's ModelContext directly)
 
     func upsertBreeds(_ breeds: [CatBreed], page: Int, limit: Int) throws {
-        // Fetch all at once and index by id (avoids #Predicate)
-        let existingAll = try db.fetch(FetchDescriptor<CachedBreed>())
+        // Fetch all at once and index by id
+        let existingAll = try context.fetch(FetchDescriptor<CachedBreed>())
         var existingById: [String: CachedBreed] = Dictionary(uniqueKeysWithValues: existingAll.map { ($0.id, $0) })
 
         for (offset, breed) in breeds.enumerated() {
@@ -51,37 +59,83 @@ final class BreedsCacheDatabaseService: BreedsCacheDatabaseServiceProtocol {
                     imageUrl: breed.image?.url ?? breed.referenceImageUrl,
                     orderIndex: idx
                 )
-                try db.insert(cached)
+                context.insert(cached)
                 existingById[breed.id] = cached
             }
         }
         // Persist changes in SwiftData
-        try db.saveIfNeeded()
+        try saveIfNeeded()
     }
 
     func fetchCachedBreedsSorted() throws -> [CachedBreed] {
-        // Fetch all and sort in memory (avoids SortDescriptor)
-        let all = try db.fetch(FetchDescriptor<CachedBreed>())
+        // Fetch all and sort in memory
+        let all = try context.fetch(FetchDescriptor<CachedBreed>())
         return all.sorted { $0.orderIndex < $1.orderIndex }
     }
 
     func fetchBreedsByIDs(_ ids: Set<String>) throws -> [CachedBreed] {
         guard !ids.isEmpty else { return [] }
         // Fetch all and filter in memory by requested IDs
-        let all = try db.fetch(FetchDescriptor<CachedBreed>())
+        let all = try context.fetch(FetchDescriptor<CachedBreed>())
         return all.filter { ids.contains($0.id) }
     }
 
-    // NEW: returns only the items from that page (based on orderIndex)
     func fetchCachedPage(page: Int, limit: Int) throws -> [CachedBreed] {
         let start = page * limit
         let endExclusive = (page + 1) * limit
-        let all = try db.fetch(FetchDescriptor<CachedBreed>())
+        let all = try context.fetch(FetchDescriptor<CachedBreed>())
         let pageItems = all.filter { $0.orderIndex >= start && $0.orderIndex < endExclusive }
         return pageItems.sorted { $0.orderIndex < $1.orderIndex }
     }
 
     func clearCache() throws {
-        try db.deleteAll(CachedBreed.self)
+        // Fetch all CachedBreed and delete
+        let all = try context.fetch(FetchDescriptor<CachedBreed>())
+        for item in all {
+            context.delete(item)
+        }
+        try saveIfNeeded()
+    }
+
+    // MARK: - Helpers
+
+    private func saveIfNeeded() throws {
+        if context.hasChanges {
+            try context.save()
+        }
+    }
+}
+
+// MARK: - Service implementation (non-MainActor), forwarding to the actor
+
+final class BreedsCacheDatabaseService: BreedsCacheDatabaseServiceProtocol {
+    private let actor: BreedsCachePersistenceActor
+
+    init(container: ModelContainer) {
+        self.actor = BreedsCachePersistenceActor(container: container)
+    }
+
+    convenience init(context: ModelContext) {
+        self.init(container: context.container)
+    }
+
+    func upsertBreeds(_ breeds: [CatBreed], page: Int, limit: Int) async throws {
+        try await actor.upsertBreeds(breeds, page: page, limit: limit)
+    }
+
+    func fetchCachedBreedsSorted() async throws -> [CachedBreed] {
+        try await actor.fetchCachedBreedsSorted()
+    }
+
+    func fetchBreedsByIDs(_ ids: Set<String>) async throws -> [CachedBreed] {
+        try await actor.fetchBreedsByIDs(ids)
+    }
+
+    func fetchCachedPage(page: Int, limit: Int) async throws -> [CachedBreed] {
+        try await actor.fetchCachedPage(page: page, limit: limit)
+    }
+
+    func clearCache() async throws {
+        try await actor.clearCache()
     }
 }

@@ -37,7 +37,14 @@ class CatBreedsViewModel: ObservableObject {
 
         // Novo favoritesRepository async baseado em container
         self.favoritesRepository = favoritesRepository ?? FavoritesRepository(container: container)
-        self.breedsCacheDB = breedsCacheDB ?? BreedsCacheDatabaseService(db: baseDB)
+
+        // Use the new async, non-MainActor cache service built with the container
+        if let breedsCacheDB {
+            self.breedsCacheDB = breedsCacheDB
+        } else {
+            // Prefer constructing via container to get a background context inside the actor
+            self.breedsCacheDB = BreedsCacheDatabaseService(container: container)
+        }
 
         // Carregar favoritos async
         fetchFavorites()
@@ -82,28 +89,36 @@ class CatBreedsViewModel: ObservableObject {
             .sink(
                 receiveCompletion: { [weak self] completion in
                     guard let self else { return }
-                    self.isLoadingPage = false
                     switch completion {
                     case .failure:
                         // Allow retrying this page later
                         self.pagesRequested.remove(page)
 
-                        // Fallback: try to read the requested page from cache
-                        do {
-                            let cached = try self.breedsCacheDB.fetchCachedPage(page: page, limit: self.limit)
-                            if !cached.isEmpty {
-                                self.currentPage = page
-                                if page == 0 { self.hasLoadedFirstPage = true }
-                            } else if page == 0 {
-                                self.hasLoadedFirstPage = true
-                            }
-                        } catch {
-                            print("❌ Cache load error page \(page): \(error)")
-                            if page == 0 {
-                                self.hasLoadedFirstPage = true
+                        // Fallback to cache asynchronously
+                        Task {
+                            do {
+                                let cached = try await self.breedsCacheDB.fetchCachedPage(page: page, limit: self.limit)
+                                await MainActor.run {
+                                    self.isLoadingPage = false
+                                    if !cached.isEmpty {
+                                        self.currentPage = page
+                                        if page == 0 { self.hasLoadedFirstPage = true }
+                                    } else if page == 0 {
+                                        self.hasLoadedFirstPage = true
+                                    }
+                                }
+                            } catch {
+                                print("❌ Cache load error page \(page): \(error)")
+                                await MainActor.run {
+                                    self.isLoadingPage = false
+                                    if page == 0 {
+                                        self.hasLoadedFirstPage = true
+                                    }
+                                }
                             }
                         }
                     case .finished:
+                        // Do nothing here; value handler will finish the flow
                         break
                     }
                 },
@@ -111,36 +126,46 @@ class CatBreedsViewModel: ObservableObject {
                     guard let self else { return }
                     let pageSlice = Array(newBreeds.prefix(self.limit))
 
-                    self.saveToCache(pageSlice, page: page)
-
-                    self.currentPage = page
-                    if page == 0 { self.hasLoadedFirstPage = true }
-
-                    self.isLoadingPage = false
+                    // Save to cache asynchronously, then update state on MainActor
+                    Task {
+                        do {
+                            try await self.breedsCacheDB.upsertBreeds(pageSlice, page: page, limit: self.limit)
+                        } catch {
+                            print("❌ Cache save error: \(error)")
+                        }
+                        await MainActor.run {
+                            self.currentPage = page
+                            if page == 0 { self.hasLoadedFirstPage = true }
+                            self.isLoadingPage = false
+                        }
+                    }
                 }
             )
             .store(in: &cancellables)
     }
 
-    private func saveToCache(_ breeds: [CatBreed], page: Int) {
-        do { try breedsCacheDB.upsertBreeds(breeds, page: page, limit: limit) }
-        catch { print("❌ Cache save error: \(error)") }
-    }
-
     // MARK: - Cache management (Settings)
 
     func clearCache() {
-        do {
-            try breedsCacheDB.clearCache()
-            currentPage = 0
-            isLoadingPage = false
-            pagesRequested.removeAll()
-            hasLoadedFirstPage = false
+        Task {
+            do {
+                try await breedsCacheDB.clearCache()
+            } catch {
+                print("❌ Error clearing cache: \(error)")
+            }
 
-            refreshFavorites()
-            fetchPage(page: 0)
-        } catch {
-            print("❌ Error clearing cache: \(error)")
+            await MainActor.run {
+                self.currentPage = 0
+                self.isLoadingPage = false
+                self.pagesRequested.removeAll()
+                self.hasLoadedFirstPage = false
+            }
+
+            // Refresh favorites and refetch first page
+            await MainActor.run {
+                self.refreshFavorites()
+                self.fetchPage(page: 0)
+            }
         }
     }
 

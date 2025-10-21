@@ -28,17 +28,16 @@ struct BreedDetailView: View {
         Group {
             switch detailVM.state {
             case .idle, .loading:
-                VStack {
+                VStack(spacing: UILayout.sectionSpacing) {
                     ProgressView()
                         .progressViewStyle(.circular)
                         .padding()
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-
             case .error(let message):
                 ScrollView {
                     VStack(spacing: UILayout.sectionSpacing) {
-                        Text("Error")
+                        Text(UIStrings.Common.errorTitle)
                             .font(.title)
                             .bold()
                         Text(message)
@@ -50,8 +49,6 @@ struct BreedDetailView: View {
             case .content(let currentBreed):
                 ScrollView {
                     VStack(alignment: .leading, spacing: UILayout.sectionSpacing) {
-
-                        // Carrossel de imagens já pronto (main + galeria deduplicada)
                         if !detailVM.imageItems.isEmpty {
                             VStack(spacing: 0) {
                                 TabView(selection: $detailVM.selectedIndex) {
@@ -73,13 +70,13 @@ struct BreedDetailView: View {
                                 .tabViewStyle(.page(indexDisplayMode: .automatic))
                                 .frame(height: UIDimensions.detailImageHeightPrimary)
 
-                                HStack {
+                                HStack(spacing: UILayout.gridSpacing) {
                                     Button {
                                         withAnimation {
                                             detailVM.goPrev()
                                         }
                                     } label: {
-                                        Image(systemName: "chevron.left")
+                                        Image(systemName: UIStrings.Icons.chevronLeft)
                                             .font(.title2)
                                             .foregroundColor(.primary)
                                             .padding(UILayout.buttonPadding)
@@ -89,7 +86,7 @@ struct BreedDetailView: View {
                                             )
                                     }
                                     .buttonStyle(.plain)
-                                    .disabled(detailVM.selectedIndex == UIDimensions.initialPageIndex)
+                                    .disabled(detailVM.selectedIndex == UIConfig.Pagination.initialPageIndex)
 
                                     Spacer()
 
@@ -106,7 +103,7 @@ struct BreedDetailView: View {
                                             detailVM.goNext()
                                         }
                                     } label: {
-                                        Image(systemName: "chevron.right")
+                                        Image(systemName: UIStrings.Icons.chevronRight)
                                             .font(.title2)
                                             .foregroundColor(.primary)
                                             .padding(UILayout.buttonPadding)
@@ -147,17 +144,17 @@ struct BreedDetailView: View {
 
                         // Campos informativos
                         if let origin = currentBreed.origin {
-                            Text("🌍 Origin: \(origin)")
+                            Text("\(UIStrings.Detail.originPrefix) \(origin)")
                                 .font(.subheadline)
                         }
 
                         if let temperament = currentBreed.temperament {
-                            Text("😺 Temperament: \(temperament)")
+                            Text("\(UIStrings.Detail.temperamentPrefix) \(temperament)")
                                 .font(.subheadline)
                         }
 
                         if let lifeSpan = currentBreed.lifeSpan {
-                            Text("⏳ Life span: \(lifeSpan) years")
+                            Text("\(UIStrings.Detail.lifeSpanPrefix) \(lifeSpan) \(UIStrings.Common.years)")
                                 .font(.subheadline)
                         }
 
@@ -170,10 +167,10 @@ struct BreedDetailView: View {
                         Button(action: {
                             viewModel.toggleFavorite(for: currentBreed)
                         }) {
-                            HStack {
-                                Image(systemName: viewModel.isFavorite(currentBreed) ? "heart.fill" : "heart")
+                            HStack(spacing: UILayout.tileContentSpacing) {
+                                Image(systemName: viewModel.isFavorite(currentBreed) ? UIStrings.Icons.heartFill : UIStrings.Icons.heart)
                                     .foregroundColor(.red)
-                                Text(viewModel.isFavorite(currentBreed) ? "Remove from Favorites" : "Add to Favorites")
+                                Text(viewModel.isFavorite(currentBreed) ? UIStrings.Detail.removeFromFavorites : UIStrings.Detail.addToFavorites)
                             }
                             .padding()
                             .frame(maxWidth: .infinity)
@@ -223,11 +220,11 @@ private struct FullscreenImageView: View {
                 .id(urlString) // força reload quando a URL muda
                 .frame(width: side, height: side, alignment: .center)
 
-                VStack {
-                    HStack {
+                VStack(spacing: 0) {
+                    HStack(spacing: 0) {
                         Spacer()
                         Button(action: onClose) {
-                            Image(systemName: "xmark.circle.fill")
+                            Image(systemName: UIStrings.Icons.closeCircleFill)
                                 .font(.largeTitle)
                                 .foregroundColor(.white.opacity(UILayout.fullscreenCloseButtonOpacity))
                                 .padding()

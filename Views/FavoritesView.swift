@@ -17,7 +17,7 @@ struct FavoritesView: View {
     var body: some View {
         VStack {
             if favoriteDetails.isEmpty {
-                Text("No favorites yet 🐾")
+                Text(UIStrings.Common.noFavoritesYet)
                     .foregroundColor(.gray)
                     .padding()
             } else {
@@ -25,7 +25,7 @@ struct FavoritesView: View {
                     NavigationLink(
                         destination: BreedDetailView(breed: row.breed, viewModel: viewModel.catViewModel)
                     ) {
-                        HStack {
+                        HStack(spacing: UILayout.tileContentSpacing) {
                             // Miniatura
                             CatImageView(
                                 urlString: row.imageURL ?? row.breed.referenceImageUrl,
@@ -45,13 +45,13 @@ struct FavoritesView: View {
                 }
 
                 if let avgText = viewModel.averageLifeSpanText {
-                    Text("Average life span of favorites: \(avgText) years")
+                    Text("\(UIStrings.Common.averageLifeSpanOfFavoritesPrefix) \(avgText) \(UIStrings.Common.years)")
                         .font(.subheadline)
                         .padding()
                 }
             }
         }
-        .navigationTitle("Favorites")
+        .navigationTitle(UIStrings.Favorites.title)
         .onAppear {
             // Atualiza IDs e constrói rows iniciais
             viewModel.refreshFavorites()
