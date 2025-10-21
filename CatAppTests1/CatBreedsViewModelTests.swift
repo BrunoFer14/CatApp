@@ -92,20 +92,31 @@ final class CatBreedsViewModelTests: XCTestCase {
         XCTAssertTrue(cached.contains(where: { $0.id == "id4" }))
     }
 
-    func testToggleFavoriteAddsAndRemovesPersistedSnapshot() throws {
+    func testToggleFavoriteAddsAndRemovesPersistedSnapshot() async throws {
         let breed = CatBreed(id: "fav1", name: "Fav Breed", origin: nil, description: "desc", temperament: nil, lifeSpan: "10 - 12", image: nil, referenceImageId: nil)
 
         XCTAssertFalse(viewModel.favoriteIDs.contains(breed.id))
+
+        // Add favorite
         viewModel.toggleFavorite(for: breed)
+        try await waitUntil(timeout: 1.0) {
+            self.viewModel.favoriteIDs.contains(breed.id)
+        }
         XCTAssertTrue(viewModel.favoriteIDs.contains(breed.id))
 
-        // Com MockFavoritesRepository, verificamos o estado no mock e não no SwiftData
-        XCTAssertTrue(mockFavs.isFavorite(id: "fav1"))
+        let isFavAfterAdd = await mockFavs.isFavorite(id: "fav1")
+        XCTAssertTrue(isFavAfterAdd)
         XCTAssertNotNil(mockFavs.details["fav1"])
 
+        // Remove favorite
         viewModel.toggleFavorite(for: breed)
+        try await waitUntil(timeout: 1.0) {
+            !self.viewModel.favoriteIDs.contains(breed.id)
+        }
         XCTAssertFalse(viewModel.favoriteIDs.contains(breed.id))
-        XCTAssertFalse(mockFavs.isFavorite(id: "fav1"))
+
+        let isFavAfterRemove = await mockFavs.isFavorite(id: "fav1")
+        XCTAssertFalse(isFavAfterRemove)
         XCTAssertNil(mockFavs.details["fav1"])
     }
 
@@ -168,5 +179,16 @@ final class CatBreedsViewModelTests: XCTestCase {
 
         XCTAssertEqual(viewModel.currentPage, 0)
         XCTAssertTrue(viewModel.hasLoadedFirstPage, "After clearCache, it should refetch first page")
+    }
+}
+
+private extension CatBreedsViewModelTests {
+    func waitUntil(timeout: TimeInterval, pollInterval: TimeInterval = 0.01, _ condition: @escaping () -> Bool) async throws {
+        let start = Date()
+        while Date().timeIntervalSince(start) < timeout {
+            if condition() { return }
+            try await Task.sleep(nanoseconds: UInt64(pollInterval * 1_000_000_000))
+        }
+        XCTFail("Condition not met within \(timeout)s")
     }
 }

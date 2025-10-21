@@ -18,6 +18,9 @@ class BreedDetailViewModel: ObservableObject {
 
     @Published var state: State
 
+    // Expose loading as a published property so tests (and UI) can subscribe to $isLoading
+    @Published var isLoading: Bool = false
+
     // Galeria de imagens adicionais (mantida separada, pois carrega independentemente)
     @Published var galleryImages: [BreedGalleryImage] = []
     @Published var isLoadingGallery = false
@@ -48,11 +51,6 @@ class BreedDetailViewModel: ObservableObject {
     var breed: CatBreed? {
         if case let .content(b) = state { return b }
         return nil
-    }
-
-    var isLoading: Bool {
-        if case .loading = state { return true }
-        return false
     }
 
     var errorMessage: String? {
@@ -141,6 +139,7 @@ class BreedDetailViewModel: ObservableObject {
         }
 
         state = .loading
+        isLoading = true
 
         var receivedNonNilValue = false
 
@@ -148,6 +147,7 @@ class BreedDetailViewModel: ObservableObject {
             .receive(on: DispatchQueue.main)
             .sink(receiveCompletion: { [weak self] completion in
                 guard let self else { return }
+                self.isLoading = false
                 switch completion {
                 case .failure(let error):
                     self.state = .error("Erro: \(error.localizedDescription)")

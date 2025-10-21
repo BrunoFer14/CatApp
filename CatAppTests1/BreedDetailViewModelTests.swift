@@ -45,14 +45,20 @@ final class BreedDetailViewModelTests: XCTestCase {
 
         viewModel = BreedDetailViewModel(breed: nil, repository: mockRepo)
 
-        // Observa mudanças de loading
+        // Observa mudanças de loading: queremos observar a sequência true -> false e cumprir exatamente uma vez
         let loadingExpectation = expectation(description: "Loading toggled")
-        var loadingStates: [Bool] = []
+        var didFulfill = false
+        var sawLoadingTrue = false
+
         viewModel.$isLoading
-            .dropFirst()
+            .dropFirst() // ignore initial value
             .sink { value in
-                loadingStates.append(value)
-                if loadingStates.count >= 2 { loadingExpectation.fulfill() }
+                if value {
+                    sawLoadingTrue = true
+                } else if sawLoadingTrue && !didFulfill {
+                    didFulfill = true
+                    loadingExpectation.fulfill()
+                }
             }
             .store(in: &cancellables)
 
@@ -78,12 +84,18 @@ final class BreedDetailViewModelTests: XCTestCase {
         viewModel = BreedDetailViewModel(breed: nil, repository: mockRepo)
 
         let loadingExpectation = expectation(description: "Loading toggled on error")
-        var loadingStates: [Bool] = []
+        var didFulfill = false
+        var sawLoadingTrue = false
+
         viewModel.$isLoading
             .dropFirst()
             .sink { value in
-                loadingStates.append(value)
-                if loadingStates.count >= 2 { loadingExpectation.fulfill() }
+                if value {
+                    sawLoadingTrue = true
+                } else if sawLoadingTrue && !didFulfill {
+                    didFulfill = true
+                    loadingExpectation.fulfill()
+                }
             }
             .store(in: &cancellables)
 
@@ -106,12 +118,18 @@ final class BreedDetailViewModelTests: XCTestCase {
         viewModel = BreedDetailViewModel(breed: nil, repository: mockRepo)
 
         let loadingExpectation = expectation(description: "Loading toggled on nil result")
-        var loadingStates: [Bool] = []
+        var didFulfill = false
+        var sawLoadingTrue = false
+
         viewModel.$isLoading
             .dropFirst()
             .sink { value in
-                loadingStates.append(value)
-                if loadingStates.count >= 2 { loadingExpectation.fulfill() }
+                if value {
+                    sawLoadingTrue = true
+                } else if sawLoadingTrue && !didFulfill {
+                    didFulfill = true
+                    loadingExpectation.fulfill()
+                }
             }
             .store(in: &cancellables)
 
@@ -141,14 +159,19 @@ final class BreedDetailViewModelTests: XCTestCase {
         ]
         mockRepo.imagesByBreedId["gal"] = images
 
-        // Observa mudanças de isLoadingGallery
+        // Observa mudanças de isLoadingGallery: cumprir quando voltar a false após ter sido true
         let loadingExpectation = expectation(description: "Gallery loading toggled")
-        var galleryLoadingStates: [Bool] = []
+        var didFulfill = false
+        var sawLoadingTrue = false
         viewModel.$isLoadingGallery
             .dropFirst()
             .sink { value in
-                galleryLoadingStates.append(value)
-                if galleryLoadingStates.count >= 2 { loadingExpectation.fulfill() }
+                if value {
+                    sawLoadingTrue = true
+                } else if sawLoadingTrue && !didFulfill {
+                    didFulfill = true
+                    loadingExpectation.fulfill()
+                }
             }
             .store(in: &cancellables)
 
@@ -179,12 +202,17 @@ final class BreedDetailViewModelTests: XCTestCase {
         viewModel = BreedDetailViewModel(breed: breed, repository: mockRepo)
 
         let loadingExpectation = expectation(description: "Gallery loading toggled on error")
-        var galleryLoadingStates: [Bool] = []
+        var didFulfill = false
+        var sawLoadingTrue = false
         viewModel.$isLoadingGallery
             .dropFirst()
             .sink { value in
-                galleryLoadingStates.append(value)
-                if galleryLoadingStates.count >= 2 { loadingExpectation.fulfill() }
+                if value {
+                    sawLoadingTrue = true
+                } else if sawLoadingTrue && !didFulfill {
+                    didFulfill = true
+                    loadingExpectation.fulfill()
+                }
             }
             .store(in: &cancellables)
 
