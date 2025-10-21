@@ -50,14 +50,18 @@ final class CatBreedsViewModelTests: XCTestCase {
         XCTAssertFalse(viewModel.hasLoadedFirstPage)
     }
 
-    func testFetchFirstPagePersistsBreedsInSwiftData() throws {
+    func testFetchFirstPagePersistsBreedsInSwiftData() async throws {
         let page0 = (0..<3).map { i in
             CatBreed(id: "id\(i)", name: "Breed \(i)", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil)
         }
         mockRepo.mockBreedsByPage[0] = page0
 
         viewModel.fetchPage(page: 0)
-        RunLoop.main.run(until: Date().addingTimeInterval(TestConstants.longDelay))
+
+        // Wait until the async cache write + state update completes.
+        try await waitUntil(timeout: TestConstants.defaultExpectationTimeout) {
+            self.viewModel.hasLoadedFirstPage && self.viewModel.currentPage == 0 && !self.viewModel.isLoadingPage
+        }
 
         let cached = try fetchAllCached()
         XCTAssertEqual(cached.count, 3, "cached: \(cached.map { $0.id })")
@@ -66,13 +70,18 @@ final class CatBreedsViewModelTests: XCTestCase {
         XCTAssertTrue(viewModel.hasLoadedFirstPage)
     }
 
-    func testPaginationAppendsToSwiftDataWithoutDuplicates() throws {
+    func testPaginationAppendsToSwiftDataWithoutDuplicates() async throws {
         let page0 = (0..<3).map { i in
             CatBreed(id: "id\(i)", name: "Breed \(i)", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil)
         }
         mockRepo.mockBreedsByPage[0] = page0
+
         viewModel.fetchPage(page: 0)
-        RunLoop.main.run(until: Date().addingTimeInterval(TestConstants.longDelay))
+
+        // Wait for page 0 persistence and state update
+        try await waitUntil(timeout: TestConstants.defaultExpectationTimeout) {
+            self.viewModel.hasLoadedFirstPage && self.viewModel.currentPage == 0 && !self.viewModel.isLoadingPage
+        }
 
         var cached = try fetchAllCached()
         XCTAssertEqual(cached.count, 3, "cached after page 0: \(cached.map { $0.id })")
@@ -83,8 +92,13 @@ final class CatBreedsViewModelTests: XCTestCase {
             CatBreed(id: "id4", name: "Breed 4", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil)
         ]
         mockRepo.mockBreedsByPage[1] = page1
+
         viewModel.fetchPage(page: 1)
-        RunLoop.main.run(until: Date().addingTimeInterval(TestConstants.longDelay))
+
+        // Wait for page 1 persistence and state update
+        try await waitUntil(timeout: TestConstants.defaultExpectationTimeout) {
+            self.viewModel.currentPage == 1 && !self.viewModel.isLoadingPage
+        }
 
         cached = try fetchAllCached()
         XCTAssertEqual(cached.count, 5, "cached after page 1: \(cached.map { $0.id })")
@@ -99,7 +113,7 @@ final class CatBreedsViewModelTests: XCTestCase {
 
         // Add favorite
         viewModel.toggleFavorite(for: breed)
-        try await waitUntil(timeout: 1.0) {
+        try await waitUntil(timeout: TestConstants.defaultExpectationTimeout) {
             self.viewModel.favoriteIDs.contains(breed.id)
         }
         XCTAssertTrue(viewModel.favoriteIDs.contains(breed.id))
@@ -110,7 +124,7 @@ final class CatBreedsViewModelTests: XCTestCase {
 
         // Remove favorite
         viewModel.toggleFavorite(for: breed)
-        try await waitUntil(timeout: 1.0) {
+        try await waitUntil(timeout: TestConstants.defaultExpectationTimeout) {
             !self.viewModel.favoriteIDs.contains(breed.id)
         }
         XCTAssertFalse(viewModel.favoriteIDs.contains(breed.id))
@@ -120,7 +134,7 @@ final class CatBreedsViewModelTests: XCTestCase {
         XCTAssertNil(mockFavs.details["fav1"])
     }
 
-    func testRequestNextPageIfNeededAdvancesPage() {
+    func testRequestNextPageIfNeededAdvancesPage() async throws {
         mockRepo.mockBreedsByPage[0] = (0..<2).map { i in
             CatBreed(id: "p0-\(i)", name: "P0-\(i)", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil)
         }
@@ -129,15 +143,19 @@ final class CatBreedsViewModelTests: XCTestCase {
         }
 
         viewModel.fetchPage(page: 0)
-        RunLoop.main.run(until: Date().addingTimeInterval(TestConstants.shortDelay))
+        try await waitUntil(timeout: TestConstants.defaultExpectationTimeout) {
+            self.viewModel.currentPage == 0 && !self.viewModel.isLoadingPage
+        }
         XCTAssertEqual(viewModel.currentPage, 0)
 
         viewModel.requestNextPageIfNeeded()
-        RunLoop.main.run(until: Date().addingTimeInterval(TestConstants.shortDelay))
+        try await waitUntil(timeout: TestConstants.defaultExpectationTimeout) {
+            self.viewModel.currentPage == 1 && !self.viewModel.isLoadingPage
+        }
         XCTAssertEqual(viewModel.currentPage, 1)
     }
 
-    func testNetworkFailureFallsBackToCacheAndUpdatesPaging() throws {
+    func testNetworkFailureFallsBackToCacheAndUpdatesPaging() async throws {
         // Seed cache with page 0
         let cached0 = (0..<2).map { offset in
             CachedBreed(
@@ -159,23 +177,32 @@ final class CatBreedsViewModelTests: XCTestCase {
         mockRepo.error = Dummy()
 
         viewModel.fetchPage(page: 0)
-        RunLoop.main.run(until: Date().addingTimeInterval(TestConstants.shortDelay))
+
+        // Wait deterministically for the async fallback to mark first page as loaded
+        try await waitUntil(timeout: TestConstants.defaultExpectationTimeout) {
+            self.viewModel.hasLoadedFirstPage && self.viewModel.currentPage == 0 && !self.viewModel.isLoadingPage
+        }
 
         XCTAssertTrue(viewModel.hasLoadedFirstPage, "Should mark first page as loaded even on error with cache")
         XCTAssertEqual(viewModel.currentPage, 0)
     }
 
-    func testClearCacheResetsStateAndReloadsFirstPage() {
+    func testClearCacheResetsStateAndReloadsFirstPage() async throws {
         mockRepo.mockBreedsByPage[0] = (0..<1).map { i in
             CatBreed(id: "id\(i)", name: "Breed \(i)", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil)
         }
 
         viewModel.fetchPage(page: 0)
-        RunLoop.main.run(until: Date().addingTimeInterval(TestConstants.shortDelay))
+        try await waitUntil(timeout: TestConstants.defaultExpectationTimeout) {
+            self.viewModel.hasLoadedFirstPage && self.viewModel.currentPage == 0 && !self.viewModel.isLoadingPage
+        }
         XCTAssertTrue(viewModel.hasLoadedFirstPage)
 
         viewModel.clearCache()
-        RunLoop.main.run(until: Date().addingTimeInterval(TestConstants.mediumDelay))
+        // After clearCache, VM resets state and triggers a refetch of page 0; wait for it
+        try await waitUntil(timeout: TestConstants.defaultExpectationTimeout) {
+            self.viewModel.currentPage == 0 && self.viewModel.hasLoadedFirstPage && !self.viewModel.isLoadingPage
+        }
 
         XCTAssertEqual(viewModel.currentPage, 0)
         XCTAssertTrue(viewModel.hasLoadedFirstPage, "After clearCache, it should refetch first page")
