@@ -128,11 +128,9 @@ class CatBreedsViewModel: ObservableObject {
 
                     // Save to cache asynchronously, then update state on MainActor
                     Task {
-                        do {
-                            try await self.breedsCacheDB.upsertBreeds(pageSlice, page: page, limit: self.limit)
-                        } catch {
-                            print("❌ Cache save error: \(error)")
-                        }
+                        // As cache is best-effort, avoid throwing; just attempt and move on
+                        try? await self.breedsCacheDB.upsertBreeds(pageSlice, page: page, limit: self.limit)
+
                         await MainActor.run {
                             self.currentPage = page
                             if page == 0 { self.hasLoadedFirstPage = true }
