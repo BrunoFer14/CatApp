@@ -23,9 +23,9 @@ actor BreedsCachePersistenceActor {
         self.context = ModelContext(container)
     }
 
-    // Convenience for previous code paths that pass a context
-    convenience init(context: ModelContext) {
-        self.init(container: context.container)
+    // Secondary designated initializer (Swift 6: no convenience in actors)
+    init(context: ModelContext) {
+        self.context = context
     }
 
     // MARK: - Operations (use this actor's ModelContext directly)

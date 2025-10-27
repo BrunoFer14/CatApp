@@ -21,66 +21,82 @@ struct MainView: View {
     @State private var settingsPath = NavigationPath()
 
     var body: some View {
+        content
+            .onChange(of: selectedTab, initial: false) { oldValue, newValue in
+                onSelectedTabChange(old: oldValue, new: newValue)
+            }
+    }
+}
+
+// MARK: - Body composition
+private extension MainView {
+    var content: some View {
         TabView(selection: $selectedTab) {
-            // Home
-            NavigationStack(path: $homePath) {
-                HomeListView(viewModel: viewModel)
-                    .navigationTitle("Cat Breeds")
-            }
-            .tabItem {
-                Label("Home", systemImage: "house")
-            }
-            .tag(Tab.home)
+            homeTab
+                .tabItem { Label(UIStrings.Home.title, systemImage: "house") }
+                .tag(Tab.home)
 
-            // Favorites
-            NavigationStack(path: $favoritesPath) {
-                FavoritesView(viewModel: viewModel)
-            }
-            .tabItem {
-                Label("Favorites", systemImage: "heart.fill")
-            }
-            .tag(Tab.favorites)
+            favoritesTab
+                .tabItem { Label(UIStrings.Favorites.title, systemImage: "heart.fill") }
+                .tag(Tab.favorites)
 
-            // Search
-            NavigationStack(path: $searchPath) {
-                SearchView(viewModel: viewModel)
-            }
-            .tabItem {
-                Label("Search", systemImage: "magnifyingglass")
-            }
-            .tag(Tab.search)
+            searchTab
+                .tabItem { Label(UIStrings.Search.title, systemImage: "magnifyingglass") }
+                .tag(Tab.search)
 
-            // Settings
-            NavigationStack(path: $settingsPath) {
-                SettingsView(viewModel: viewModel)
-            }
-            .tabItem {
-                Label("Settings", systemImage: "gearshape")
-            }
-            .tag(Tab.settings)
+            settingsTab
+                // TODO: criar UIStrings.Settings.title para consistência
+                .tabItem { Label("Settings", systemImage: "gearshape") }
+                .tag(Tab.settings)
         }
-        // Sempre que a seleção muda:
-        // - Se for para Home, limpa SEMPRE o path (volta à raiz).
-        // - Se for re-tap na mesma tab, limpa o path dessa tab (pop to root).
-        .onChange(of: selectedTab) { oldValue, newValue in
-            // Sempre que vamos para Home, garantir pop to root
-            if newValue == .home {
-                homePath = NavigationPath()
-            }
+    }
 
-            // Re-tap: se o utilizador toca na mesma tab duas vezes seguidas,
-            // limpamos o respetivo NavigationPath (pop to root).
-            if oldValue == newValue {
-                switch newValue {
-                case .home:
-                    homePath = NavigationPath()
-                case .favorites:
-                    favoritesPath = NavigationPath()
-                case .search:
-                    searchPath = NavigationPath()
-                case .settings:
-                    settingsPath = NavigationPath()
-                }
+    var homeTab: some View {
+        NavigationStack(path: $homePath) {
+            HomeListView(viewModel: viewModel)
+            // O título já é definido em HomeListView via UIStrings.Home.title
+        }
+    }
+
+    var favoritesTab: some View {
+        NavigationStack(path: $favoritesPath) {
+            FavoritesView(viewModel: viewModel)
+        }
+    }
+
+    var searchTab: some View {
+        NavigationStack(path: $searchPath) {
+            SearchView(viewModel: viewModel)
+        }
+    }
+
+    var settingsTab: some View {
+        NavigationStack(path: $settingsPath) {
+            SettingsView(viewModel: viewModel)
+        }
+    }
+}
+
+// MARK: - Handlers
+private extension MainView {
+    private func onSelectedTabChange(old: Tab, new: Tab) {
+        // Sempre que vamos para Home, garantir pop to root
+        if new == .home {
+            homePath = NavigationPath()
+        }
+
+        // Re-tap: se o utilizador toca na mesma tab duas vezes seguidas,
+        // limpamos o respetivo NavigationPath (pop to root).
+        if old == new {
+            switch new {
+            case .home:
+                homePath = NavigationPath()
+            case .favorites:
+                favoritesPath = NavigationPath()
+            case .search:
+                searchPath = NavigationPath()
+            case .settings:
+                settingsPath = NavigationPath()
             }
         }
     }

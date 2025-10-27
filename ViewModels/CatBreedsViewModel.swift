@@ -31,10 +31,6 @@ class CatBreedsViewModel: ObservableObject {
         self.repository = repository
         self.detailsRepository = detailsRepository
 
-        // DB base ainda pode ser MainActor para cache de breeds (mantemos como estava)
-        let mainContext = container.mainContext
-        let baseDB = SwiftDataDatabaseService(context: mainContext)
-
         // Novo favoritesRepository async baseado em container
         self.favoritesRepository = favoritesRepository ?? FavoritesRepository(container: container)
 
@@ -109,7 +105,7 @@ class CatBreedsViewModel: ObservableObject {
                                 }
                             } catch {
                                 print("❌ Cache load error page \(page): \(error)")
-                                await MainActor.run {
+                                _ = await MainActor.run {
                                     self.isLoadingPage = false
                                     if page == 0 {
                                         self.hasLoadedFirstPage = true
@@ -131,7 +127,7 @@ class CatBreedsViewModel: ObservableObject {
                         // As cache is best-effort, avoid throwing; just attempt and move on
                         try? await self.breedsCacheDB.upsertBreeds(pageSlice, page: page, limit: self.limit)
 
-                        await MainActor.run {
+                        _ = await MainActor.run {
                             self.currentPage = page
                             if page == 0 { self.hasLoadedFirstPage = true }
                             self.isLoadingPage = false
@@ -152,7 +148,7 @@ class CatBreedsViewModel: ObservableObject {
                 print("❌ Error clearing cache: \(error)")
             }
 
-            await MainActor.run {
+            _ = await MainActor.run {
                 self.currentPage = 0
                 self.isLoadingPage = false
                 self.pagesRequested.removeAll()
@@ -160,7 +156,7 @@ class CatBreedsViewModel: ObservableObject {
             }
 
             // Refresh favorites and refetch first page
-            await MainActor.run {
+            _ = await MainActor.run {
                 self.refreshFavorites()
                 self.fetchPage(page: 0)
             }
@@ -173,11 +169,11 @@ class CatBreedsViewModel: ObservableObject {
         Task {
             do {
                 let favs = try await favoritesRepository.fetchFavorites()
-                await MainActor.run {
+                _ = await MainActor.run {
                     self.favoriteIDs = Set(favs.map { $0.breedId })
                 }
             } catch {
-                await MainActor.run {
+                _ = await MainActor.run {
                     self.favoriteIDs = []
                 }
                 print("❌ Error fetching favorites: \(error)")
@@ -200,7 +196,7 @@ class CatBreedsViewModel: ObservableObject {
                 do {
                     try await favoritesRepository.removeFavorite(id: id)
                     try await favoritesRepository.deleteFavoriteDetail(id: id)
-                    await MainActor.run {
+                    _ = await MainActor.run {
                         self.favoriteIDs.remove(id)
                     }
                 } catch {
@@ -210,7 +206,7 @@ class CatBreedsViewModel: ObservableObject {
                 do {
                     try await favoritesRepository.addFavorite(id: id)
                     try await favoritesRepository.upsertFavoriteDetail(from: `for`)
-                    await MainActor.run {
+                    _ = await MainActor.run {
                         self.favoriteIDs.insert(id)
                     }
                 } catch {
