@@ -6,15 +6,19 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		B3B318432E99346800E3BA47 /* ConfigDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3B318422E99345900E3BA47 /* ConfigDecoder.swift */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
-		AF7B3B2F2E43AEAD005F7801 /* PBXContainerItemProxy */ = {
+		AF7B3B392E43AEAD005F7801 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = AF7B3B182E43AEAB005F7801 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = AF7B3B1F2E43AEAB005F7801;
 			remoteInfo = CatApp;
 		};
-		AF7B3B392E43AEAD005F7801 /* PBXContainerItemProxy */ = {
+		B38B17F62E8C276C00F2B693 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = AF7B3B182E43AEAB005F7801 /* Project object */;
 			proxyType = 1;
@@ -25,24 +29,28 @@
 
 /* Begin PBXFileReference section */
 		AF7B3B202E43AEAB005F7801 /* CatApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CatApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		AF7B3B2E2E43AEAD005F7801 /* CatAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CatAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF7B3B382E43AEAD005F7801 /* CatAppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CatAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B38B17F22E8C276C00F2B693 /* CatAppTests1.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CatAppTests1.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B3B318422E99345900E3BA47 /* ConfigDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigDecoder.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		B3B318452E99366C00E3BA47 /* Exceptions for "CatApp" folder in "CatApp" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = AF7B3B1F2E43AEAB005F7801 /* CatApp */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		AF7B3B222E43AEAB005F7801 /* CatApp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				B3B318452E99366C00E3BA47 /* Exceptions for "CatApp" folder in "CatApp" target */,
+			);
 			path = CatApp;
-			sourceTree = "<group>";
-		};
-		AF7B3B312E43AEAD005F7801 /* CatAppTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = CatAppTests;
-			sourceTree = "<group>";
-		};
-		AF7B3B3B2E43AEAD005F7801 /* CatAppUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = CatAppUITests;
 			sourceTree = "<group>";
 		};
 		AF7B3B4B2E43AF37005F7801 /* Models */ = {
@@ -60,17 +68,35 @@
 			path = Views;
 			sourceTree = "<group>";
 		};
+		B38B17C42E8A860A00F2B693 /* Services */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Services;
+			sourceTree = "<group>";
+		};
+		B38B17C82E8A879C00F2B693 /* Repositories */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Repositories;
+			sourceTree = "<group>";
+		};
+		B38B17F32E8C276C00F2B693 /* CatAppTests1 */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = CatAppTests1;
+			sourceTree = "<group>";
+		};
+		B3B318462E993EE500E3BA47 /* Secrets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Secrets;
+			sourceTree = "<group>";
+		};
+		B3B31A0E2EA128B800E3BA47 /* Constants */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Constants;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		AF7B3B1D2E43AEAB005F7801 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF7B3B2B2E43AEAD005F7801 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -84,18 +110,29 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B38B17EF2E8C276C00F2B693 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		AF7B3B172E43AEAB005F7801 = {
 			isa = PBXGroup;
 			children = (
+				B3B31A0E2EA128B800E3BA47 /* Constants */,
+				B3B318422E99345900E3BA47 /* ConfigDecoder.swift */,
+				B3B318462E993EE500E3BA47 /* Secrets */,
+				B38B17C82E8A879C00F2B693 /* Repositories */,
+				B38B17C42E8A860A00F2B693 /* Services */,
 				AF7B3B4D2E43AF4B005F7801 /* Views */,
 				AF7B3B4C2E43AF40005F7801 /* ViewModels */,
 				AF7B3B4B2E43AF37005F7801 /* Models */,
 				AF7B3B222E43AEAB005F7801 /* CatApp */,
-				AF7B3B312E43AEAD005F7801 /* CatAppTests */,
-				AF7B3B3B2E43AEAD005F7801 /* CatAppUITests */,
+				B38B17F32E8C276C00F2B693 /* CatAppTests1 */,
 				AF7B3B212E43AEAB005F7801 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -104,8 +141,8 @@
 			isa = PBXGroup;
 			children = (
 				AF7B3B202E43AEAB005F7801 /* CatApp.app */,
-				AF7B3B2E2E43AEAD005F7801 /* CatAppTests.xctest */,
 				AF7B3B382E43AEAD005F7801 /* CatAppUITests.xctest */,
+				B38B17F22E8C276C00F2B693 /* CatAppTests1.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -130,6 +167,10 @@
 				AF7B3B4B2E43AF37005F7801 /* Models */,
 				AF7B3B4C2E43AF40005F7801 /* ViewModels */,
 				AF7B3B4D2E43AF4B005F7801 /* Views */,
+				B38B17C42E8A860A00F2B693 /* Services */,
+				B38B17C82E8A879C00F2B693 /* Repositories */,
+				B3B318462E993EE500E3BA47 /* Secrets */,
+				B3B31A0E2EA128B800E3BA47 /* Constants */,
 			);
 			name = CatApp;
 			packageProductDependencies = (
@@ -137,29 +178,6 @@
 			productName = CatApp;
 			productReference = AF7B3B202E43AEAB005F7801 /* CatApp.app */;
 			productType = "com.apple.product-type.application";
-		};
-		AF7B3B2D2E43AEAD005F7801 /* CatAppTests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = AF7B3B452E43AEAD005F7801 /* Build configuration list for PBXNativeTarget "CatAppTests" */;
-			buildPhases = (
-				AF7B3B2A2E43AEAD005F7801 /* Sources */,
-				AF7B3B2B2E43AEAD005F7801 /* Frameworks */,
-				AF7B3B2C2E43AEAD005F7801 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				AF7B3B302E43AEAD005F7801 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				AF7B3B312E43AEAD005F7801 /* CatAppTests */,
-			);
-			name = CatAppTests;
-			packageProductDependencies = (
-			);
-			productName = CatAppTests;
-			productReference = AF7B3B2E2E43AEAD005F7801 /* CatAppTests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
 		};
 		AF7B3B372E43AEAD005F7801 /* CatAppUITests */ = {
 			isa = PBXNativeTarget;
@@ -174,15 +192,35 @@
 			dependencies = (
 				AF7B3B3A2E43AEAD005F7801 /* PBXTargetDependency */,
 			);
-			fileSystemSynchronizedGroups = (
-				AF7B3B3B2E43AEAD005F7801 /* CatAppUITests */,
-			);
 			name = CatAppUITests;
 			packageProductDependencies = (
 			);
 			productName = CatAppUITests;
 			productReference = AF7B3B382E43AEAD005F7801 /* CatAppUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		B38B17F12E8C276C00F2B693 /* CatAppTests1 */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B38B17F82E8C276C00F2B693 /* Build configuration list for PBXNativeTarget "CatAppTests1" */;
+			buildPhases = (
+				B38B17EE2E8C276C00F2B693 /* Sources */,
+				B38B17EF2E8C276C00F2B693 /* Frameworks */,
+				B38B17F02E8C276C00F2B693 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B38B17F72E8C276C00F2B693 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				B38B17F32E8C276C00F2B693 /* CatAppTests1 */,
+			);
+			name = CatAppTests1;
+			packageProductDependencies = (
+			);
+			productName = CatAppTests1;
+			productReference = B38B17F22E8C276C00F2B693 /* CatAppTests1.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
 
@@ -191,18 +229,18 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1640;
+				LastSwiftUpdateCheck = 2600;
 				LastUpgradeCheck = 1640;
 				TargetAttributes = {
 					AF7B3B1F2E43AEAB005F7801 = {
 						CreatedOnToolsVersion = 16.4;
 					};
-					AF7B3B2D2E43AEAD005F7801 = {
+					AF7B3B372E43AEAD005F7801 = {
 						CreatedOnToolsVersion = 16.4;
 						TestTargetID = AF7B3B1F2E43AEAB005F7801;
 					};
-					AF7B3B372E43AEAD005F7801 = {
-						CreatedOnToolsVersion = 16.4;
+					B38B17F12E8C276C00F2B693 = {
+						CreatedOnToolsVersion = 26.0.1;
 						TestTargetID = AF7B3B1F2E43AEAB005F7801;
 					};
 				};
@@ -222,21 +260,14 @@
 			projectRoot = "";
 			targets = (
 				AF7B3B1F2E43AEAB005F7801 /* CatApp */,
-				AF7B3B2D2E43AEAD005F7801 /* CatAppTests */,
 				AF7B3B372E43AEAD005F7801 /* CatAppUITests */,
+				B38B17F12E8C276C00F2B693 /* CatAppTests1 */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		AF7B3B1E2E43AEAB005F7801 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF7B3B2C2E43AEAD005F7801 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -250,6 +281,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B38B17F02E8C276C00F2B693 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -257,13 +295,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		AF7B3B2A2E43AEAD005F7801 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
+				B3B318432E99346800E3BA47 /* ConfigDecoder.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -274,24 +306,33 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B38B17EE2E8C276C00F2B693 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		AF7B3B302E43AEAD005F7801 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = AF7B3B1F2E43AEAB005F7801 /* CatApp */;
-			targetProxy = AF7B3B2F2E43AEAD005F7801 /* PBXContainerItemProxy */;
-		};
 		AF7B3B3A2E43AEAD005F7801 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = AF7B3B1F2E43AEAB005F7801 /* CatApp */;
 			targetProxy = AF7B3B392E43AEAD005F7801 /* PBXContainerItemProxy */;
+		};
+		B38B17F72E8C276C00F2B693 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF7B3B1F2E43AEAB005F7801 /* CatApp */;
+			targetProxy = B38B17F62E8C276C00F2B693 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		AF7B3B402E43AEAD005F7801 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = B3B318462E993EE500E3BA47 /* Secrets */;
+			baseConfigurationReferenceRelativePath = config.xcconfig;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -353,6 +394,8 @@
 		};
 		AF7B3B412E43AEAD005F7801 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = B3B318462E993EE500E3BA47 /* Secrets */;
+			baseConfigurationReferenceRelativePath = config.xcconfig;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -406,6 +449,8 @@
 		};
 		AF7B3B432E43AEAD005F7801 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = B3B318462E993EE500E3BA47 /* Secrets */;
+			baseConfigurationReferenceRelativePath = config.xcconfig;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -414,6 +459,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = CatApp/Info.plist;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -443,6 +489,8 @@
 		};
 		AF7B3B442E43AEAD005F7801 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = B3B318462E993EE500E3BA47 /* Secrets */;
+			baseConfigurationReferenceRelativePath = config.xcconfig;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -451,6 +499,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = CatApp/Info.plist;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -474,50 +523,6 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,7";
-				XROS_DEPLOYMENT_TARGET = 2.5;
-			};
-			name = Release;
-		};
-		AF7B3B462E43AEAD005F7801 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
-				MACOSX_DEPLOYMENT_TARGET = 15.5;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.bruno.CatAppTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = auto;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2,7";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CatApp.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/CatApp";
-				XROS_DEPLOYMENT_TARGET = 2.5;
-			};
-			name = Debug;
-		};
-		AF7B3B472E43AEAD005F7801 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
-				MACOSX_DEPLOYMENT_TARGET = 15.5;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.bruno.CatAppTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = auto;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2,7";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CatApp.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/CatApp";
 				XROS_DEPLOYMENT_TARGET = 2.5;
 			};
 			name = Release;
@@ -564,6 +569,51 @@
 			};
 			name = Release;
 		};
+		B38B17F92E8C276C00F2B693 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = CatApp.CatAppTests1;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CatApp.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/CatApp";
+			};
+			name = Debug;
+		};
+		B38B17FA2E8C276C00F2B693 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = CatApp.CatAppTests1;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CatApp.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/CatApp";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -585,20 +635,20 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		AF7B3B452E43AEAD005F7801 /* Build configuration list for PBXNativeTarget "CatAppTests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				AF7B3B462E43AEAD005F7801 /* Debug */,
-				AF7B3B472E43AEAD005F7801 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 		AF7B3B482E43AEAD005F7801 /* Build configuration list for PBXNativeTarget "CatAppUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				AF7B3B492E43AEAD005F7801 /* Debug */,
 				AF7B3B4A2E43AEAD005F7801 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B38B17F82E8C276C00F2B693 /* Build configuration list for PBXNativeTarget "CatAppTests1" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B38B17F92E8C276C00F2B693 /* Debug */,
+				B38B17FA2E8C276C00F2B693 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

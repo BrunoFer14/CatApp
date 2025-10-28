@@ -1,0 +1,152 @@
+import SwiftUI
+#if canImport(UIKit)
+import UIKit
+#endif
+#if canImport(AppKit)
+import AppKit
+#endif
+import SwiftData
+
+/// Lista principal de raças em grelha 2-colunas com cartões quadrados.
+/// Agora lê diretamente do SwiftData via @Query (CachedBreed) e usa o ViewModel apenas para paginar/sincronizar.
+struct HomeListView: View {
+    @ObservedObject var viewModel: CatBreedsViewModel
+
+    // Colunas flexíveis para manter pares simétricos
+    private var columns: [GridItem] {
+        Array(repeating: GridItem(.flexible(), spacing: UILayout.gridSpacing), count: UIDimensions.homeGridColumnCount)
+    }
+
+    // Cores adaptadas à plataforma
+    private var cardBackground: Color {
+        #if canImport(UIKit)
+        return Color(UIColor.secondarySystemBackground)
+        #elseif canImport(AppKit)
+        return Color(NSColor.windowBackgroundColor)
+        #else
+        return Color.gray.opacity(UILayout.previewCardBackgroundOpacity)
+        #endif
+    }
+
+    private var shadowColor: Color {
+        #if canImport(UIKit)
+        return Color.black.opacity(UILayout.previewShadowOpacity)
+        #else
+        return Color.black.opacity(UILayout.macOSShadowOpacity)
+        #endif
+    }
+
+    // Lê diretamente do SwiftData, ordenado pelo orderIndex (ordem de paginação)
+    @Query(sort: [SortDescriptor(\CachedBreed.orderIndex, order: .forward)])
+    private var cachedBreeds: [CachedBreed]
+
+    var body: some View {
+        content
+            .navigationTitle(UIStrings.Home.title)
+            .onAppear(perform: onAppearHome)
+    }
+}
+
+// MARK: - Body composition
+private extension HomeListView {
+    @ViewBuilder
+    var content: some View {
+        if cachedBreeds.isEmpty && !viewModel.hasLoadedFirstPage {
+            loadingPlaceholderSection
+        } else {
+            breedsGridSection
+        }
+    }
+}
+
+// MARK: - Sections
+private extension HomeListView {
+    var loadingPlaceholderSection: some View {
+        VStack {
+            ProgressView(UIStrings.Common.loadingBreeds)
+                .progressViewStyle(.circular)
+                .padding()
+            LazyVGrid(columns: columns, spacing: UILayout.gridSpacing) {
+                ForEach(0..<UIDimensions.placeholderItemsCount, id: \.self) { _ in
+                    RoundedRectangle(cornerRadius: UILayout.cardCornerRadius, style: .continuous)
+                        .fill(cardBackground)
+                        .frame(height: UIDimensions.breedCardHeight)
+                        .redacted(reason: .placeholder)
+                        .shimmer()
+                }
+            }
+            .padding(.all, UILayout.listPadding)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    var breedsGridSection: some View {
+        ScrollView {
+            LazyVGrid(columns: columns, spacing: UILayout.gridSpacing) {
+                ForEach(Array(cachedBreeds.enumerated()), id: \.element.id) { index, cached in
+                    breedTileLink(index: index, cached: cached)
+                }
+
+                if viewModel.isLoadingPage {
+                    ProgressView()
+                        .padding()
+                        .gridCellColumns(UIDimensions.homeGridColumnCount)
+                }
+            }
+            .padding(.all, UILayout.listPadding)
+        }
+    }
+}
+
+// MARK: - Components
+private extension HomeListView {
+    @ViewBuilder
+    func breedTileLink(index: Int, cached: CachedBreed) -> some View {
+        let breed = CatBreed(
+            id: cached.id,
+            name: cached.name,
+            origin: cached.origin,
+            description: cached.breedDescription,
+            temperament: cached.temperament,
+            lifeSpan: cached.lifeSpan,
+            image: BreedImage(url: cached.imageUrl),
+            referenceImageId: nil
+        )
+
+        NavigationLink(destination: BreedDetailView(breed: breed, viewModel: viewModel)) {
+            BreedSquareTile(
+                breed: breed,
+                isFavorite: viewModel.isFavorite(breed),
+                favoriteAction: { viewModel.toggleFavorite(for: breed) },
+                cardBackground: cardBackground,
+                shadowColor: Color(shadowColor)
+            )
+        }
+        .buttonStyle(.plain)
+        .onAppear {
+            onTileAppear(index: index)
+        }
+    }
+}
+
+// MARK: - Lifecycle handlers
+private extension HomeListView {
+    func onAppearHome() {
+        if cachedBreeds.isEmpty && !viewModel.isLoadingPage && !viewModel.hasLoadedFirstPage {
+            viewModel.fetchPage(page: UIConfig.Pagination.initialPageIndex)
+        }
+    }
+
+    func onTileAppear(index: Int) {
+        let threshold = max(0, cachedBreeds.count - UILayout.homePrefetchThresholdFromEnd)
+        if index >= threshold {
+            viewModel.requestNextPageIfNeeded()
+        }
+    }
+}
+
+// Remova este modificador se não tiver implementação de shimmer
+private extension View {
+    @ViewBuilder
+    func shimmer() -> some View { self }
+}
