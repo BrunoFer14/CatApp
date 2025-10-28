@@ -54,7 +54,6 @@ actor FavoritesPersistenceActor {
             existing.lifeSpan = breed.lifeSpan
             existing.breedDescription = breed.description
             existing.imageUrl = breed.image?.url ?? breed.referenceImageUrl
-            try saveIfNeeded()
         } else {
             let detail = FavoriteBreedDetail(
                 id: breed.id,
@@ -66,8 +65,10 @@ actor FavoritesPersistenceActor {
                 imageUrl: breed.image?.url ?? breed.referenceImageUrl
             )
             context.insert(detail)
-            try saveIfNeeded()
         }
+
+        // Single save for both branches
+        try saveIfNeeded()
     }
 
     func deleteFavoriteDetail(id: String) throws {
