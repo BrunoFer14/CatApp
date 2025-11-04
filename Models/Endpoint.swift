@@ -15,6 +15,7 @@ enum Endpoint {
     case breedSearch(query: String)
     case breedImages(breedId: String, limit: Int?)
 
+    
     // MARK: - Components
     var method: HTTPMethod {
         switch self {

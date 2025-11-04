@@ -1,24 +1,29 @@
 import SwiftUI
+import ComposableArchitecture
 
-/// Tab bar principal com 4 separadores: Home, Favorites, Search e Settings.
-/// Usa NavigationStack + NavigationPath por separador para permitir "pop to root"
-/// quando o utilizador toca na tab. No caso da Home, sempre que selecionada, volta à raiz.
 struct MainView: View {
-    @ObservedObject var viewModel: CatBreedsViewModel
-
-    // Identificadores das tabs
+    // tab identifier
     private enum Tab: Hashable {
-        case home, favorites, search, settings
+        case home, favorites, search
     }
-
-    // Tab selecionada
+    // Tab selected
     @State private var selectedTab: Tab = .home
 
-    // Navigation paths por separador
+    // Navigation paths
     @State private var homePath = NavigationPath()
     @State private var favoritesPath = NavigationPath()
     @State private var searchPath = NavigationPath()
-    @State private var settingsPath = NavigationPath()
+
+    // Stores TCA for Home, Favorites e Search
+    private let homeStore: StoreOf<HomeFeature>
+    private let favoritesStore: StoreOf<FavoritesFeature>
+    private let searchStore: StoreOf<SearchFeature>
+
+    init() {
+        self.homeStore = Store(initialState: HomeFeature.State(), reducer: { HomeFeature() })
+        self.favoritesStore = Store(initialState: FavoritesFeature.State(), reducer: { FavoritesFeature() })
+        self.searchStore = Store(initialState: SearchFeature.State(), reducer: { SearchFeature() })
+    }
 
     var body: some View {
         content
@@ -33,46 +38,32 @@ private extension MainView {
     var content: some View {
         TabView(selection: $selectedTab) {
             homeTab
-                .tabItem { Label(UIStrings.Home.title, systemImage: "house") }
+                .tabItem { Label(UIStrings.Home.title, systemImage: UIStrings.Icons.house) }
                 .tag(Tab.home)
 
             favoritesTab
-                .tabItem { Label(UIStrings.Favorites.title, systemImage: "heart.fill") }
+                .tabItem { Label(UIStrings.Favorites.title, systemImage: UIStrings.Icons.heartFill) }
                 .tag(Tab.favorites)
 
             searchTab
-                .tabItem { Label(UIStrings.Search.title, systemImage: "magnifyingglass") }
+                .tabItem { Label(UIStrings.Search.title, systemImage: UIStrings.Icons.magnifyingglass) }
                 .tag(Tab.search)
-
-            settingsTab
-                // TODO: criar UIStrings.Settings.title para consistência
-                .tabItem { Label("Settings", systemImage: "gearshape") }
-                .tag(Tab.settings)
         }
     }
 
     var homeTab: some View {
         NavigationStack(path: $homePath) {
-            HomeListView(viewModel: viewModel)
-            // O título já é definido em HomeListView via UIStrings.Home.title
+            HomeListView(store: homeStore)
         }
     }
 
     var favoritesTab: some View {
-        NavigationStack(path: $favoritesPath) {
-            FavoritesView(viewModel: viewModel)
-        }
+        FavoritesView(store: favoritesStore)
     }
 
     var searchTab: some View {
         NavigationStack(path: $searchPath) {
-            SearchView(viewModel: viewModel)
-        }
-    }
-
-    var settingsTab: some View {
-        NavigationStack(path: $settingsPath) {
-            SettingsView(viewModel: viewModel)
+            SearchView(store: searchStore)
         }
     }
 }
@@ -80,23 +71,15 @@ private extension MainView {
 // MARK: - Handlers
 private extension MainView {
     private func onSelectedTabChange(old: Tab, new: Tab) {
-        // Sempre que vamos para Home, garantir pop to root
-        if new == .home {
-            homePath = NavigationPath()
-        }
-
-        // Re-tap: se o utilizador toca na mesma tab duas vezes seguidas,
-        // limpamos o respetivo NavigationPath (pop to root).
+        // Back to root when clicked
         if old == new {
             switch new {
             case .home:
                 homePath = NavigationPath()
             case .favorites:
-                favoritesPath = NavigationPath()
+                break
             case .search:
                 searchPath = NavigationPath()
-            case .settings:
-                settingsPath = NavigationPath()
             }
         }
     }

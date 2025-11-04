@@ -1,66 +1,75 @@
 import SwiftUI
 import SwiftData
+import ComposableArchitecture
 
-/// Local search screen over SwiftData storage (CachedBreed),
-/// with text filtering and pagination like Home.
+/// Local search screen over SwiftData storage (CachedBreed)
 struct SearchView: View {
-    @ObservedObject var viewModel: CatBreedsViewModel
-    @State private var searchText = ""
+    let store: StoreOf<SearchFeature>
 
     // Read directly from SwiftData, ordered by orderIndex
     @Query(sort: [SortDescriptor(\CachedBreed.orderIndex, order: .forward)])
     private var cachedBreeds: [CachedBreed]
 
     // Filter by name, case-insensitive, over the array coming from @Query
-    private var filteredBreeds: [CachedBreed] {
-        guard !searchText.isEmpty else { return cachedBreeds }
-        return cachedBreeds.filter { cached in
-            cached.name.localizedCaseInsensitiveContains(searchText)
-        }
+    private func filteredBreeds(_ breeds: [CachedBreed], query: String) -> [CachedBreed] {
+        guard !query.isEmpty else { return breeds }
+        return breeds.filter { $0.name.localizedCaseInsensitiveContains(query) }
     }
 
     var body: some View {
-        content
-            .navigationTitle(UIStrings.Search.title)
-            .searchable(text: $searchText, prompt: UIStrings.Common.searchPrompt)
-            .onAppear(perform: onAppearSearch)
-    }
-}
+        NavigationStackStore(
+            store.scope(state: \.path, action: \.path)
+        ) {
+            WithViewStore(store, observe: { $0 }) { viewStore in
+                // Precompute filtered array to simplify type inference inside List/ForEach
+                let filtered: [CachedBreed] = filteredBreeds(cachedBreeds, query: viewStore.query)
 
-// MARK: - Body composition
-private extension SearchView {
-    var content: some View {
-        List {
-            listRowsSection
-            loadingRowSection
-        }
-    }
-}
+                List {
+                    ForEach(filtered, id: \.id) { cached in
+                        // Precompute mapped model outside the label to reduce inference load
+                        let breed: CatBreed = mapCachedToBreed(cached)
 
-// MARK: - Sections
-private extension SearchView {
-    var listRowsSection: some View {
-        ForEach(filteredBreeds, id: \.id) { cached in
-            let breed = mapCachedToBreed(cached)
-            NavigationLink(
-                destination: BreedDetailView(breed: breed, viewModel: viewModel)
-            ) {
-                breedRow(breed)
+                        Button {
+                            viewStore.send(.tappedBreed(breed))
+                        } label: {
+                            breedRow(breed, viewStore: viewStore)
+                        }
+                        .onAppear {
+                            onRowAppear(cached: cached, viewStore: viewStore, filtered: filtered)
+                        }
+                    }
+
+                    if viewStore.isLoadingPage {
+                        HStack(spacing: UILayout.gridSpacing) {
+                            Spacer()
+                            ProgressView()
+                                .padding()
+                            Spacer()
+                        }
+                    }
+                }
+                .navigationTitle(UIStrings.Search.title)
+                .searchable(
+                    text: Binding(
+                        get: { viewStore.query },
+                        set: { viewStore.send(.queryChanged($0)) }
+                    ),
+                    prompt: UIStrings.Common.searchPrompt
+                )
+                .onAppear {
+                    viewStore.send(.onAppear)
+                }
             }
-            .onAppear {
-                onRowAppear(cached: cached)
-            }
-        }
-    }
-
-    var loadingRowSection: some View {
-        Group {
-            if viewModel.isLoadingPage {
-                HStack(spacing: UILayout.gridSpacing) {
-                    Spacer()
-                    ProgressView()
-                        .padding()
-                    Spacer()
+        } destination: { destinationStore in
+            SwitchStore(destinationStore) { state in
+                switch state {
+                case .breedDetail:
+                    BreedDetailView(
+                        store: destinationStore.scope(
+                            state: { $0.breedDetail! },
+                            action: { .breedDetail($0) }
+                        )
+                    )
                 }
             }
         }
@@ -69,7 +78,7 @@ private extension SearchView {
 
 // MARK: - Row
 private extension SearchView {
-    func breedRow(_ breed: CatBreed) -> some View {
+    func breedRow(_ breed: CatBreed, viewStore: ViewStoreOf<SearchFeature>) -> some View {
         HStack(spacing: UILayout.searchRowHorizontalSpacing) {
             CatImageView(
                 urlString: breed.image?.url ?? breed.referenceImageUrl,
@@ -87,33 +96,20 @@ private extension SearchView {
                 }
             }
             Spacer()
-            FavoriteButton(isFavorite: viewModel.isFavorite(breed)) {
-                viewModel.toggleFavorite(for: breed)
+            FavoriteButton(isFavorite: viewStore.favoriteIDs.contains(breed.id)) {
+                viewStore.send(.toggleFavorite(breed))
             }
         }
         .padding(.vertical, UILayout.searchRowVerticalPadding)
     }
-}
 
-// MARK: - Lifecycle handlers
-private extension SearchView {
-    func onAppearSearch() {
-        // Ensure initial content exists
-        if cachedBreeds.isEmpty && !viewModel.isLoadingPage && !viewModel.hasLoadedFirstPage {
-            viewModel.fetchPage(page: UIConfig.Pagination.initialPageIndex)
-        }
-    }
-
-    func onRowAppear(cached: CachedBreed) {
+    func onRowAppear(cached: CachedBreed, viewStore: ViewStoreOf<SearchFeature>, filtered: [CachedBreed]) {
         // Pagination: when the last filtered item appears, request next page
-        if cached.id == filteredBreeds.last?.id {
-            viewModel.fetchPage(page: viewModel.currentPage + 1)
+        if cached.id == filtered.last?.id {
+            viewStore.send(.requestNextPageIfNeeded)
         }
     }
-}
 
-// MARK: - Mapping
-private extension SearchView {
     func mapCachedToBreed(_ cached: CachedBreed) -> CatBreed {
         CatBreed(
             id: cached.id,

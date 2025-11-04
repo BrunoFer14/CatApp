@@ -25,14 +25,14 @@ struct SearchBar: View {
 
     var body: some View {
         HStack {
-            Image(systemName: "magnifyingglass")
+            Image(systemName: UIStrings.Icons.magnifyingglass)
 
             TextField(placeholder, text: $text)
                 .textFieldStyle(PlainTextFieldStyle())
 
             if !text.isEmpty {
                 Button(action: { text = "" }) {
-                    Image(systemName: "xmark.circle.fill")
+                    Image(systemName: UIStrings.Icons.xmarkCircleFill)
                         .foregroundColor(.gray)
                 }
             }

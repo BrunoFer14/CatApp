@@ -1,75 +1,75 @@
 import SwiftUI
-#if canImport(UIKit)
-import UIKit
-#endif
-#if canImport(AppKit)
-import AppKit
-#endif
-import SwiftData
+import ComposableArchitecture
 
-/// Lista principal de raças em grelha 2-colunas com cartões quadrados.
-/// Agora lê diretamente do SwiftData via @Query (CachedBreed) e usa o ViewModel apenas para paginar/sincronizar.
+/// Home screen view displaying a grid of cat breeds with navigation
 struct HomeListView: View {
-    @ObservedObject var viewModel: CatBreedsViewModel
-
-    // Colunas flexíveis para manter pares simétricos
+    /// TCA store containing the home feature state and actions
+    let store: StoreOf<HomeFeature>
+    
+    /// Grid layout configuration for breed tiles
     private var columns: [GridItem] {
         Array(repeating: GridItem(.flexible(), spacing: UILayout.gridSpacing), count: UIDimensions.homeGridColumnCount)
     }
 
-    // Cores adaptadas à plataforma
-    private var cardBackground: Color {
-        #if canImport(UIKit)
-        return Color(UIColor.secondarySystemBackground)
-        #elseif canImport(AppKit)
-        return Color(NSColor.windowBackgroundColor)
-        #else
-        return Color.gray.opacity(UILayout.previewCardBackgroundOpacity)
-        #endif
-    }
-
-    private var shadowColor: Color {
-        #if canImport(UIKit)
-        return Color.black.opacity(UILayout.previewShadowOpacity)
-        #else
-        return Color.black.opacity(UILayout.macOSShadowOpacity)
-        #endif
-    }
-
-    // Lê diretamente do SwiftData, ordenado pelo orderIndex (ordem de paginação)
-    @Query(sort: [SortDescriptor(\CachedBreed.orderIndex, order: .forward)])
-    private var cachedBreeds: [CachedBreed]
-
     var body: some View {
-        content
-            .navigationTitle(UIStrings.Home.title)
-            .onAppear(perform: onAppearHome)
+        /// NavigationStackStore handles TCA-driven navigation
+        NavigationStackStore(
+            store.scope(state: \.path, action: \.path)
+        ) {
+            /// Main content observes state changes and sends actions
+            WithViewStore(self.store, observe: { $0 }) { viewStore in
+                content(viewStore: viewStore)
+                    .navigationTitle(UIStrings.Home.title)
+                    .onAppear {
+                        viewStore.send(.onAppear)
+                    }
+            }
+        } destination: { store in
+            /// Handle navigation destinations using SwitchStore
+            SwitchStore(store) { state in
+                switch state {
+                case .breedDetail:
+                    BreedDetailView(
+                        store: store.scope(
+                            state: { $0.breedDetail! },
+                            action: { .breedDetail($0) }
+                        )
+                    )
+                }
+            }
+        }
     }
 }
 
 // MARK: - Body composition
+/// Breaks down the main view into logical sections
 private extension HomeListView {
     @ViewBuilder
-    var content: some View {
-        if cachedBreeds.isEmpty && !viewModel.hasLoadedFirstPage {
+    func content(viewStore: ViewStoreOf<HomeFeature>) -> some View {
+        /// Show loading state when no breeds are available and initial load hasn't completed
+        if viewStore.breeds.isEmpty && !viewStore.hasLoadedFirstPage {
             loadingPlaceholderSection
         } else {
-            breedsGridSection
+            /// Show breeds grid when data is available
+            breedsGridSection(viewStore: viewStore)
         }
     }
 }
 
 // MARK: - Sections
+/// Reusable view sections for different loading states
 private extension HomeListView {
+    /// Loading state with shimmer placeholder tiles
     var loadingPlaceholderSection: some View {
         VStack {
             ProgressView(UIStrings.Common.loadingBreeds)
                 .progressViewStyle(.circular)
                 .padding()
+            /// Grid of placeholder tiles to maintain visual consistency
             LazyVGrid(columns: columns, spacing: UILayout.gridSpacing) {
                 ForEach(0..<UIDimensions.placeholderItemsCount, id: \.self) { _ in
                     RoundedRectangle(cornerRadius: UILayout.cardCornerRadius, style: .continuous)
-                        .fill(cardBackground)
+                        .fill(Color.gray.opacity(0.2))
                         .frame(height: UIDimensions.breedCardHeight)
                         .redacted(reason: .placeholder)
                         .shimmer()
@@ -80,14 +80,17 @@ private extension HomeListView {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
-    var breedsGridSection: some View {
+    /// Main grid section displaying actual breed data
+    func breedsGridSection(viewStore: ViewStoreOf<HomeFeature>) -> some View {
         ScrollView {
             LazyVGrid(columns: columns, spacing: UILayout.gridSpacing) {
-                ForEach(Array(cachedBreeds.enumerated()), id: \.element.id) { index, cached in
-                    breedTileLink(index: index, cached: cached)
+                /// Display each breed with index for pagination tracking
+                ForEach(Array(viewStore.breeds.enumerated()), id: \.element.id) { index, breed in
+                    breedTileLink(index: index, breed: breed, viewStore: viewStore)
                 }
 
-                if viewModel.isLoadingPage {
+                /// Show loading indicator at bottom when fetching next page
+                if viewStore.isLoadingPage {
                     ProgressView()
                         .padding()
                         .gridCellColumns(UIDimensions.homeGridColumnCount)
@@ -99,53 +102,51 @@ private extension HomeListView {
 }
 
 // MARK: - Components
+/// Individual UI components used within the view
 private extension HomeListView {
     @ViewBuilder
-    func breedTileLink(index: Int, cached: CachedBreed) -> some View {
-        let breed = CatBreed(
-            id: cached.id,
-            name: cached.name,
-            origin: cached.origin,
-            description: cached.breedDescription,
-            temperament: cached.temperament,
-            lifeSpan: cached.lifeSpan,
-            image: BreedImage(url: cached.imageUrl),
-            referenceImageId: nil
-        )
-
-        NavigationLink(destination: BreedDetailView(breed: breed, viewModel: viewModel)) {
+    func breedTileLink(index: Int, breed: CatBreed, viewStore: ViewStoreOf<HomeFeature>) -> some View {
+        /// Button wrapper for breed tile with navigation action
+        Button {
+            viewStore.send(.tappedBreed(breed))
+        } label: {
+            /// Breed tile component with favorite toggle functionality
             BreedSquareTile(
                 breed: breed,
-                isFavorite: viewModel.isFavorite(breed),
-                favoriteAction: { viewModel.toggleFavorite(for: breed) },
-                cardBackground: cardBackground,
-                shadowColor: Color(shadowColor)
+                isFavorite: viewStore.favoriteIDs.contains(breed.id),
+                favoriteAction: { viewStore.send(.toggleFavorite(breed: breed)) },
+                cardBackground: Color.gray.opacity(0.1),
+                shadowColor: Color.black.opacity(0.1)
             )
         }
         .buttonStyle(.plain)
         .onAppear {
-            onTileAppear(index: index)
+            /// Trigger pagination when tile appears near the end of the list
+            onTileAppear(index: index, totalCount: viewStore.breeds.count, viewStore: viewStore)
         }
     }
 }
 
 // MARK: - Lifecycle handlers
+/// Event handlers for view lifecycle and user interactions
 private extension HomeListView {
-    func onAppearHome() {
-        if cachedBreeds.isEmpty && !viewModel.isLoadingPage && !viewModel.hasLoadedFirstPage {
-            viewModel.fetchPage(page: UIConfig.Pagination.initialPageIndex)
-        }
-    }
-
-    func onTileAppear(index: Int) {
-        let threshold = max(0, cachedBreeds.count - UILayout.homePrefetchThresholdFromEnd)
+    /// Handles tile appearance for pagination triggering
+    /// - Parameters:
+    ///   - index: Current tile index in the list
+    ///   - totalCount: Total number of breeds currently loaded
+    ///   - viewStore: TCA view store for sending actions
+    func onTileAppear(index: Int, totalCount: Int, viewStore: ViewStoreOf<HomeFeature>) {
+        /// Calculate threshold for triggering next page load
+        let threshold = max(0, totalCount - UILayout.homePrefetchThresholdFromEnd)
         if index >= threshold {
-            viewModel.requestNextPageIfNeeded()
+            /// Request next page when approaching the end of loaded data
+            viewStore.send(.requestNextPageIfNeeded)
         }
     }
 }
 
-// Remova este modificador se não tiver implementação de shimmer
+// MARK: - Placeholder Extensions
+/// Extensions for visual enhancements (shimmer effect placeholder)
 private extension View {
     @ViewBuilder
     func shimmer() -> some View { self }

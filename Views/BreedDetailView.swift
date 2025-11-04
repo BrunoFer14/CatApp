@@ -5,15 +5,11 @@ import UIKit
 #if canImport(AppKit)
 import AppKit
 #endif
+import ComposableArchitecture
 
-/// Ecrã de detalhes de uma raça.
 struct BreedDetailView: View {
-    let breed: CatBreed
-    @ObservedObject var viewModel: CatBreedsViewModel
+    let store: StoreOf<BreedDetailFeature>
 
-    @StateObject private var detailVM = BreedDetailViewModel()
-
-    // Cor do botão (compatível com várias plataformas)
     private var buttonBackground: Color {
         #if canImport(UIKit)
         return Color(UIColor.systemGray6)
@@ -25,29 +21,37 @@ struct BreedDetailView: View {
     }
 
     var body: some View {
-        content
-            .onAppear(perform: onAppearDetail)
-            // Fullscreen viewer
-            .fullScreenCover(isPresented: $detailVM.isPresentingFullscreen) {
-                FullscreenImageView(urlString: detailVM.fullscreenURL) {
-                    detailVM.dismissFullscreen()
+        WithViewStore(store, observe: { $0 }) { viewStore in
+            content(viewStore: viewStore)
+                .onAppear {
+                    viewStore.send(.onAppear)
                 }
-            }
+                .fullScreenCover(
+                    isPresented: viewStore.binding(
+                        get: \.isPresentingFullscreen,
+                        send: { $0 ? .presentFullscreenForSelected : .dismissFullscreen }
+                    )
+                ) {
+                    FullscreenImageView(urlString: viewStore.fullscreenURL) {
+                        viewStore.send(.dismissFullscreen)
+                    }
+                }
+        }
     }
 }
 
 // MARK: - Body composition
 private extension BreedDetailView {
     @ViewBuilder
-    var content: some View {
+    func content(viewStore: ViewStoreOf<BreedDetailFeature>) -> some View {
         Group {
-            switch detailVM.state {
+            switch viewStore.screenState {
             case .idle, .loading:
                 loadingSection
             case .error(let message):
                 errorSection(message: message)
-            case .content(let currentBreed):
-                contentSection(currentBreed: currentBreed)
+            case .content:
+                contentSection(viewStore: viewStore, currentBreed: viewStore.breed)
             }
         }
     }
@@ -77,19 +81,19 @@ private extension BreedDetailView {
         }
     }
 
-    func contentSection(currentBreed: CatBreed) -> some View {
+    func contentSection(viewStore: ViewStoreOf<BreedDetailFeature>, currentBreed: CatBreed) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: UILayout.sectionSpacing) {
-                if !detailVM.imageItems.isEmpty {
-                    headerCarouselSection
+                if !viewStore.imageItems.isEmpty {
+                    headerCarouselSection(viewStore: viewStore)
                 } else {
-                    fallbackImageSection(currentBreed: currentBreed)
+                    fallbackImageSection(currentBreed: currentBreed, viewStore: viewStore)
                 }
 
                 titleSection(currentBreed: currentBreed)
                 infoSection(currentBreed: currentBreed)
                 descriptionSection(currentBreed: currentBreed)
-                favoriteButtonSection(currentBreed: currentBreed)
+                favoriteButtonSection(viewStore: viewStore)
             }
             .padding()
         }
@@ -97,10 +101,15 @@ private extension BreedDetailView {
         .navigationBarTitleDisplayMode(.inline)
     }
 
-    var headerCarouselSection: some View {
+    func headerCarouselSection(viewStore: ViewStoreOf<BreedDetailFeature>) -> some View {
         VStack(spacing: 0) {
-            TabView(selection: $detailVM.selectedIndex) {
-                ForEach(Array(detailVM.imageItems.enumerated()), id: \.offset) { index, item in
+            TabView(
+                selection: viewStore.binding(
+                    get: \.selectedIndex,
+                    send: { .selectImage(index: $0) }
+                )
+            ) {
+                ForEach(Array(viewStore.imageItems.enumerated()), id: \.offset) { index, item in
                     CatImageView(
                         urlString: item.url,
                         height: UIDimensions.detailImageHeightPrimary,
@@ -109,8 +118,8 @@ private extension BreedDetailView {
                     )
                     .contentShape(Rectangle())
                     .onTapGesture {
-                        detailVM.select(index: index)
-                        detailVM.presentFullscreenForSelected()
+                        viewStore.send(.selectImage(index: index))
+                        viewStore.send(.presentFullscreenForSelected)
                     }
                     .tag(index)
                 }
@@ -118,17 +127,17 @@ private extension BreedDetailView {
             .tabViewStyle(.page(indexDisplayMode: .automatic))
             .frame(height: UIDimensions.detailImageHeightPrimary)
 
-            carouselControlsSection
+            carouselControlsSection(viewStore: viewStore)
                 .padding(.horizontal)
                 .padding(.top, UILayout.gridSpacing)
         }
     }
 
-    var carouselControlsSection: some View {
+    func carouselControlsSection(viewStore: ViewStoreOf<BreedDetailFeature>) -> some View {
         HStack(spacing: UILayout.gridSpacing) {
             Button {
                 withAnimation {
-                    detailVM.goPrev()
+                    _ = viewStore.send(.goPrev)
                 }
             } label: {
                 Image(systemName: UIStrings.Icons.chevronLeft)
@@ -141,11 +150,11 @@ private extension BreedDetailView {
                     )
             }
             .buttonStyle(.plain)
-            .disabled(detailVM.selectedIndex == UIConfig.Pagination.initialPageIndex)
+            .disabled(viewStore.selectedIndex == UIConfig.Pagination.initialPageIndex)
 
             Spacer()
 
-            if detailVM.isLoadingGallery {
+            if viewStore.isLoadingGallery {
                 ProgressView()
                     .progressViewStyle(.circular)
                     .padding(.horizontal)
@@ -155,7 +164,7 @@ private extension BreedDetailView {
 
             Button {
                 withAnimation {
-                    detailVM.goNext()
+                    _ = viewStore.send(.goNext)
                 }
             } label: {
                 Image(systemName: UIStrings.Icons.chevronRight)
@@ -168,11 +177,11 @@ private extension BreedDetailView {
                     )
             }
             .buttonStyle(.plain)
-            .disabled(detailVM.selectedIndex >= detailVM.imageItems.count - 1)
+            .disabled(viewStore.selectedIndex >= max(0, viewStore.imageItems.count - 1))
         }
     }
 
-    func fallbackImageSection(currentBreed: CatBreed) -> some View {
+    func fallbackImageSection(currentBreed: CatBreed, viewStore: ViewStoreOf<BreedDetailFeature>) -> some View {
         CatImageView(
             urlString: currentBreed.image?.url ?? currentBreed.referenceImageUrl,
             height: UIDimensions.detailImageHeightFallback,
@@ -181,9 +190,9 @@ private extension BreedDetailView {
         )
         .contentShape(Rectangle())
         .onTapGesture {
-            if let url = currentBreed.image?.url ?? currentBreed.referenceImageUrl {
-                detailVM.fullscreenURL = url
-                detailVM.isPresentingFullscreen = true
+            if currentBreed.image?.url ?? currentBreed.referenceImageUrl != nil {
+                viewStore.send(.selectImage(index: 0))
+                viewStore.send(.presentFullscreenForSelected)
             }
         }
         .frame(maxWidth: .infinity)
@@ -223,14 +232,14 @@ private extension BreedDetailView {
         }
     }
 
-    func favoriteButtonSection(currentBreed: CatBreed) -> some View {
+    func favoriteButtonSection(viewStore: ViewStoreOf<BreedDetailFeature>) -> some View {
         Button(action: {
-            viewModel.toggleFavorite(for: currentBreed)
+            viewStore.send(.toggleFavorite)
         }) {
             HStack(spacing: UILayout.tileContentSpacing) {
-                Image(systemName: viewModel.isFavorite(currentBreed) ? UIStrings.Icons.heartFill : UIStrings.Icons.heart)
+                Image(systemName: viewStore.isFavorite ? UIStrings.Icons.heartFill : UIStrings.Icons.heart)
                     .foregroundColor(.red)
-                Text(viewModel.isFavorite(currentBreed) ? UIStrings.Detail.removeFromFavorites : UIStrings.Detail.addToFavorites)
+                Text(viewStore.isFavorite ? UIStrings.Detail.removeFromFavorites : UIStrings.Detail.addToFavorites)
             }
             .padding()
             .frame(maxWidth: .infinity)
@@ -238,14 +247,6 @@ private extension BreedDetailView {
             .cornerRadius(UILayout.defaultCornerRadius)
         }
         .padding(.top, UILayout.textTopPaddingMedium)
-    }
-}
-
-// MARK: - Lifecycle handlers
-private extension BreedDetailView {
-    func onAppearDetail() {
-        // VM decide o que carregar e como construir imagens
-        detailVM.prepare(for: breed)
     }
 }
 
@@ -268,7 +269,7 @@ private struct FullscreenImageView: View {
                     cornerRadius: UILayout.fullscreenImageCornerRadius,
                     contentMode: .fit
                 )
-                .id(urlString) // força reload quando a URL muda
+                .id(urlString)
                 .frame(width: side, height: side, alignment: .center)
 
                 VStack(spacing: 0) {

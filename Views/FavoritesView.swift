@@ -1,38 +1,70 @@
 import SwiftUI
 import SwiftData
+import ComposableArchitecture
+import Combine
 
-/// Ecrã que lista apenas os favoritos, lendo diretamente do SwiftData (FavoriteBreedDetail).
+/// Ecrã que lista apenas os favoritos, lendo diretamente do SwiftData (FavoriteBreedDetail),
+/// agora controlado por TCA (FavoritesFeature) com navegação em stack para BreedDetailFeature.
 struct FavoritesView: View {
-    @StateObject private var viewModel: FavoritesViewModel
-
-    // Recebe o CatBreedsViewModel para partilhar estado
-    init(viewModel: CatBreedsViewModel) {
-        _viewModel = StateObject(wrappedValue: FavoritesViewModel(catViewModel: viewModel))
-    }
+    let store: StoreOf<FavoritesFeature>
 
     // Lê snapshots persistidos dos favoritos diretamente do SwiftData
     @Query(sort: [SortDescriptor(\FavoriteBreedDetail.name, order: .forward)])
     private var favoriteDetails: [FavoriteBreedDetail]
 
     var body: some View {
-        content
-            .navigationTitle(UIStrings.Favorites.title)
-            .onAppear(perform: onAppear)
-            .onChange(of: favoriteDetails) {
-                onFavoritesChanged(favoriteDetails)
+        NavigationStackStore(
+            store.scope(state: \.path, action: \.path)
+        ) {
+            WithViewStore(store, observe: { $0 }) { viewStore in
+                content(viewStore: viewStore)
+                    .navigationTitle(UIStrings.Favorites.title)
+                    .onAppear {
+                        viewStore.send(.onAppear)
+                        viewStore.send(.favoritesSnapshotChanged(favoriteDetails))
+                    }
+                    // Use a publisher to observe changes to the @Query array.
+                    .onReceive(favoriteDetailsPublisher) { newValue in
+                        viewStore.send(.favoritesSnapshotChanged(newValue))
+                    }
             }
+        } destination: { destinationStore in
+            SwitchStore(destinationStore) { state in
+                switch state {
+                case .breedDetail:
+                    BreedDetailView(
+                        store: destinationStore.scope(
+                            state: { $0.breedDetail! },
+                            action: { .breedDetail($0) }
+                        )
+                    )
+                }
+            }
+        }
+    }
+
+    // Create a simple publisher from the @Query array using SwiftUI's observation.
+    // This works by emitting whenever the view recomputes and the array identity changes.
+    private var favoriteDetailsPublisher: AnyPublisher<[FavoriteBreedDetail], Never> {
+        Just(favoriteDetails)
+            .removeDuplicates(by: { lhs, rhs in
+                // Avoid spamming by comparing ids & counts; adjust if needed.
+                guard lhs.count == rhs.count else { return false }
+                return zip(lhs, rhs).allSatisfy { $0.id == $1.id }
+            })
+            .eraseToAnyPublisher()
     }
 }
 
 // MARK: - Body composition
 private extension FavoritesView {
-    var content: some View {
+    func content(viewStore: ViewStoreOf<FavoritesFeature>) -> some View {
         VStack(alignment: .leading, spacing: UILayout.sectionSpacing) {
-            if favoriteDetails.isEmpty {
+            if viewStore.rows.isEmpty {
                 emptyStateSection
             } else {
-                favoritesListSection
-                averageFooterSection
+                favoritesListSection(viewStore: viewStore)
+                averageFooterSection(viewStore: viewStore)
             }
         }
     }
@@ -46,19 +78,20 @@ private extension FavoritesView {
             .padding()
     }
 
-    var favoritesListSection: some View {
-        List(viewModel.rows) { row in
-            NavigationLink(
-                destination: BreedDetailView(breed: row.breed, viewModel: viewModel.catViewModel)
-            ) {
-                favoriteRow(row)
+    func favoritesListSection(viewStore: ViewStoreOf<FavoritesFeature>) -> some View {
+        List(viewStore.rows) { row in
+            Button {
+                viewStore.send(.tappedRow(row.breed))
+            } label: {
+                favoriteRow(row, viewStore: viewStore)
             }
+            .buttonStyle(.plain)
         }
     }
 
     @ViewBuilder
-    var averageFooterSection: some View {
-        if let avgText = viewModel.averageLifeSpanText {
+    func averageFooterSection(viewStore: ViewStoreOf<FavoritesFeature>) -> some View {
+        if let avgText = viewStore.averageLifeSpanText {
             Text("\(UIStrings.Common.averageLifeSpanOfFavoritesPrefix) \(avgText) \(UIStrings.Common.years)")
                 .font(.subheadline)
                 .padding()
@@ -68,9 +101,9 @@ private extension FavoritesView {
 
 // MARK: - Row
 private extension FavoritesView {
-    func favoriteRow(_ row: FavoriteRowModel) -> some View {
+    func favoriteRow(_ row: FavoriteRow, viewStore: ViewStoreOf<FavoritesFeature>) -> some View {
         HStack(spacing: UILayout.tileContentSpacing) {
-            // Miniatura
+            // Mini
             CatImageView(
                 urlString: row.imageURL ?? row.breed.referenceImageUrl,
                 width: UIDimensions.favoriteThumbnailSize,
@@ -80,24 +113,10 @@ private extension FavoritesView {
             Text(row.name)
                 .font(.headline)
             Spacer()
-            // Botão coração dentro da célula
+            // Heart Button
             FavoriteButton(isFavorite: row.isFavorite) {
-                viewModel.toggleFavorite(row)
+                viewStore.send(.toggleFavorite(row.breed))
             }
         }
-    }
-}
-
-// MARK: - Lifecycle handlers
-private extension FavoritesView {
-    func onAppear() {
-        // Atualiza IDs e constrói rows iniciais
-        viewModel.refreshFavorites()
-        viewModel.update(with: favoriteDetails)
-    }
-
-    func onFavoritesChanged(_ new: [FavoriteBreedDetail]) {
-        // Sempre que SwiftData mudar, reconstruir rows e derivados
-        viewModel.update(with: new)
     }
 }

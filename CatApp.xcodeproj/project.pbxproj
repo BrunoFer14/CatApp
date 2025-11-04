@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		B3B318432E99346800E3BA47 /* ConfigDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3B318422E99345900E3BA47 /* ConfigDecoder.swift */; };
+		B3FB2EA92EB22D0500C45695 /* ComposableArchitecture in Frameworks */ = {isa = PBXBuildFile; productRef = B3FB2EA82EB22D0500C45695 /* ComposableArchitecture */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -35,7 +36,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		B3B318452E99366C00E3BA47 /* Exceptions for "CatApp" folder in "CatApp" target */ = {
+		B3FB2EA62EB22A2D00C45695 /* Exceptions for "CatApp" folder in "CatApp" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -48,7 +49,7 @@
 		AF7B3B222E43AEAB005F7801 /* CatApp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				B3B318452E99366C00E3BA47 /* Exceptions for "CatApp" folder in "CatApp" target */,
+				B3FB2EA62EB22A2D00C45695 /* Exceptions for "CatApp" folder in "CatApp" target */,
 			);
 			path = CatApp;
 			sourceTree = "<group>";
@@ -56,11 +57,6 @@
 		AF7B3B4B2E43AF37005F7801 /* Models */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Models;
-			sourceTree = "<group>";
-		};
-		AF7B3B4C2E43AF40005F7801 /* ViewModels */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = ViewModels;
 			sourceTree = "<group>";
 		};
 		AF7B3B4D2E43AF4B005F7801 /* Views */ = {
@@ -71,11 +67,6 @@
 		B38B17C42E8A860A00F2B693 /* Services */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Services;
-			sourceTree = "<group>";
-		};
-		B38B17C82E8A879C00F2B693 /* Repositories */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Repositories;
 			sourceTree = "<group>";
 		};
 		B38B17F32E8C276C00F2B693 /* CatAppTests1 */ = {
@@ -93,6 +84,11 @@
 			path = Constants;
 			sourceTree = "<group>";
 		};
+		B3FB2EAA2EB26AE300C45695 /* Reducers */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Reducers;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -100,6 +96,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B3FB2EA92EB22D0500C45695 /* ComposableArchitecture in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -123,13 +120,12 @@
 		AF7B3B172E43AEAB005F7801 = {
 			isa = PBXGroup;
 			children = (
+				B3FB2EAA2EB26AE300C45695 /* Reducers */,
 				B3B31A0E2EA128B800E3BA47 /* Constants */,
 				B3B318422E99345900E3BA47 /* ConfigDecoder.swift */,
 				B3B318462E993EE500E3BA47 /* Secrets */,
-				B38B17C82E8A879C00F2B693 /* Repositories */,
 				B38B17C42E8A860A00F2B693 /* Services */,
 				AF7B3B4D2E43AF4B005F7801 /* Views */,
-				AF7B3B4C2E43AF40005F7801 /* ViewModels */,
 				AF7B3B4B2E43AF37005F7801 /* Models */,
 				AF7B3B222E43AEAB005F7801 /* CatApp */,
 				B38B17F32E8C276C00F2B693 /* CatAppTests1 */,
@@ -165,15 +161,15 @@
 			fileSystemSynchronizedGroups = (
 				AF7B3B222E43AEAB005F7801 /* CatApp */,
 				AF7B3B4B2E43AF37005F7801 /* Models */,
-				AF7B3B4C2E43AF40005F7801 /* ViewModels */,
 				AF7B3B4D2E43AF4B005F7801 /* Views */,
 				B38B17C42E8A860A00F2B693 /* Services */,
-				B38B17C82E8A879C00F2B693 /* Repositories */,
 				B3B318462E993EE500E3BA47 /* Secrets */,
 				B3B31A0E2EA128B800E3BA47 /* Constants */,
+				B3FB2EAA2EB26AE300C45695 /* Reducers */,
 			);
 			name = CatApp;
 			packageProductDependencies = (
+				B3FB2EA82EB22D0500C45695 /* ComposableArchitecture */,
 			);
 			productName = CatApp;
 			productReference = AF7B3B202E43AEAB005F7801 /* CatApp.app */;
@@ -254,6 +250,9 @@
 			);
 			mainGroup = AF7B3B172E43AEAB005F7801;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				B3FB2EA72EB22D0500C45695 /* XCRemoteSwiftPackageReference "swift-composable-architecture" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = AF7B3B212E43AEAB005F7801 /* Products */;
 			projectDirPath = "";
@@ -654,6 +653,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		B3FB2EA72EB22D0500C45695 /* XCRemoteSwiftPackageReference "swift-composable-architecture" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/pointfreeco/swift-composable-architecture";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.23.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		B3FB2EA82EB22D0500C45695 /* ComposableArchitecture */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B3FB2EA72EB22D0500C45695 /* XCRemoteSwiftPackageReference "swift-composable-architecture" */;
+			productName = ComposableArchitecture;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = AF7B3B182E43AEAB005F7801 /* Project object */;
 }

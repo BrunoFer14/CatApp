@@ -53,7 +53,7 @@ struct CatImageView: View {
             } else if isLoading {
                 ProgressView()
             } else {
-                Image(systemName: "photo")
+                Image(systemName: UIStrings.Icons.photo)
                     .resizable()
                     .aspectRatio(contentMode: contentMode == .fill ? .fill : .fit)
                     .scaledToFit()

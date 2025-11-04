@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import ComposableArchitecture
 
 /// Protocolo para um serviço de rede genérico.
 protocol NetworkServiceProtocol {
@@ -32,5 +33,33 @@ class NetworkService: NetworkServiceProtocol {
             .map(\.data)
             .decode(type: T.self, decoder: JSONDecoder())
             .eraseToAnyPublisher()
+    }
+}
+
+// MARK: - TCA Dependency
+
+private enum NetworkServiceKey: DependencyKey {
+    static var liveValue: NetworkServiceProtocol {
+        NetworkService(apiKey: secrets.catApiKey)
+    }
+
+    // Minimal stub for tests; override as needed in your tests
+    static var testValue: NetworkServiceProtocol {
+        struct Stub: NetworkServiceProtocol {
+            func fetch<T>(_ type: T.Type, from url: URL) -> AnyPublisher<T, Error> where T : Decodable {
+                Fail(error: URLError(.unsupportedURL)).eraseToAnyPublisher()
+            }
+            func fetch<T>(_ type: T.Type, from request: URLRequest) -> AnyPublisher<T, Error> where T : Decodable {
+                Fail(error: URLError(.unsupportedURL)).eraseToAnyPublisher()
+            }
+        }
+        return Stub()
+    }
+}
+
+extension DependencyValues {
+    var networkService: NetworkServiceProtocol {
+        get { self[NetworkServiceKey.self] }
+        set { self[NetworkServiceKey.self] = newValue }
     }
 }

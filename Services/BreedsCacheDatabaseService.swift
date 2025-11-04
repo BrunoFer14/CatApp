@@ -1,14 +1,12 @@
 import SwiftData
+import ComposableArchitecture
 
 // MARK: - Async, non-MainActor protocol
 
-/// Service to store/read cached breeds (SwiftData).
-/// These operations perform I/O and should not be main-thread bound.
 protocol BreedsCacheDatabaseServiceProtocol {
     func upsertBreeds(_ breeds: [CatBreed], page: Int, limit: Int) async throws
     func fetchCachedBreedsSorted() async throws -> [CachedBreed]
     func fetchBreedsByIDs(_ ids: Set<String>) async throws -> [CachedBreed]
-    /// Fetch only one page (based on orderIndex)
     func fetchCachedPage(page: Int, limit: Int) async throws -> [CachedBreed]
     func clearCache() async throws
 }
@@ -19,19 +17,14 @@ actor BreedsCachePersistenceActor {
     private let context: ModelContext
 
     init(container: ModelContainer) {
-        // Create a background context for SwiftData operations
         self.context = ModelContext(container)
     }
 
-    // Secondary designated initializer (Swift 6: no convenience in actors)
     init(context: ModelContext) {
         self.context = context
     }
 
-    // MARK: - Operations (use this actor's ModelContext directly)
-
     func upsertBreeds(_ breeds: [CatBreed], page: Int, limit: Int) throws {
-        // Fetch all at once and index by id
         let existingAll = try context.fetch(FetchDescriptor<CachedBreed>())
         var existingById: [String: CachedBreed] = Dictionary(uniqueKeysWithValues: existingAll.map { ($0.id, $0) })
 
@@ -39,7 +32,6 @@ actor BreedsCachePersistenceActor {
             let idx = page * limit + offset
 
             if let existing = existingById[breed.id] {
-                // Update fields
                 existing.name = breed.name
                 existing.origin = breed.origin
                 existing.temperament = breed.temperament
@@ -48,7 +40,6 @@ actor BreedsCachePersistenceActor {
                 existing.imageUrl = breed.image?.url ?? breed.referenceImageUrl
                 existing.orderIndex = idx
             } else {
-                // Insert new
                 let cached = CachedBreed(
                     id: breed.id,
                     name: breed.name,
@@ -63,19 +54,16 @@ actor BreedsCachePersistenceActor {
                 existingById[breed.id] = cached
             }
         }
-        // Persist changes in SwiftData
         try saveIfNeeded()
     }
 
     func fetchCachedBreedsSorted() throws -> [CachedBreed] {
-        // Fetch all and sort in memory
         let all = try context.fetch(FetchDescriptor<CachedBreed>())
         return all.sorted { $0.orderIndex < $1.orderIndex }
     }
 
     func fetchBreedsByIDs(_ ids: Set<String>) throws -> [CachedBreed] {
         guard !ids.isEmpty else { return [] }
-        // Fetch all and filter in memory by requested IDs
         let all = try context.fetch(FetchDescriptor<CachedBreed>())
         return all.filter { ids.contains($0.id) }
     }
@@ -89,15 +77,12 @@ actor BreedsCachePersistenceActor {
     }
 
     func clearCache() throws {
-        // Fetch all CachedBreed and delete
         let all = try context.fetch(FetchDescriptor<CachedBreed>())
         for item in all {
             context.delete(item)
         }
         try saveIfNeeded()
     }
-
-    // MARK: - Helpers
 
     private func saveIfNeeded() throws {
         if context.hasChanges {
@@ -106,7 +91,7 @@ actor BreedsCachePersistenceActor {
     }
 }
 
-// MARK: - Service implementation (non-MainActor), forwarding to the actor
+// MARK: - Service implementation
 
 final class BreedsCacheDatabaseService: BreedsCacheDatabaseServiceProtocol {
     private let actor: BreedsCachePersistenceActor
@@ -137,5 +122,35 @@ final class BreedsCacheDatabaseService: BreedsCacheDatabaseServiceProtocol {
 
     func clearCache() async throws {
         try await actor.clearCache()
+    }
+}
+
+// MARK: - TCA Dependency
+
+private enum BreedsCacheDBKey: DependencyKey {
+    static var liveValue: BreedsCacheDatabaseServiceProtocol {
+        // Use the provider's own liveValue directly; do not access DependencyValues.current
+        let container = try! ModelContainerProviderKey.liveValue.make()
+        return BreedsCacheDatabaseService(container: container)
+    }
+
+    static var testValue: BreedsCacheDatabaseServiceProtocol {
+        struct Stub: BreedsCacheDatabaseServiceProtocol {
+            func upsertBreeds(_ breeds: [CatBreed], page: Int, limit: Int) async throws {}
+            func fetchCachedBreedsSorted() async throws -> [CachedBreed] { [] }
+            func fetchBreedsByIDs(_ ids: Set<String>) async throws -> [CachedBreed] { [] }
+            func fetchCachedPage(page: Int, limit: Int) async throws -> [CachedBreed] { [] }
+            func clearCache() async throws {}
+        }
+        return Stub()
+    }
+
+    static var previewValue: BreedsCacheDatabaseServiceProtocol { liveValue }
+}
+
+extension DependencyValues {
+    var breedsCacheDB: BreedsCacheDatabaseServiceProtocol {
+        get { self[BreedsCacheDBKey.self] }
+        set { self[BreedsCacheDBKey.self] = newValue }
     }
 }
