@@ -252,7 +252,6 @@ struct BreedDetailFeature {
 }
 
 // MARK: - Helpers
-
 private func rebuildImageItems(into state: inout BreedDetailFeature.State) {
     var urls: [String] = []
 
@@ -260,7 +259,6 @@ private func rebuildImageItems(into state: inout BreedDetailFeature.State) {
     if let main = state.breed.image?.url ?? state.breed.referenceImageUrl {
         urls.append(main)
     }
-
     // gallery urls
     let gallery = state.galleryImages.map { $0.url }
 

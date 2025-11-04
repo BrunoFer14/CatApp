@@ -52,17 +52,17 @@ struct HomeFeature {
         /// Binding actions for two-way data flow
         case binding(BindingAction<State>)
 
-        // MARK: Lifecycle Actions
+        //Lifecycle Actions
         /// Triggered when the view appears for the first time
         case onAppear
 
-        // MARK: Data Loading Actions
+        // Data Loading Actions
         /// Request to load cached breeds from local storage
         case loadCachedBreeds
         /// Successful completion of cached breeds loading
         case loadCachedBreedsFinished([CatBreed])
 
-        // MARK: Pagination Actions
+        //Pagination Actions
         /// Request to load the next page if needed (triggered by scroll)
         case requestNextPageIfNeeded
         /// Start fetching a specific page from the API
@@ -80,7 +80,7 @@ struct HomeFeature {
         /// Cache clearing operation completed
         case clearCacheFinished
 
-        // MARK: Favorites Actions
+        // Favorites Actions
         /// Request to refresh the favorites list
         case refreshFavorites
         /// Successfully loaded favorites from storage
@@ -92,7 +92,7 @@ struct HomeFeature {
         /// Failed to update favorite status
         case toggleFavoriteFailure
 
-        // MARK: Navigation Actions
+        // Navigation Actions
         /// Handle navigation stack actions
         case path(StackActionOf<Route>)
         /// User tapped on a breed to view details
@@ -105,7 +105,7 @@ struct HomeFeature {
     @Dependency(\.favoritesService) var favoritesService
     @Dependency(\.breedsCacheDB) var breedsCacheDB
 
-    // MARK: - Configuration
+    // Configuration
     /// Number of breeds to fetch per page
     private let limit: Int = APIConstants.defaultPageLimit
 
@@ -117,7 +117,7 @@ struct HomeFeature {
         Reduce { state, action in
             switch action {
 
-            // MARK: Lifecycle Handling
+            //Lifecycle Handling
             case .onAppear:
                 /// Load cached breeds and favorites, start initial page if needed
                 return .merge(
@@ -126,7 +126,7 @@ struct HomeFeature {
                     state.hasLoadedFirstPage ? .none : .send(.fetchPage(UIConfig.Pagination.initialPageIndex))
                 )
 
-            // MARK: Data Loading
+            // Data Loading
             case .loadCachedBreeds:
                 /// Load all cached breeds from local storage and convert to CatBreed models
                 return .run { send in
@@ -155,7 +155,7 @@ struct HomeFeature {
                 state.breeds = breeds
                 return .none
 
-            // MARK: Pagination Handling
+            // Pagination Handling
             case .requestNextPageIfNeeded:
                 /// Trigger loading of the next page in sequence
                 let next = state.currentPage + 1

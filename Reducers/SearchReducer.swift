@@ -4,7 +4,7 @@ import Combine
 
 @Reducer
 struct SearchFeature {
-    // MARK: - Navigation Route
+    //Navigation Route
     @Reducer
     struct Route {
         @CasePathable
