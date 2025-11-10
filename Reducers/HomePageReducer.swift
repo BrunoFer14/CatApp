@@ -37,12 +37,26 @@ struct HomeFeature {
     struct State: Equatable {
         /// Array of cat breeds ready for display (converted from cache)
         var breeds: [CatBreed] = []
+        
+        /// Set of breed IDs that are marked as favorites
         var favoriteIDs: Set<String> = []
+        
+        /// Indicates if a page request is currently in progress
         var isLoadingPage: Bool = false
+        
+        /// Current page number for pagination tracking
         var currentPage: Int = 0
+        
+        /// Tracks if the initial page has been loaded successfully
         var hasLoadedFirstPage: Bool = false
+
+        /// Internal: prevents duplicate page requests
         var pagesRequested: Set<Int> = []
+        
+        /// Optional error message for UI display (Equatable-friendly)
         var lastErrorMessage: String?
+
+        /// Navigation stack for routing to child features
         var path = StackState<Route.State>()
     }
 
@@ -52,17 +66,17 @@ struct HomeFeature {
         /// Binding actions for two-way data flow
         case binding(BindingAction<State>)
 
-        //Lifecycle Actions
+        // MARK: Lifecycle Actions
         /// Triggered when the view appears for the first time
         case onAppear
 
-        // Data Loading Actions
+        // MARK: Data Loading Actions
         /// Request to load cached breeds from local storage
         case loadCachedBreeds
         /// Successful completion of cached breeds loading
         case loadCachedBreedsFinished([CatBreed])
 
-        //Pagination Actions
+        // MARK: Pagination Actions
         /// Request to load the next page if needed (triggered by scroll)
         case requestNextPageIfNeeded
         /// Start fetching a specific page from the API
@@ -80,7 +94,7 @@ struct HomeFeature {
         /// Cache clearing operation completed
         case clearCacheFinished
 
-        // Favorites Actions
+        // MARK: Favorites Actions
         /// Request to refresh the favorites list
         case refreshFavorites
         /// Successfully loaded favorites from storage
@@ -92,7 +106,7 @@ struct HomeFeature {
         /// Failed to update favorite status
         case toggleFavoriteFailure
 
-        // Navigation Actions
+        // MARK: Navigation Actions
         /// Handle navigation stack actions
         case path(StackActionOf<Route>)
         /// User tapped on a breed to view details
@@ -105,7 +119,7 @@ struct HomeFeature {
     @Dependency(\.favoritesService) var favoritesService
     @Dependency(\.breedsCacheDB) var breedsCacheDB
 
-    // Configuration
+    // MARK: - Configuration
     /// Number of breeds to fetch per page
     private let limit: Int = APIConstants.defaultPageLimit
 
@@ -117,7 +131,7 @@ struct HomeFeature {
         Reduce { state, action in
             switch action {
 
-            //Lifecycle Handling
+            // MARK: Lifecycle Handling
             case .onAppear:
                 /// Load cached breeds and favorites, start initial page if needed
                 return .merge(
@@ -126,7 +140,7 @@ struct HomeFeature {
                     state.hasLoadedFirstPage ? .none : .send(.fetchPage(UIConfig.Pagination.initialPageIndex))
                 )
 
-            // Data Loading
+            // MARK: Data Loading
             case .loadCachedBreeds:
                 /// Load all cached breeds from local storage and convert to CatBreed models
                 return .run { send in
@@ -155,7 +169,7 @@ struct HomeFeature {
                 state.breeds = breeds
                 return .none
 
-            // Pagination Handling
+            // MARK: Pagination Handling
             case .requestNextPageIfNeeded:
                 /// Trigger loading of the next page in sequence
                 let next = state.currentPage + 1

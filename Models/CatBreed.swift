@@ -9,9 +9,13 @@ struct CatBreed: Identifiable, Codable, Equatable {
     let name: String
     let origin: String?
     let description: String?
+    /// Personality traits and temperament information
     let temperament: String?
+    /// Expected lifespan range (e.g., "12 - 15")
     let lifeSpan: String?
+    /// Image object containing URL for breed representation
     let image: BreedImage?
+    /// Alternative image ID for constructing image URLs
     let referenceImageId: String?
 
     /// Maps JSON keys to Swift property names

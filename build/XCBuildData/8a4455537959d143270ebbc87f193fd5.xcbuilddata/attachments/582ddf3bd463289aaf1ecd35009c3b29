@@ -1,0 +1,46 @@
+{
+  "" : {
+    "const-values" : "/Users/bd.ferreira/Library/Developer/Xcode/DerivedData/CatApp-angqocubekplmubbusiosllenocs/SourcePackages/checkouts/swift-composable-architecture/build/swift-composable-architecture.build/Release-iphonesimulator/ComposableArchitectureMacros.build/Objects-normal/arm64/ComposableArchitectureMacros-primary.swiftconstvalues",
+    "dependencies" : "/Users/bd.ferreira/Library/Developer/Xcode/DerivedData/CatApp-angqocubekplmubbusiosllenocs/SourcePackages/checkouts/swift-composable-architecture/build/swift-composable-architecture.build/Release-iphonesimulator/ComposableArchitectureMacros.build/Objects-normal/arm64/ComposableArchitectureMacros-primary.d",
+    "diagnostics" : "/Users/bd.ferreira/Library/Developer/Xcode/DerivedData/CatApp-angqocubekplmubbusiosllenocs/SourcePackages/checkouts/swift-composable-architecture/build/swift-composable-architecture.build/Release-iphonesimulator/ComposableArchitectureMacros.build/Objects-normal/arm64/ComposableArchitectureMacros-primary.dia",
+    "emit-module-dependencies" : "/Users/bd.ferreira/Library/Developer/Xcode/DerivedData/CatApp-angqocubekplmubbusiosllenocs/SourcePackages/checkouts/swift-composable-architecture/build/swift-composable-architecture.build/Release-iphonesimulator/ComposableArchitectureMacros.build/Objects-normal/arm64/ComposableArchitectureMacros-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/bd.ferreira/Library/Developer/Xcode/DerivedData/CatApp-angqocubekplmubbusiosllenocs/SourcePackages/checkouts/swift-composable-architecture/build/swift-composable-architecture.build/Release-iphonesimulator/ComposableArchitectureMacros.build/Objects-normal/arm64/ComposableArchitectureMacros-primary-emit-module.dia",
+    "pch" : "/Users/bd.ferreira/Library/Developer/Xcode/DerivedData/CatApp-angqocubekplmubbusiosllenocs/SourcePackages/checkouts/swift-composable-architecture/build/swift-composable-architecture.build/Release-iphonesimulator/ComposableArchitectureMacros.build/Objects-normal/arm64/ComposableArchitectureMacros-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/bd.ferreira/Library/Developer/Xcode/DerivedData/CatApp-angqocubekplmubbusiosllenocs/SourcePackages/checkouts/swift-composable-architecture/build/swift-composable-architecture.build/Release-iphonesimulator/ComposableArchitectureMacros.build/Objects-normal/arm64/ComposableArchitectureMacros-primary.swiftdeps"
+  },
+  "/Users/bd.ferreira/Library/Developer/Xcode/DerivedData/CatApp-angqocubekplmubbusiosllenocs/SourcePackages/checkouts/swift-composable-architecture/Sources/ComposableArchitectureMacros/Availability.swift" : {
+    "index-unit-output-path" : "/swift-composable-architecture.build/Release-iphonesimulator/ComposableArchitectureMacros.build/Objects-normal/arm64/Availability.o",
+    "llvm-bc" : "/Users/bd.ferreira/Library/Developer/Xcode/DerivedData/CatApp-angqocubekplmubbusiosllenocs/SourcePackages/checkouts/swift-composable-architecture/build/swift-composable-architecture.build/Release-iphonesimulator/ComposableArchitectureMacros.build/Objects-normal/arm64/Availability.bc",
+    "object" : "/Users/bd.ferreira/Library/Developer/Xcode/DerivedData/CatApp-angqocubekplmubbusiosllenocs/SourcePackages/checkouts/swift-composable-architecture/build/swift-composable-architecture.build/Release-iphonesimulator/ComposableArchitectureMacros.build/Objects-normal/arm64/Availability.o"
+  },
+  "/Users/bd.ferreira/Library/Developer/Xcode/DerivedData/CatApp-angqocubekplmubbusiosllenocs/SourcePackages/checkouts/swift-composable-architecture/Sources/ComposableArchitectureMacros/Extensions.swift" : {
+    "index-unit-output-path" : "/swift-composable-architecture.build/Release-iphonesimulator/ComposableArchitectureMacros.build/Objects-normal/arm64/Extensions.o",
+    "llvm-bc" : "/Users/bd.ferreira/Library/Developer/Xcode/DerivedData/CatApp-angqocubekplmubbusiosllenocs/SourcePackages/checkouts/swift-composable-architecture/build/swift-composable-architecture.build/Release-iphonesimulator/ComposableArchitectureMacros.build/Objects-normal/arm64/Extensions.bc",
+    "object" : "/Users/bd.ferreira/Library/Developer/Xcode/DerivedData/CatApp-angqocubekplmubbusiosllenocs/SourcePackages/checkouts/swift-composable-architecture/build/swift-composable-architecture.build/Release-iphonesimulator/ComposableArchitectureMacros.build/Objects-normal/arm64/Extensions.o"
+  },
+  "/Users/bd.ferreira/Library/Developer/Xcode/DerivedData/CatApp-angqocubekplmubbusiosllenocs/SourcePackages/checkouts/swift-composable-architecture/Sources/ComposableArchitectureMacros/ObservableStateMacro.swift" : {
+    "index-unit-output-path" : "/swift-composable-architecture.build/Release-iphonesimulator/ComposableArchitectureMacros.build/Objects-normal/arm64/ObservableStateMacro.o",
+    "llvm-bc" : "/Users/bd.ferreira/Library/Developer/Xcode/DerivedData/CatApp-angqocubekplmubbusiosllenocs/SourcePackages/checkouts/swift-composable-architecture/build/swift-composable-architecture.build/Release-iphonesimulator/ComposableArchitectureMacros.build/Objects-normal/arm64/ObservableStateMacro.bc",
+    "object" : "/Users/bd.ferreira/Library/Developer/Xcode/DerivedData/CatApp-angqocubekplmubbusiosllenocs/SourcePackages/checkouts/swift-composable-architecture/build/swift-composable-architecture.build/Release-iphonesimulator/ComposableArchitectureMacros.build/Objects-normal/arm64/ObservableStateMacro.o"
+  },
+  "/Users/bd.ferreira/Library/Developer/Xcode/DerivedData/CatApp-angqocubekplmubbusiosllenocs/SourcePackages/checkouts/swift-composable-architecture/Sources/ComposableArchitectureMacros/Plugins.swift" : {
+    "index-unit-output-path" : "/swift-composable-architecture.build/Release-iphonesimulator/ComposableArchitectureMacros.build/Objects-normal/arm64/Plugins.o",
+    "llvm-bc" : "/Users/bd.ferreira/Library/Developer/Xcode/DerivedData/CatApp-angqocubekplmubbusiosllenocs/SourcePackages/checkouts/swift-composable-architecture/build/swift-composable-architecture.build/Release-iphonesimulator/ComposableArchitectureMacros.build/Objects-normal/arm64/Plugins.bc",
+    "object" : "/Users/bd.ferreira/Library/Developer/Xcode/DerivedData/CatApp-angqocubekplmubbusiosllenocs/SourcePackages/checkouts/swift-composable-architecture/build/swift-composable-architecture.build/Release-iphonesimulator/ComposableArchitectureMacros.build/Objects-normal/arm64/Plugins.o"
+  },
+  "/Users/bd.ferreira/Library/Developer/Xcode/DerivedData/CatApp-angqocubekplmubbusiosllenocs/SourcePackages/checkouts/swift-composable-architecture/Sources/ComposableArchitectureMacros/PresentsMacro.swift" : {
+    "index-unit-output-path" : "/swift-composable-architecture.build/Release-iphonesimulator/ComposableArchitectureMacros.build/Objects-normal/arm64/PresentsMacro.o",
+    "llvm-bc" : "/Users/bd.ferreira/Library/Developer/Xcode/DerivedData/CatApp-angqocubekplmubbusiosllenocs/SourcePackages/checkouts/swift-composable-architecture/build/swift-composable-architecture.build/Release-iphonesimulator/ComposableArchitectureMacros.build/Objects-normal/arm64/PresentsMacro.bc",
+    "object" : "/Users/bd.ferreira/Library/Developer/Xcode/DerivedData/CatApp-angqocubekplmubbusiosllenocs/SourcePackages/checkouts/swift-composable-architecture/build/swift-composable-architecture.build/Release-iphonesimulator/ComposableArchitectureMacros.build/Objects-normal/arm64/PresentsMacro.o"
+  },
+  "/Users/bd.ferreira/Library/Developer/Xcode/DerivedData/CatApp-angqocubekplmubbusiosllenocs/SourcePackages/checkouts/swift-composable-architecture/Sources/ComposableArchitectureMacros/ReducerMacro.swift" : {
+    "index-unit-output-path" : "/swift-composable-architecture.build/Release-iphonesimulator/ComposableArchitectureMacros.build/Objects-normal/arm64/ReducerMacro.o",
+    "llvm-bc" : "/Users/bd.ferreira/Library/Developer/Xcode/DerivedData/CatApp-angqocubekplmubbusiosllenocs/SourcePackages/checkouts/swift-composable-architecture/build/swift-composable-architecture.build/Release-iphonesimulator/ComposableArchitectureMacros.build/Objects-normal/arm64/ReducerMacro.bc",
+    "object" : "/Users/bd.ferreira/Library/Developer/Xcode/DerivedData/CatApp-angqocubekplmubbusiosllenocs/SourcePackages/checkouts/swift-composable-architecture/build/swift-composable-architecture.build/Release-iphonesimulator/ComposableArchitectureMacros.build/Objects-normal/arm64/ReducerMacro.o"
+  },
+  "/Users/bd.ferreira/Library/Developer/Xcode/DerivedData/CatApp-angqocubekplmubbusiosllenocs/SourcePackages/checkouts/swift-composable-architecture/Sources/ComposableArchitectureMacros/ViewActionMacro.swift" : {
+    "index-unit-output-path" : "/swift-composable-architecture.build/Release-iphonesimulator/ComposableArchitectureMacros.build/Objects-normal/arm64/ViewActionMacro.o",
+    "llvm-bc" : "/Users/bd.ferreira/Library/Developer/Xcode/DerivedData/CatApp-angqocubekplmubbusiosllenocs/SourcePackages/checkouts/swift-composable-architecture/build/swift-composable-architecture.build/Release-iphonesimulator/ComposableArchitectureMacros.build/Objects-normal/arm64/ViewActionMacro.bc",
+    "object" : "/Users/bd.ferreira/Library/Developer/Xcode/DerivedData/CatApp-angqocubekplmubbusiosllenocs/SourcePackages/checkouts/swift-composable-architecture/build/swift-composable-architecture.build/Release-iphonesimulator/ComposableArchitectureMacros.build/Objects-normal/arm64/ViewActionMacro.o"
+  }
+}

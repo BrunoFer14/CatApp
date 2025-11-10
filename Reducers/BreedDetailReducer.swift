@@ -52,7 +52,6 @@ struct BreedDetailFeature {
 
         // Lifecycle
         case onAppear
-        case prepare // builds initial items and kicks off loads
 
         // Favorites
         case refreshFavorite
@@ -96,12 +95,8 @@ struct BreedDetailFeature {
 
             // Lifecycle
             case .onAppear:
-                return .send(.prepare)
-
-            case .prepare:
-                // Initial items from current breed
+                // Build initial image items from the current breed and kick off loads
                 rebuildImageItems(into: &state)
-                // Refresh favorite and kick off data loads
                 return .merge(
                     .send(.refreshFavorite),
                     .send(.loadDetail(id: state.breed.id)),
@@ -110,34 +105,10 @@ struct BreedDetailFeature {
 
             // Favorites
             case .refreshFavorite:
-                let id = state.breed.id
-                return .run { [id] send in
-                    let isFav = await favoritesService.isFavorite(id: id)
-                    await send(.toggleFavoriteSuccess(id: id, isNowFavorite: isFav))
-                }
+                return refreshFavoriteEffect(for: state.breed.id)
 
             case .toggleFavorite:
-                let breed = state.breed
-                return .run { send in
-                    let id = breed.id
-                    if await favoritesService.isFavorite(id: id) {
-                        do {
-                            try await favoritesService.removeFavorite(id: id)
-                            try await favoritesService.deleteFavoriteDetail(id: id)
-                            await send(.toggleFavoriteSuccess(id: id, isNowFavorite: false))
-                        } catch {
-                            await send(.toggleFavoriteFailure)
-                        }
-                    } else {
-                        do {
-                            try await favoritesService.addFavorite(id: id)
-                            try await favoritesService.upsertFavoriteDetail(from: breed)
-                            await send(.toggleFavoriteSuccess(id: id, isNowFavorite: true))
-                        } catch {
-                            await send(.toggleFavoriteFailure)
-                        }
-                    }
-                }
+                return toggleFavorite(for: state.breed)
 
             case let .toggleFavoriteSuccess(id, isNowFavorite):
                 if state.breed.id == id {
@@ -159,15 +130,7 @@ struct BreedDetailFeature {
                 state.screenState = .loading
                 state.isLoading = true
                 state.lastErrorMessage = nil
-
-                return .run { [id] send in
-                    do {
-                        let result = try await detailsService.breedDetail(id: id)
-                        await send(.detailResponseSuccess(result))
-                    } catch {
-                        await send(.detailResponseFailure(error.localizedDescription))
-                    }
-                }
+                return loadDetailEffect(id: id)
 
             case let .detailResponseSuccess(fetched):
                 state.isLoading = false
@@ -190,15 +153,7 @@ struct BreedDetailFeature {
             case let .loadGallery(id, limit):
                 state.isLoadingGallery = true
                 state.galleryError = nil
-
-                return .run { [id, limit] send in
-                    do {
-                        let images = try await detailsService.breedImages(id: id, limit: limit)
-                        await send(.galleryResponseSuccess(images))
-                    } catch {
-                        await send(.galleryResponseFailure(error.localizedDescription))
-                    }
-                }
+                return loadGalleryEffect(id: id, limit: limit)
 
             case let .galleryResponseSuccess(images):
                 state.isLoadingGallery = false
@@ -246,6 +201,59 @@ struct BreedDetailFeature {
 
             case .binding:
                 return .none
+            }
+        }
+    }
+
+    // MARK: - Effects helpers
+    private func toggleFavorite(for breed: CatBreed) -> EffectOf<Self> {
+        .run { send in
+            let id = breed.id
+            if await favoritesService.isFavorite(id: id) {
+                do {
+                    try await favoritesService.removeFavorite(id: id)
+                    try await favoritesService.deleteFavoriteDetail(id: id)
+                    await send(.toggleFavoriteSuccess(id: id, isNowFavorite: false))
+                } catch {
+                    await send(.toggleFavoriteFailure)
+                }
+            } else {
+                do {
+                    try await favoritesService.addFavorite(id: id)
+                    try await favoritesService.upsertFavoriteDetail(from: breed)
+                    await send(.toggleFavoriteSuccess(id: id, isNowFavorite: true))
+                } catch {
+                    await send(.toggleFavoriteFailure)
+                }
+            }
+        }
+    }
+
+    private func refreshFavoriteEffect(for id: String) -> EffectOf<Self> {
+        .run { [id] send in
+            let isFav = await favoritesService.isFavorite(id: id)
+            await send(.toggleFavoriteSuccess(id: id, isNowFavorite: isFav))
+        }
+    }
+
+    private func loadDetailEffect(id: String) -> EffectOf<Self> {
+        .run { [id] send in
+            do {
+                let result = try await detailsService.breedDetail(id: id)
+                await send(.detailResponseSuccess(result))
+            } catch {
+                await send(.detailResponseFailure(error.localizedDescription))
+            }
+        }
+    }
+
+    private func loadGalleryEffect(id: String, limit: Int) -> EffectOf<Self> {
+        .run { [id, limit] send in
+            do {
+                let images = try await detailsService.breedImages(id: id, limit: limit)
+                await send(.galleryResponseSuccess(images))
+            } catch {
+                await send(.galleryResponseFailure(error.localizedDescription))
             }
         }
     }

@@ -7,10 +7,8 @@ import Combine
 /// agora controlado por TCA (FavoritesFeature) com navegação em stack para BreedDetailFeature.
 struct FavoritesView: View {
     let store: StoreOf<FavoritesFeature>
-
-    // Lê snapshots persistidos dos favoritos diretamente do SwiftData
-    @Query(sort: [SortDescriptor(\FavoriteBreedDetail.name, order: .forward)])
-    private var favoriteDetails: [FavoriteBreedDetail]
+    
+    @Environment(\.modelContext) private var modelContext
 
     var body: some View {
         NavigationStackStore(
@@ -21,19 +19,15 @@ struct FavoritesView: View {
                     .navigationTitle(UIStrings.Favorites.title)
                     .onAppear {
                         viewStore.send(.onAppear)
-                        viewStore.send(.favoritesSnapshotChanged(favoriteDetails))
-                    }
-                    // Use a publisher to observe changes to the @Query array.
-                    .onReceive(favoriteDetailsPublisher) { newValue in
-                        viewStore.send(.favoritesSnapshotChanged(newValue))
+                        loadFavorites(viewStore: viewStore)
                     }
             }
-        } destination: { destinationStore in
-            SwitchStore(destinationStore) { state in
+        } destination: { routeStore in
+            SwitchStore(routeStore) { state in
                 switch state {
                 case .breedDetail:
                     BreedDetailView(
-                        store: destinationStore.scope(
+                        store: routeStore.scope(
                             state: { $0.breedDetail! },
                             action: { .breedDetail($0) }
                         )
@@ -43,16 +37,17 @@ struct FavoritesView: View {
         }
     }
 
-    // Create a simple publisher from the @Query array using SwiftUI's observation.
-    // This works by emitting whenever the view recomputes and the array identity changes.
-    private var favoriteDetailsPublisher: AnyPublisher<[FavoriteBreedDetail], Never> {
-        Just(favoriteDetails)
-            .removeDuplicates(by: { lhs, rhs in
-                // Avoid spamming by comparing ids & counts; adjust if needed.
-                guard lhs.count == rhs.count else { return false }
-                return zip(lhs, rhs).allSatisfy { $0.id == $1.id }
-            })
-            .eraseToAnyPublisher()
+    private func loadFavorites(viewStore: ViewStore<FavoritesFeature.State, FavoritesFeature.Action>) {
+        do {
+            let descriptor = FetchDescriptor<FavoriteBreedDetail>(
+                sortBy: [SortDescriptor(\FavoriteBreedDetail.name)]
+            )
+            let favorites = try modelContext.fetch(descriptor)
+            viewStore.send(.favoritesSnapshotChanged(favorites))
+        } catch {
+            // Handle error if necessary
+            print("Error loading favorites: \(error)")
+        }
     }
 }
 

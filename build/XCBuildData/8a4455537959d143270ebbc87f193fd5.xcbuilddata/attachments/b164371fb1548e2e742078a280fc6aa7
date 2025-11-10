@@ -1,0 +1,21 @@
+{
+  "" : {
+    "const-values" : "/Users/bd.ferreira/Library/Developer/Xcode/DerivedData/CatApp-angqocubekplmubbusiosllenocs/SourcePackages/checkouts/xctest-dynamic-overlay/build/xctest-dynamic-overlay.build/Release-iphonesimulator/XCTestDynamicOverlay.build/Objects-normal/arm64/XCTestDynamicOverlay-primary.swiftconstvalues",
+    "dependencies" : "/Users/bd.ferreira/Library/Developer/Xcode/DerivedData/CatApp-angqocubekplmubbusiosllenocs/SourcePackages/checkouts/xctest-dynamic-overlay/build/xctest-dynamic-overlay.build/Release-iphonesimulator/XCTestDynamicOverlay.build/Objects-normal/arm64/XCTestDynamicOverlay-primary.d",
+    "diagnostics" : "/Users/bd.ferreira/Library/Developer/Xcode/DerivedData/CatApp-angqocubekplmubbusiosllenocs/SourcePackages/checkouts/xctest-dynamic-overlay/build/xctest-dynamic-overlay.build/Release-iphonesimulator/XCTestDynamicOverlay.build/Objects-normal/arm64/XCTestDynamicOverlay-primary.dia",
+    "emit-module-dependencies" : "/Users/bd.ferreira/Library/Developer/Xcode/DerivedData/CatApp-angqocubekplmubbusiosllenocs/SourcePackages/checkouts/xctest-dynamic-overlay/build/xctest-dynamic-overlay.build/Release-iphonesimulator/XCTestDynamicOverlay.build/Objects-normal/arm64/XCTestDynamicOverlay-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/bd.ferreira/Library/Developer/Xcode/DerivedData/CatApp-angqocubekplmubbusiosllenocs/SourcePackages/checkouts/xctest-dynamic-overlay/build/xctest-dynamic-overlay.build/Release-iphonesimulator/XCTestDynamicOverlay.build/Objects-normal/arm64/XCTestDynamicOverlay-primary-emit-module.dia",
+    "pch" : "/Users/bd.ferreira/Library/Developer/Xcode/DerivedData/CatApp-angqocubekplmubbusiosllenocs/SourcePackages/checkouts/xctest-dynamic-overlay/build/xctest-dynamic-overlay.build/Release-iphonesimulator/XCTestDynamicOverlay.build/Objects-normal/arm64/XCTestDynamicOverlay-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/bd.ferreira/Library/Developer/Xcode/DerivedData/CatApp-angqocubekplmubbusiosllenocs/SourcePackages/checkouts/xctest-dynamic-overlay/build/xctest-dynamic-overlay.build/Release-iphonesimulator/XCTestDynamicOverlay.build/Objects-normal/arm64/XCTestDynamicOverlay-primary.swiftdeps"
+  },
+  "/Users/bd.ferreira/Library/Developer/Xcode/DerivedData/CatApp-angqocubekplmubbusiosllenocs/SourcePackages/checkouts/xctest-dynamic-overlay/Sources/XCTestDynamicOverlay/Internal/Deprecations.swift" : {
+    "index-unit-output-path" : "/xctest-dynamic-overlay.build/Release-iphonesimulator/XCTestDynamicOverlay.build/Objects-normal/arm64/Deprecations.o",
+    "llvm-bc" : "/Users/bd.ferreira/Library/Developer/Xcode/DerivedData/CatApp-angqocubekplmubbusiosllenocs/SourcePackages/checkouts/xctest-dynamic-overlay/build/xctest-dynamic-overlay.build/Release-iphonesimulator/XCTestDynamicOverlay.build/Objects-normal/arm64/Deprecations.bc",
+    "object" : "/Users/bd.ferreira/Library/Developer/Xcode/DerivedData/CatApp-angqocubekplmubbusiosllenocs/SourcePackages/checkouts/xctest-dynamic-overlay/build/xctest-dynamic-overlay.build/Release-iphonesimulator/XCTestDynamicOverlay.build/Objects-normal/arm64/Deprecations.o"
+  },
+  "/Users/bd.ferreira/Library/Developer/Xcode/DerivedData/CatApp-angqocubekplmubbusiosllenocs/SourcePackages/checkouts/xctest-dynamic-overlay/Sources/XCTestDynamicOverlay/Internal/Exports.swift" : {
+    "index-unit-output-path" : "/xctest-dynamic-overlay.build/Release-iphonesimulator/XCTestDynamicOverlay.build/Objects-normal/arm64/Exports.o",
+    "llvm-bc" : "/Users/bd.ferreira/Library/Developer/Xcode/DerivedData/CatApp-angqocubekplmubbusiosllenocs/SourcePackages/checkouts/xctest-dynamic-overlay/build/xctest-dynamic-overlay.build/Release-iphonesimulator/XCTestDynamicOverlay.build/Objects-normal/arm64/Exports.bc",
+    "object" : "/Users/bd.ferreira/Library/Developer/Xcode/DerivedData/CatApp-angqocubekplmubbusiosllenocs/SourcePackages/checkouts/xctest-dynamic-overlay/build/xctest-dynamic-overlay.build/Release-iphonesimulator/XCTestDynamicOverlay.build/Objects-normal/arm64/Exports.o"
+  }
+}

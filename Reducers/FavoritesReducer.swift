@@ -11,7 +11,12 @@ struct FavoriteRow: Identifiable, Equatable {
 
 @Reducer
 struct FavoritesFeature {
+    
     // MARK: - Navigation Route
+    //@Reducer(state: .equatable, action: .equatable)
+    //enum Route {
+        //case breedDetail(BreedDetailFeature)
+    //}
     @Reducer
     struct Route {
         @ObservableState
@@ -35,6 +40,7 @@ struct FavoritesFeature {
         var rows: [FavoriteRow] = []
         var favoriteIDs: Set<String> = []
         var averageLifeSpanText: String?
+        // Path holds Route.State elements
         var path = StackState<Route.State>()
     }
 
@@ -49,7 +55,6 @@ struct FavoritesFeature {
         case favoritesSnapshotChanged([FavoriteBreedDetail])
 
         // IDs refresh (from service)
-        case refreshFavorites
         case refreshFavoritesFinished(Set<String>)
 
         // Toggle favorite
@@ -64,8 +69,7 @@ struct FavoritesFeature {
 
     // MARK: - Dependencies
     @Dependency(\.favoritesService) var favoritesService
-    
-    
+
     // MARK: - Body
     var body: some ReducerOf<Self> {
         BindingReducer()
@@ -74,7 +78,15 @@ struct FavoritesFeature {
             switch action {
             // Lifecycle
             case .onAppear:
-                return .send(.refreshFavorites)
+                return .run { send in
+                    do {
+                        let favs = try await favoritesService.fetchFavorites()
+                        let ids = Set(favs.map { $0.breedId })
+                        await send(.refreshFavoritesFinished(ids))
+                    } catch {
+                        await send(.refreshFavoritesFinished([]))
+                    }
+                }
 
             // Snapshot coming from SwiftData via the view
             case let .favoritesSnapshotChanged(details):
@@ -102,18 +114,7 @@ struct FavoritesFeature {
                 state.averageLifeSpanText = computeAverageLifeSpanText(from: details)
                 return .none
 
-            // Refresh IDs from service
-            case .refreshFavorites:
-                return .run { send in
-                    do {
-                        let favs = try await favoritesService.fetchFavorites()
-                        let ids = Set(favs.map { $0.breedId })
-                        await send(.refreshFavoritesFinished(ids))
-                    } catch {
-                        await send(.refreshFavoritesFinished([]))
-                    }
-                }
-
+            // Refresh IDs finished
             case let .refreshFavoritesFinished(ids):
                 state.favoriteIDs = ids
                 // Also update isFavorite flags in current rows to keep in sync
@@ -171,6 +172,7 @@ struct FavoritesFeature {
 
             // Navigation
             case let .tappedRow(breed):
+                // Push new destination
                 state.path.append(.breedDetail(BreedDetailFeature.State(breed: breed)))
                 return .none
 
@@ -181,6 +183,7 @@ struct FavoritesFeature {
                 return .none
             }
         }
+        // Compose child reducers for stack elements
         .forEach(\.path, action: \.path) {
             Route()
         }
