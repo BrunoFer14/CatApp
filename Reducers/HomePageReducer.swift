@@ -66,17 +66,17 @@ struct HomeFeature {
         /// Binding actions for two-way data flow
         case binding(BindingAction<State>)
 
-        // MARK: Lifecycle Actions
+        //Lifecycle Actions
         /// Triggered when the view appears for the first time
         case onAppear
 
-        // MARK: Data Loading Actions
+        //Data Loading Actions
         /// Request to load cached breeds from local storage
         case loadCachedBreeds
         /// Successful completion of cached breeds loading
         case loadCachedBreedsFinished([CatBreed])
 
-        // MARK: Pagination Actions
+        //Pagination Actions
         /// Request to load the next page if needed (triggered by scroll)
         case requestNextPageIfNeeded
         /// Start fetching a specific page from the API
@@ -88,13 +88,13 @@ struct HomeFeature {
         /// Fallback response when using cached data after API failure
         case cacheFallbackResponse(page: Int, cachedCount: Int)
 
-        // MARK: Cache Management Actions
+        //Cache Management Actions
         /// Request to clear all cached data
         case clearCache
         /// Cache clearing operation completed
         case clearCacheFinished
 
-        // MARK: Favorites Actions
+        //Favorites Actions
         /// Request to refresh the favorites list
         case refreshFavorites
         /// Successfully loaded favorites from storage
@@ -106,7 +106,7 @@ struct HomeFeature {
         /// Failed to update favorite status
         case toggleFavoriteFailure
 
-        // MARK: Navigation Actions
+        //Navigation Actions
         /// Handle navigation stack actions
         case path(StackActionOf<Route>)
         /// User tapped on a breed to view details
