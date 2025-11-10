@@ -1,6 +1,6 @@
 import SwiftData
 
-/// Modelo SwiftData simples: guarda apenas o ID da raça favorita.
+/// Model Swift Data : saves favorite breed id
 @Model
 class Favorite {
     @Attribute(.unique) var breedId: String

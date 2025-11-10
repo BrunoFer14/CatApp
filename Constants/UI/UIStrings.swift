@@ -14,8 +14,8 @@ enum UIStrings {
         static let averageLifeSpanOfFavoritesPrefix = "Average life span of favorites:"
         
         // Error messages
-        static let pageLoadFailure = "Falha ao carregar página"
-        static let favoriteUpdateFailure = "Falha ao atualizar favorito."
+        static let pageLoadFailure = "Failed loading page"
+        static let favoriteUpdateFailure = "Failed updating favorite"
     }
 
     enum Detail {
@@ -24,7 +24,7 @@ enum UIStrings {
         static let lifeSpanPrefix = "⏳ Life span:"
         static let addToFavorites = "Add to Favorites"
         static let removeFromFavorites = "Remove from Favorites"
-        static let notFoundError = "Erro: Raça não encontrada."
+        static let notFoundError = "Error: Breed not found"
     }
 
     enum Favorites {

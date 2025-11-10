@@ -2,7 +2,7 @@ import Foundation
 import SwiftData
 import ComposableArchitecture
 
-// Um pequeno provider para construir ModelContainer sob TCA.
+// A small provider to build a ModelContainer under TCA
 protocol ModelContainerProviding {
     func make() throws -> ModelContainer
 }
@@ -21,7 +21,7 @@ enum ModelContainerProviderKey: DependencyKey {
         return LiveProvider()
     }
 
-    // Container in-memory para testes
+    // Container in-memory for tests
     static var testValue: any ModelContainerProviding {
         struct TestProvider: ModelContainerProviding {
             func make() throws -> ModelContainer {
@@ -34,7 +34,7 @@ enum ModelContainerProviderKey: DependencyKey {
         return TestProvider()
     }
 
-    // Previews usam o mesmo que live
+    // Previews that use live
     static var previewValue: any ModelContainerProviding { liveValue }
 }
 
