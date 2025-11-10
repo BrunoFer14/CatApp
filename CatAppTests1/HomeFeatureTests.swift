@@ -6,10 +6,10 @@ import ComposableArchitecture
 final class HomeFeatureTests: XCTestCase {
     
     func testInitialState() {
-        // Arrange & Act
+        // Given & When
         let state = HomeFeature.State()
         
-        // Assert
+        // Then
         XCTAssertTrue(state.breeds.isEmpty)
         XCTAssertTrue(state.favoriteIDs.isEmpty)
         XCTAssertFalse(state.isLoadingPage)
@@ -20,20 +20,20 @@ final class HomeFeatureTests: XCTestCase {
     }
     
     func testOnAppearTriggersActions() {
-        // Arrange
+        // Given
         var state = HomeFeature.State()
         
-        // Act
+        // When
         let reducer = HomeFeature()
         let action = HomeFeature.Action.onAppear
         let effect = reducer.reduce(into: &state, action: action)
         
-        // Assert - Should trigger merged actions
+        // Then - Should trigger merged actions
         XCTAssertNotNil(effect)
     }
     
     func testFetchPageSuccessUpdatesStateForFirstPage() {
-        // Arrange
+        // Given
         var state = HomeFeature.State()
         let page = UIConfig.Pagination.initialPageIndex
         let breeds = [
@@ -41,12 +41,12 @@ final class HomeFeatureTests: XCTestCase {
             CatBreed(id: "test2", name: "Test 2", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil)
         ]
         
-        // Act
+        // When
         let reducer = HomeFeature()
         let action = HomeFeature.Action.fetchPageSuccess(page: page, breeds: breeds)
         _ = reducer.reduce(into: &state, action: action)
         
-        // Assert
+        // Then
         XCTAssertEqual(state.currentPage, page)
         XCTAssertTrue(state.hasLoadedFirstPage)
         XCTAssertFalse(state.isLoadingPage)
@@ -54,97 +54,97 @@ final class HomeFeatureTests: XCTestCase {
     }
     
     func testFetchPageFailureHandlesFirstPage() {
-        // Arrange
+        // Given
         var state = HomeFeature.State()
         let page = UIConfig.Pagination.initialPageIndex
         
-        // Act
+        // When
         let reducer = HomeFeature()
         let action = HomeFeature.Action.fetchPageFailure(page: page)
         _ = reducer.reduce(into: &state, action: action)
         
-        // Assert
+        // Then
         XCTAssertTrue(state.hasLoadedFirstPage) // Still marks as loaded even on failure
         XCTAssertFalse(state.isLoadingPage)
         XCTAssertNotNil(state.lastErrorMessage)
     }
     
     func testLoadCachedBreedsFinishedUpdatesBreeds() {
-        // Arrange
+        // Given
         var state = HomeFeature.State()
         let breeds = [
             CatBreed(id: "cached1", name: "Cached 1", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil),
             CatBreed(id: "cached2", name: "Cached 2", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil)
         ]
         
-        // Act
+        // When
         let reducer = HomeFeature()
         let action = HomeFeature.Action.loadCachedBreedsFinished(breeds)
         _ = reducer.reduce(into: &state, action: action)
         
-        // Assert
+        // Then
         XCTAssertEqual(state.breeds.count, 2)
         XCTAssertEqual(state.breeds[0].id, "cached1")
         XCTAssertEqual(state.breeds[1].id, "cached2")
     }
     
     func testRefreshFavoritesFinishedUpdatesIds() {
-        // Arrange
+        // Given
         var state = HomeFeature.State()
         let ids: Set<String> = ["persian", "siamese"]
         
-        // Act
+        // When
         let reducer = HomeFeature()
         let action = HomeFeature.Action.refreshFavoritesFinished(ids)
         _ = reducer.reduce(into: &state, action: action)
         
-        // Assert
+        // Then
         XCTAssertEqual(state.favoriteIDs, ids)
     }
     
     func testToggleFavoriteSuccessAddsToFavorites() {
-        // Arrange
+        // Given
         var state = HomeFeature.State()
         state.favoriteIDs = []
         
-        // Act
+        // When
         let reducer = HomeFeature()
         let action = HomeFeature.Action.toggleFavoriteSuccess(id: "test")
         _ = reducer.reduce(into: &state, action: action)
         
-        // Assert
+        // Then
         XCTAssertTrue(state.favoriteIDs.contains("test"))
     }
     
     func testToggleFavoriteSuccessRemovesFromFavorites() {
-        // Arrange
+        // Given
         var state = HomeFeature.State()
         state.favoriteIDs = ["test"]
         
-        // Act
+        // When
         let reducer = HomeFeature()
         let action = HomeFeature.Action.toggleFavoriteSuccess(id: "test")
         _ = reducer.reduce(into: &state, action: action)
         
-        // Assert
+        // Then
         XCTAssertFalse(state.favoriteIDs.contains("test"))
     }
     
     func testToggleFavoriteFailureSetsError() {
-        // Arrange
+        // Given
         var state = HomeFeature.State()
         
-        // Act
+        // When
         let reducer = HomeFeature()
         let action = HomeFeature.Action.toggleFavoriteFailure
         _ = reducer.reduce(into: &state, action: action)
         
-        // Assert
+        // Then
         XCTAssertNotNil(state.lastErrorMessage)
     }
     
     func testTappedBreedNavigatesToDetail() {
-        // Arrange
+        // Given
         var state = HomeFeature.State()
         let breed = CatBreed(
             id: "test-id",
@@ -157,42 +157,42 @@ final class HomeFeatureTests: XCTestCase {
             referenceImageId: nil
         )
         
-        // Act
+        // When
         let reducer = HomeFeature()
         let action = HomeFeature.Action.tappedBreed(breed)
         _ = reducer.reduce(into: &state, action: action)
         
-        // Assert
+        // Then
         XCTAssertEqual(state.path.count, 1)
     }
     
     func testRequestNextPageIfNeededWithValidConditions() {
-        // Arrange
+        // Given
         var state = HomeFeature.State()
         state.currentPage = 1
         state.hasLoadedFirstPage = true
         state.isLoadingPage = false
         
-        // Act
+        // When
         let reducer = HomeFeature()
         let action = HomeFeature.Action.requestNextPageIfNeeded
         let effect = reducer.reduce(into: &state, action: action)
         
-        // Assert - Should trigger async work to fetch next page
+        // Then - Should trigger async work to fetch next page
         XCTAssertNotNil(effect)
     }
     
     func testCacheFallbackResponseWithData() {
-        // Arrange
+        // Given
         var state = HomeFeature.State()
         let page = UIConfig.Pagination.initialPageIndex
         
-        // Act
+        // When
         let reducer = HomeFeature()
         let action = HomeFeature.Action.cacheFallbackResponse(page: page, cachedCount: 5)
         let effect = reducer.reduce(into: &state, action: action)
         
-        // Assert
+        // Then
         XCTAssertFalse(state.isLoadingPage)
         XCTAssertEqual(state.currentPage, page)
         XCTAssertTrue(state.hasLoadedFirstPage)

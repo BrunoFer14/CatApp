@@ -6,10 +6,10 @@ import ComposableArchitecture
 final class SearchFeatureTests: XCTestCase {
     
     func testInitialState() {
-        // Arrange & Act
+        // Given & When
         let state = SearchFeature.State()
         
-        // Assert
+        // Then
         XCTAssertEqual(state.query, "")
         XCTAssertFalse(state.isLoadingPage)
         XCTAssertEqual(state.currentPage, 0)
@@ -18,42 +18,42 @@ final class SearchFeatureTests: XCTestCase {
     }
     
     func testQueryChangedUpdatesState() {
-        // Arrange
+        // Given
         var state = SearchFeature.State()
         
-        // Act
+        // When
         let reducer = SearchFeature()
         let action = SearchFeature.Action.queryChanged("persian")
         _ = reducer.reduce(into: &state, action: action)
         
-        // Assert
+        // Then
         XCTAssertEqual(state.query, "persian")
     }
     
     func testOnAppearTriggersActions() {
-        // Arrange
+        // Given
         var state = SearchFeature.State()
         
-        // Act
+        // When
         let reducer = SearchFeature()
         let action = SearchFeature.Action.onAppear
         let effect = reducer.reduce(into: &state, action: action)
         
-        // Assert - Should trigger some async work
+        // Then - Should trigger some async work
         XCTAssertNotNil(effect)
     }
     
     func testFetchPageSuccessUpdatesState() {
-        // Arrange
+        // Given
         var state = SearchFeature.State()
         let page = 1
         
-        // Act
+        // When
         let reducer = SearchFeature()
         let action = SearchFeature.Action.fetchPageSuccess(page: page)
         _ = reducer.reduce(into: &state, action: action)
         
-        // Assert
+        // Then
         XCTAssertEqual(state.currentPage, page)
         XCTAssertFalse(state.isLoadingPage)
         if page == UIConfig.Pagination.initialPageIndex {
@@ -62,65 +62,65 @@ final class SearchFeatureTests: XCTestCase {
     }
     
     func testFetchPageFailureUpdatesState() {
-        // Arrange
+        // Given
         var state = SearchFeature.State()
         state.isLoadingPage = true
         let page = UIConfig.Pagination.initialPageIndex
         
-        // Act
+        // When
         let reducer = SearchFeature()
         let action = SearchFeature.Action.fetchPageFailure(page: page)
         _ = reducer.reduce(into: &state, action: action)
         
-        // Assert
+        // Then
         XCTAssertFalse(state.isLoadingPage)
         XCTAssertTrue(state.hasLoadedFirstPage) // First page failure still marks as loaded
     }
     
     func testRefreshFavoritesFinishedUpdatesIds() {
-        // Arrange
+        // Given
         var state = SearchFeature.State()
         let ids: Set<String> = ["persian", "siamese"]
         
-        // Act
+        // When
         let reducer = SearchFeature()
         let action = SearchFeature.Action.refreshFavoritesFinished(ids)
         _ = reducer.reduce(into: &state, action: action)
         
-        // Assert
+        // Then
         XCTAssertEqual(state.favoriteIDs, ids)
     }
     
     func testToggleFavoriteSuccessUpdatesIds() {
-        // Arrange
+        // Given
         var state = SearchFeature.State()
         state.favoriteIDs = []
         
-        // Act
+        // When
         let reducer = SearchFeature()
         let action = SearchFeature.Action.toggleFavoriteSuccess(id: "test")
         _ = reducer.reduce(into: &state, action: action)
         
-        // Assert
+        // Then
         XCTAssertTrue(state.favoriteIDs.contains("test"))
     }
     
     func testToggleFavoriteSuccessRemovesFavorite() {
-        // Arrange
+        // Given
         var state = SearchFeature.State()
         state.favoriteIDs = ["test"]
         
-        // Act
+        // When
         let reducer = SearchFeature()
         let action = SearchFeature.Action.toggleFavoriteSuccess(id: "test")
         _ = reducer.reduce(into: &state, action: action)
         
-        // Assert
+        // Then
         XCTAssertFalse(state.favoriteIDs.contains("test"))
     }
     
     func testTappedBreedNavigatesToDetail() {
-        // Arrange
+        // Given
         var state = SearchFeature.State()
         let breed = CatBreed(
             id: "test-id",
@@ -133,26 +133,26 @@ final class SearchFeatureTests: XCTestCase {
             referenceImageId: nil
         )
         
-        // Act
+        // When
         let reducer = SearchFeature()
         let action = SearchFeature.Action.tappedBreed(breed)
         _ = reducer.reduce(into: &state, action: action)
         
-        // Assert
+        // Then
         XCTAssertEqual(state.path.count, 1)
     }
     
     func testRequestNextPageIfNeeded() {
-        // Arrange
+        // Given
         var state = SearchFeature.State()
         state.currentPage = 1
         
-        // Act
+        // When
         let reducer = SearchFeature()
         let action = SearchFeature.Action.requestNextPageIfNeeded
         let effect = reducer.reduce(into: &state, action: action)
         
-        // Assert
+        // Then
         XCTAssertNotNil(effect) // Should trigger fetchPage action
     }
 }

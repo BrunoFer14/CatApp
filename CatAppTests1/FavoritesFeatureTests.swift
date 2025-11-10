@@ -6,30 +6,30 @@ import ComposableArchitecture
 final class FavoritesFeatureTests: XCTestCase {
     
     func testInitialState() {
-        // Arrange & Act
+        // Given & When
         let state = FavoritesFeature.State()
         
-        // Assert
+        // Then
         XCTAssertTrue(state.rows.isEmpty)
         XCTAssertTrue(state.favoriteIDs.isEmpty)
         XCTAssertNil(state.averageLifeSpanText)
     }
     
     func testOnAppear() {
-        // Arrange
+        // Given
         var state = FavoritesFeature.State()
         
-        // Act
+        // When
         let reducer = FavoritesFeature()
         let action = FavoritesFeature.Action.onAppear
         let effect = reducer.reduce(into: &state, action: action)
         
-        // Assert - Should trigger some async work
+        // Then - Should trigger some async work
         XCTAssertNotNil(effect)
     }
     
     func testFavoritesSnapshotChangedUpdatesRowsAndAverage() {
-        // Arrange
+        // Given
         var state = FavoritesFeature.State()
         state.favoriteIDs = ["persian", "siamese"] // Mark both as favorites
         
@@ -54,12 +54,12 @@ final class FavoritesFeatureTests: XCTestCase {
             )
         ]
         
-        // Act
+        // When
         let reducer = FavoritesFeature()
         let action = FavoritesFeature.Action.favoritesSnapshotChanged(details)
         _ = reducer.reduce(into: &state, action: action)
         
-        // Assert
+        // Then
         XCTAssertEqual(state.rows.count, 2)
         XCTAssertEqual(state.rows[0].name, "Persian")
         XCTAssertEqual(state.rows[1].name, "Siamese")
@@ -69,21 +69,21 @@ final class FavoritesFeatureTests: XCTestCase {
     }
     
     func testRefreshFavoritesFinishedUpdatesIds() {
-        // Arrange
+        // Given
         var state = FavoritesFeature.State()
         let ids: Set<String> = ["persian", "siamese"]
         
-        // Act
+        // When
         let reducer = FavoritesFeature()
         let action = FavoritesFeature.Action.refreshFavoritesFinished(ids)
         _ = reducer.reduce(into: &state, action: action)
         
-        // Assert
+        // Then
         XCTAssertEqual(state.favoriteIDs, ids)
     }
     
     func testToggleFavoriteSuccessUpdatesState() {
-        // Arrange
+        // Given
         var state = FavoritesFeature.State()
         state.favoriteIDs = []
         state.rows = [
@@ -96,18 +96,18 @@ final class FavoritesFeatureTests: XCTestCase {
             )
         ]
         
-        // Act
+        // When
         let reducer = FavoritesFeature()
         let action = FavoritesFeature.Action.toggleFavoriteSuccess(id: "test")
         _ = reducer.reduce(into: &state, action: action)
         
-        // Assert
+        // Then
         XCTAssertTrue(state.favoriteIDs.contains("test"))
         XCTAssertTrue(state.rows[0].isFavorite)
     }
     
     func testTappedRowNavigatesToBreedDetail() {
-        // Arrange
+        // Given
         var state = FavoritesFeature.State()
         let breed = CatBreed(
             id: "test-id",
@@ -120,12 +120,12 @@ final class FavoritesFeatureTests: XCTestCase {
             referenceImageId: nil
         )
         
-        // Act
+        // When
         let reducer = FavoritesFeature()
         let action = FavoritesFeature.Action.tappedRow(breed)
         _ = reducer.reduce(into: &state, action: action)
         
-        // Assert
+        // Then
         XCTAssertEqual(state.path.count, 1)
     }
 }
