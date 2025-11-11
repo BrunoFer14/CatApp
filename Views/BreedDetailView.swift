@@ -46,7 +46,7 @@ private extension BreedDetailView {
     func content(viewStore: ViewStoreOf<BreedDetailFeature>) -> some View {
         Group {
             switch viewStore.screenState {
-            case .idle, .loading:
+            case .loading:
                 loadingSection
             case .error(let message):
                 errorSection(message: message)

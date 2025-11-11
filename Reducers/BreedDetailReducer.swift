@@ -16,12 +16,11 @@ struct BreedDetailFeature {
 
         // Detail loading state
         enum ScreenState: Equatable {
-            case idle
             case loading
             case content
             case error(String)
         }
-        var screenState: ScreenState = .idle
+        var screenState: ScreenState = .loading
         var isLoading: Bool = false
 
         // Gallery

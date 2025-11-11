@@ -13,9 +13,7 @@ enum ModelContainerProviderKey: DependencyKey {
     static var liveValue: any ModelContainerProviding {
         struct LiveProvider: ModelContainerProviding {
             func make() throws -> ModelContainer {
-                try ModelContainer(
-                    for: Favorite.self, CachedBreed.self, FavoriteBreedDetail.self
-                )
+                try ModelContainer(for: Favorite.self, CachedBreed.self, FavoriteBreedDetail.self)
             }
         }
         return LiveProvider()

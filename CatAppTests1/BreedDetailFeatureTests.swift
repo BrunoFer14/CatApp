@@ -26,7 +26,7 @@ final class BreedDetailFeatureTests: XCTestCase {
         // Then
         XCTAssertEqual(state.breed.id, "test-id")
         XCTAssertEqual(state.breed.name, "Test Breed")
-        XCTAssertEqual(state.screenState, .idle)
+        XCTAssertEqual(state.screenState, .loading)
         XCTAssertFalse(state.isLoading)
         XCTAssertFalse(state.isLoadingGallery)
         XCTAssertFalse(state.isFavorite)
