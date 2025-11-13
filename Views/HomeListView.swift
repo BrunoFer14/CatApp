@@ -6,7 +6,7 @@ import ComposableArchitecture
 /// All data comes from TCA state, all interactions send actions
 struct HomeListView: View {
     /// TCA store containing the home feature state and actions
-    let store: StoreOf<HomeFeature>
+    let store: StoreOf<HomePageReducer>
     
     /// Grid layout configuration for breed tiles
     private var columns: [GridItem] {
@@ -47,7 +47,7 @@ struct HomeListView: View {
 /// Breaks down the main view into logical sections
 private extension HomeListView {
     @ViewBuilder
-    func content(viewStore: ViewStoreOf<HomeFeature>) -> some View {
+    func content(viewStore: ViewStoreOf<HomePageReducer>) -> some View {
         /// Show loading state when no breeds are available and initial load hasn't completed
         if viewStore.breeds.isEmpty && !viewStore.hasLoadedFirstPage {
             loadingPlaceholderSection
@@ -83,7 +83,7 @@ private extension HomeListView {
     }
 
     /// Main grid section displaying actual breed data
-    func breedsGridSection(viewStore: ViewStoreOf<HomeFeature>) -> some View {
+    func breedsGridSection(viewStore: ViewStoreOf<HomePageReducer>) -> some View {
         ScrollView {
             LazyVGrid(columns: columns, spacing: UILayout.gridSpacing) {
                 /// Display each breed with index for pagination tracking
@@ -107,7 +107,7 @@ private extension HomeListView {
 /// Individual UI components used within the view
 private extension HomeListView {
     @ViewBuilder
-    func breedTileLink(index: Int, breed: CatBreed, viewStore: ViewStoreOf<HomeFeature>) -> some View {
+    func breedTileLink(index: Int, breed: CatBreed, viewStore: ViewStoreOf<HomePageReducer>) -> some View {
         /// Button wrapper for breed tile with navigation action
         Button {
             viewStore.send(.tappedBreed(breed))
@@ -137,7 +137,7 @@ private extension HomeListView {
     ///   - index: Current tile index in the list
     ///   - totalCount: Total number of breeds currently loaded
     ///   - viewStore: TCA view store for sending actions
-    func onTileAppear(index: Int, totalCount: Int, viewStore: ViewStoreOf<HomeFeature>) {
+    func onTileAppear(index: Int, totalCount: Int, viewStore: ViewStoreOf<HomePageReducer>) {
         /// Calculate threshold for triggering next page load
         let threshold = max(0, totalCount - UILayout.homePrefetchThresholdFromEnd)
         if index >= threshold {

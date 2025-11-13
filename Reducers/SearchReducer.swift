@@ -3,20 +3,20 @@ import ComposableArchitecture
 import Combine
 
 @Reducer
-struct SearchFeature {
+struct SearchReducer {
     //Navigation Route
     @Reducer
     struct Route {
         @CasePathable
         enum State: Equatable {
-            case breedDetail(BreedDetailFeature.State)
+            case breedDetail(BreedDetailReducer.State)
         }
         enum Action: Equatable {
-            case breedDetail(BreedDetailFeature.Action)
+            case breedDetail(BreedDetailReducer.Action)
         }
         var body: some ReducerOf<Self> {
             Scope(state: \.breedDetail, action: \.breedDetail) {
-                BreedDetailFeature()
+                BreedDetailReducer()
             }
         }
     }
@@ -191,7 +191,7 @@ struct SearchFeature {
 
             // Navigation
             case let .tappedBreed(breed):
-                state.path.append(.breedDetail(BreedDetailFeature.State(breed: breed)))
+                state.path.append(.breedDetail(BreedDetailReducer.State(breed: breed)))
                 return .none
 
             case .path:

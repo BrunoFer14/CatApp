@@ -10,7 +10,7 @@ struct FavoriteRow: Identifiable, Equatable {
 }
 
 @Reducer
-struct FavoritesFeature {
+struct FavoritesReducer {
     
     // MARK: - Navigation Route
     //@Reducer(state: .equatable, action: .equatable)
@@ -22,14 +22,14 @@ struct FavoritesFeature {
         @ObservableState
         @CasePathable
         enum State: Equatable {
-            case breedDetail(BreedDetailFeature.State)
+            case breedDetail(BreedDetailReducer.State)
         }
         enum Action: Equatable {
-            case breedDetail(BreedDetailFeature.Action)
+            case breedDetail(BreedDetailReducer.Action)
         }
         var body: some ReducerOf<Self> {
             Scope(state: \.breedDetail, action: \.breedDetail) {
-                BreedDetailFeature()
+                BreedDetailReducer()
             }
         }
     }
@@ -173,7 +173,7 @@ struct FavoritesFeature {
             // Navigation
             case let .tappedRow(breed):
                 // Push new destination
-                state.path.append(.breedDetail(BreedDetailFeature.State(breed: breed)))
+                state.path.append(.breedDetail(BreedDetailReducer.State(breed: breed)))
                 return .none
 
             case .path:

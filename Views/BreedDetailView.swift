@@ -8,7 +8,7 @@ import AppKit
 import ComposableArchitecture
 
 struct BreedDetailView: View {
-    let store: StoreOf<BreedDetailFeature>
+    let store: StoreOf<BreedDetailReducer>
 
     private var buttonBackground: Color {
         #if canImport(UIKit)
@@ -43,7 +43,7 @@ struct BreedDetailView: View {
 // MARK: - Body composition
 private extension BreedDetailView {
     @ViewBuilder
-    func content(viewStore: ViewStoreOf<BreedDetailFeature>) -> some View {
+    func content(viewStore: ViewStoreOf<BreedDetailReducer>) -> some View {
         Group {
             switch viewStore.screenState {
             case .loading:
@@ -81,7 +81,7 @@ private extension BreedDetailView {
         }
     }
 
-    func contentSection(viewStore: ViewStoreOf<BreedDetailFeature>, currentBreed: CatBreed) -> some View {
+    func contentSection(viewStore: ViewStoreOf<BreedDetailReducer>, currentBreed: CatBreed) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: UILayout.sectionSpacing) {
                 if !viewStore.imageItems.isEmpty {
@@ -101,7 +101,7 @@ private extension BreedDetailView {
         .navigationBarTitleDisplayMode(.inline)
     }
 
-    func headerCarouselSection(viewStore: ViewStoreOf<BreedDetailFeature>) -> some View {
+    func headerCarouselSection(viewStore: ViewStoreOf<BreedDetailReducer>) -> some View {
         VStack(spacing: 0) {
             TabView(
                 selection: viewStore.binding(
@@ -133,7 +133,7 @@ private extension BreedDetailView {
         }
     }
 
-    func carouselControlsSection(viewStore: ViewStoreOf<BreedDetailFeature>) -> some View {
+    func carouselControlsSection(viewStore: ViewStoreOf<BreedDetailReducer>) -> some View {
         HStack(spacing: UILayout.gridSpacing) {
             Button {
                 withAnimation {
@@ -181,7 +181,7 @@ private extension BreedDetailView {
         }
     }
 
-    func fallbackImageSection(currentBreed: CatBreed, viewStore: ViewStoreOf<BreedDetailFeature>) -> some View {
+    func fallbackImageSection(currentBreed: CatBreed, viewStore: ViewStoreOf<BreedDetailReducer>) -> some View {
         CatImageView(
             urlString: currentBreed.image?.url ?? currentBreed.referenceImageUrl,
             height: UIDimensions.detailImageHeightFallback,
@@ -232,7 +232,7 @@ private extension BreedDetailView {
         }
     }
 
-    func favoriteButtonSection(viewStore: ViewStoreOf<BreedDetailFeature>) -> some View {
+    func favoriteButtonSection(viewStore: ViewStoreOf<BreedDetailReducer>) -> some View {
         Button(action: {
             viewStore.send(.toggleFavorite)
         }) {

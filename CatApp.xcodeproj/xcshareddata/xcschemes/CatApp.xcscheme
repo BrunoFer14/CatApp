@@ -27,15 +27,20 @@
       buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
-      shouldUseLaunchSchemeArgsEnv = "YES"
-      shouldAutocreateTestPlan = "YES">
+      shouldUseLaunchSchemeArgsEnv = "YES">
+      <TestPlans>
+         <TestPlanReference
+            reference = "container:CatApp.xctestplan"
+            default = "YES">
+         </TestPlanReference>
+      </TestPlans>
       <Testables>
          <TestableReference
             skipped = "NO"
             parallelizable = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "AF7B3B2D2E43AEAD005F7801"
+               BlueprintIdentifier = "B3C808D12EC602CA0091937C"
                BuildableName = "CatAppTests.xctest"
                BlueprintName = "CatAppTests"
                ReferencedContainer = "container:CatApp.xcodeproj">
@@ -60,6 +65,28 @@
                BlueprintIdentifier = "B38B17F12E8C276C00F2B693"
                BuildableName = "CatAppTests1.xctest"
                BlueprintName = "CatAppTests1"
+               ReferencedContainer = "container:CatApp.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "B3C808D12EC602CA0091937C"
+               BuildableName = "CatAppTests.xctest"
+               BlueprintName = "CatAppTests"
+               ReferencedContainer = "container:CatApp.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "AF7B3B372E43AEAD005F7801"
+               BuildableName = "CatAppUITests.xctest"
+               BlueprintName = "CatAppUITests"
                ReferencedContainer = "container:CatApp.xcodeproj">
             </BuildableReference>
          </TestableReference>

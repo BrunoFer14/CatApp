@@ -3,7 +3,7 @@ import ComposableArchitecture
 import Combine
 
 @Reducer
-struct BreedDetailFeature {
+struct BreedDetailReducer {
     // MARK: - State
     @ObservableState
     struct State: Equatable {
@@ -259,7 +259,7 @@ struct BreedDetailFeature {
 }
 
 // MARK: - Helpers
-private func rebuildImageItems(into state: inout BreedDetailFeature.State) {
+private func rebuildImageItems(into state: inout BreedDetailReducer.State) {
     var urls: [String] = []
 
     // main image (from breed)
@@ -271,7 +271,7 @@ private func rebuildImageItems(into state: inout BreedDetailFeature.State) {
 
     // deduplicate while preserving order (main first)
     var seen = Set<String>()
-    var result: [BreedDetailFeature.State.ImageItem] = []
+    var result: [BreedDetailReducer.State.ImageItem] = []
     for url in urls + gallery {
         if !seen.contains(url) {
             seen.insert(url)

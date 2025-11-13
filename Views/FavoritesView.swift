@@ -6,7 +6,7 @@ import Combine
 /// Ecrã que lista apenas os favoritos, lendo diretamente do SwiftData (FavoriteBreedDetail),
 /// agora controlado por TCA (FavoritesFeature) com navegação em stack para BreedDetailFeature.
 struct FavoritesView: View {
-    let store: StoreOf<FavoritesFeature>
+    let store: StoreOf<FavoritesReducer>
     
     @Environment(\.modelContext) private var modelContext
 
@@ -37,7 +37,7 @@ struct FavoritesView: View {
         }
     }
 
-    private func loadFavorites(viewStore: ViewStore<FavoritesFeature.State, FavoritesFeature.Action>) {
+    private func loadFavorites(viewStore: ViewStore<FavoritesReducer.State, FavoritesReducer.Action>) {
         do {
             let descriptor = FetchDescriptor<FavoriteBreedDetail>(
                 sortBy: [SortDescriptor(\FavoriteBreedDetail.name)]
@@ -53,7 +53,7 @@ struct FavoritesView: View {
 
 // MARK: - Body composition
 private extension FavoritesView {
-    func content(viewStore: ViewStoreOf<FavoritesFeature>) -> some View {
+    func content(viewStore: ViewStoreOf<FavoritesReducer>) -> some View {
         VStack(alignment: .leading, spacing: UILayout.sectionSpacing) {
             if viewStore.rows.isEmpty {
                 emptyStateSection
@@ -73,7 +73,7 @@ private extension FavoritesView {
             .padding()
     }
 
-    func favoritesListSection(viewStore: ViewStoreOf<FavoritesFeature>) -> some View {
+    func favoritesListSection(viewStore: ViewStoreOf<FavoritesReducer>) -> some View {
         List(viewStore.rows) { row in
             Button {
                 viewStore.send(.tappedRow(row.breed))
@@ -85,7 +85,7 @@ private extension FavoritesView {
     }
 
     @ViewBuilder
-    func averageFooterSection(viewStore: ViewStoreOf<FavoritesFeature>) -> some View {
+    func averageFooterSection(viewStore: ViewStoreOf<FavoritesReducer>) -> some View {
         if let avgText = viewStore.averageLifeSpanText {
             Text("\(UIStrings.Common.averageLifeSpanOfFavoritesPrefix) \(avgText) \(UIStrings.Common.years)")
                 .font(.subheadline)
@@ -96,7 +96,7 @@ private extension FavoritesView {
 
 // MARK: - Row
 private extension FavoritesView {
-    func favoriteRow(_ row: FavoriteRow, viewStore: ViewStoreOf<FavoritesFeature>) -> some View {
+    func favoriteRow(_ row: FavoriteRow, viewStore: ViewStoreOf<FavoritesReducer>) -> some View {
         HStack(spacing: UILayout.tileContentSpacing) {
             // Mini
             CatImageView(

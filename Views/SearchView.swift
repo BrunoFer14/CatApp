@@ -4,7 +4,7 @@ import ComposableArchitecture
 
 /// Local search screen over SwiftData storage (CachedBreed)
 struct SearchView: View {
-    let store: StoreOf<SearchFeature>
+    let store: StoreOf<SearchReducer>
 
     // Read directly from SwiftData, ordered by orderIndex
     @Query(sort: [SortDescriptor(\CachedBreed.orderIndex, order: .forward)])
@@ -78,7 +78,7 @@ struct SearchView: View {
 
 // MARK: - Row
 private extension SearchView {
-    func breedRow(_ breed: CatBreed, viewStore: ViewStoreOf<SearchFeature>) -> some View {
+    func breedRow(_ breed: CatBreed, viewStore: ViewStoreOf<SearchReducer>) -> some View {
         HStack(spacing: UILayout.searchRowHorizontalSpacing) {
             CatImageView(
                 urlString: breed.image?.url ?? breed.referenceImageUrl,
@@ -103,7 +103,7 @@ private extension SearchView {
         .padding(.vertical, UILayout.searchRowVerticalPadding)
     }
 
-    func onRowAppear(cached: CachedBreed, viewStore: ViewStoreOf<SearchFeature>, filtered: [CachedBreed]) {
+    func onRowAppear(cached: CachedBreed, viewStore: ViewStoreOf<SearchReducer>, filtered: [CachedBreed]) {
         // Pagination: when the last filtered item appears, request next page
         if cached.id == filtered.last?.id {
             viewStore.send(.requestNextPageIfNeeded)

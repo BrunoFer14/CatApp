@@ -6,7 +6,7 @@ import ComposableArchitecture
 /// Main feature for displaying paginated cat breeds with favorites support
 /// Follows TCA architecture with proper state management and side effects
 @Reducer
-struct HomeFeature {
+struct HomePageReducer {
     // MARK: - Navigation Route
     /// Defines possible navigation destinations from the home screen
     @Reducer
@@ -15,18 +15,18 @@ struct HomeFeature {
         @ObservableState
         @CasePathable
         enum State: Equatable {
-            case breedDetail(BreedDetailFeature.State)
+            case breedDetail(BreedDetailReducer.State)
         }
         
         /// Actions that can be performed on navigation destinations
         enum Action: Equatable {
-            case breedDetail(BreedDetailFeature.Action)
+            case breedDetail(BreedDetailReducer.Action)
         }
         
         /// Composes child reducers for navigation destinations
         var body: some ReducerOf<Self> {
             Scope(state: \.breedDetail, action: \.breedDetail) {
-                BreedDetailFeature()
+                BreedDetailReducer()
             }
         }
     }
@@ -311,7 +311,7 @@ struct HomeFeature {
 
             // Navigation
             case let .tappedBreed(breed):
-                state.path.append(.breedDetail(BreedDetailFeature.State(breed: breed)))
+                state.path.append(.breedDetail(BreedDetailReducer.State(breed: breed)))
                 return .none
 
             case .path:

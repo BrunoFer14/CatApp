@@ -15,14 +15,14 @@ struct MainView: View {
     @State private var searchPath = NavigationPath()
 
     // Stores TCA for Home, Favorites e Search
-    private let homeStore: StoreOf<HomeFeature>
-    private let favoritesStore: StoreOf<FavoritesFeature>
-    private let searchStore: StoreOf<SearchFeature>
+    private let homeStore: StoreOf<HomePageReducer>
+    private let favoritesStore: StoreOf<FavoritesReducer>
+    private let searchStore: StoreOf<SearchReducer>
 
     init() {
-        self.homeStore = Store(initialState: HomeFeature.State(), reducer: { HomeFeature() })
-        self.favoritesStore = Store(initialState: FavoritesFeature.State(), reducer: { FavoritesFeature() })
-        self.searchStore = Store(initialState: SearchFeature.State(), reducer: { SearchFeature() })
+        self.homeStore = Store(initialState: HomePageReducer.State(), reducer: { HomePageReducer() })
+        self.favoritesStore = Store(initialState: FavoritesReducer.State(), reducer: { FavoritesReducer() })
+        self.searchStore = Store(initialState: SearchReducer.State(), reducer: { SearchReducer() })
     }
 
     var body: some View {
