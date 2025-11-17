@@ -3,10 +3,12 @@ import Testing
 import ComposableArchitecture
 
 struct CatAppTests {
-    
+
+    // Existing tests
+
     @Test
     func testInitialState() async {
-        // Given - Create a test breed
+        // Given
         let testBreed = CatBreed(
             id: "test-id",
             name: "Test Breed",
@@ -17,14 +19,14 @@ struct CatAppTests {
             image: BreedImage(url: "test-image.jpg"),
             referenceImageId: nil
         )
-        
-        // When - Create TestStore with initial state
+
+        // When
         let store = await TestStore(
             initialState: BreedDetailReducer.State(breed: testBreed),
             reducer: { BreedDetailReducer() }
         )
-        
-        // Then - Verify initial values from store.state
+
+        // Then
         let state = await store.state
         #expect(state.breed.id == "test-id")
         #expect(state.breed.name == "Test Breed")
@@ -36,7 +38,7 @@ struct CatAppTests {
         #expect(state.selectedIndex == UIConfig.Pagination.initialPageIndex)
         #expect(state.lastErrorMessage == nil)
     }
-    
+
     @Test
     func isFavoriteButtonToggled() async throws {
         // Given
@@ -50,8 +52,8 @@ struct CatAppTests {
             image: BreedImage(url: "test-image.jpg"),
             referenceImageId: nil
         )
-        
-        // When - Build store and override dependency to simulate "not favorite" -> toggled to favorite
+
+        // When
         let store = await TestStore(
             initialState: BreedDetailReducer.State(breed: testBreed),
             reducer: { BreedDetailReducer() },
@@ -59,30 +61,283 @@ struct CatAppTests {
                 deps.favoritesService = FavoritesStub(initiallyFavorite: false)
             }
         )
-        
-        //send the toggle action
         await store.send(.toggleFavorite)
-        
-        // Then - expect the reducer to emit success and flip isFavorite to true
+
+        // Then
         await store.receive(.toggleFavoriteSuccess(id: "test-id", isNowFavorite: true)) { state in
             state.isFavorite = true
             state.lastErrorMessage = nil
         }
     }
+
+    // New
+    @Test
+    func detail_loadDetail_nil_setsNotFoundError() async {
+        // Given
+        let breed = CatBreed(id: "x", name: "X", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil)
+        let store = await TestStore(
+            initialState: BreedDetailReducer.State(breed: breed),
+            reducer: { BreedDetailReducer() },
+            withDependencies: {
+                $0.detailsService = DetailsStub(detail: nil, images: [])
+                $0.favoritesService = FavoritesStub(initiallyFavorite: false)
+            }
+        )
+
+        // When
+        await store.send(.loadDetail(id: "x")) { $0.isLoading = true }
+
+        // Then
+        await store.receive(.detailResponseSuccess(nil)) {
+            $0.isLoading = false
+            $0.screenState = .error(UIStrings.Detail.notFoundError)
+        }
+    }
+
+    @Test
+    func detail_loadGallery_success_rebuildsItemsAndResetsIndex() async {
+        // Given
+        let breed = CatBreed(id: "b", name: "B", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: BreedImage(url: "main.jpg"), referenceImageId: nil)
+        let gallery = [BreedGalleryImage(id: "g1", url: "main.jpg"), BreedGalleryImage(id: "g2", url: "g2.jpg")]
+        let store = await TestStore(
+            initialState: BreedDetailReducer.State(breed: breed),
+            reducer: { BreedDetailReducer() },
+            withDependencies: {
+                $0.detailsService = DetailsStub(detail: breed, images: gallery)
+                $0.favoritesService = FavoritesStub(initiallyFavorite: false)
+            }
+        )
+
+        // When
+        await store.send(.loadGallery(id: "b", limit: 10)) { $0.isLoadingGallery = true }
+
+        // Then
+        await store.receive(.galleryResponseSuccess(gallery)) {
+            $0.isLoadingGallery = false
+            $0.galleryImages = gallery
+            $0.selectedIndex = 0
+        }
+        // rebuildImageItems mutates state; reflect that in expectations
+        await store.receive(.rebuildImageItems) {
+            $0.imageItems = [
+                .init(id: "main.jpg", url: "main.jpg"),
+                .init(id: "g2.jpg", url: "g2.jpg")
+            ]
+        }
+        // Now assert URLs content
+        let urls = await store.state.imageItems.map(\.url)
+        #expect(urls.first == "main.jpg")
+        #expect(urls.contains("g2.jpg"))
+    }
+
+    @Test
+    func detail_present_and_dismiss_fullscreen() async {
+        // Given
+        var state = BreedDetailReducer.State(breed: CatBreed(id: "b", name: "B", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil))
+        state.imageItems = [.init(id: "1", url: "1.jpg")]
+        let store = await TestStore(initialState: state, reducer: { BreedDetailReducer() })
+
+        // When
+        await store.send(.presentFullscreenForSelected) { $0.isPresentingFullscreen = true; $0.fullscreenURL = "1.jpg" }
+
+        // Then
+        await store.send(.dismissFullscreen) { $0.isPresentingFullscreen = false; $0.fullscreenURL = nil }
+    }
+
+    @Test
+    func favorites_onAppear_loadsIDs() async {
+        // Given
+        struct FavService: FavoritesServiceProtocol {
+            func fetchFavorites() async throws -> [Favorite] { [Favorite(breedId: "a"), Favorite(breedId: "b")] }
+            func addFavorite(id: String) async throws {}
+            func removeFavorite(id: String) async throws {}
+            func isFavorite(id: String) async -> Bool { false }
+            func upsertFavoriteDetail(from breed: CatBreed) async throws {}
+            func deleteFavoriteDetail(id: String) async throws {}
+            func fetchFavoriteDetailsByIDs(_ ids: Set<String>) async throws -> [FavoriteBreedDetail] { [] }
+        }
+        let store = await TestStore(
+            initialState: FavoritesReducer.State(),
+            reducer: { FavoritesReducer() },
+            withDependencies: { $0.favoritesService = FavService() }
+        )
+
+        // When
+        await store.send(.onAppear)
+
+        // Then
+        await store.receive(.refreshFavoritesFinished(Set(["a","b"]))) { $0.favoriteIDs = Set(["a","b"]) }
+    }
+
+    @Test
+    func favorites_refreshFavoritesFinished_updatesIDsAndRowFlags() async {
+        // Given
+        var state = FavoritesReducer.State()
+        state.rows = [
+            FavoriteRow(id: "a", name: "A", imageURL: nil, breed: CatBreed(id: "a", name: "A", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil), isFavorite: false),
+            FavoriteRow(id: "b", name: "B", imageURL: nil, breed: CatBreed(id: "b", name: "B", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil), isFavorite: false)
+        ]
+        let store = await TestStore(initialState: state, reducer: { FavoritesReducer() })
+
+        // When
+        await store.send(.refreshFavoritesFinished(Set(["a"]))) {
+            $0.favoriteIDs = Set(["a"])
+            $0.rows[0].isFavorite = true
+            $0.rows[1].isFavorite = false
+        }
+
+        // Then
+        let s = await store.state
+        #expect(s.favoriteIDs == Set(["a"]))
+        #expect(s.rows.first?.isFavorite == true)
+        #expect(s.rows.last?.isFavorite == false)
+    }
+
+    @Test
+    func favorites_favoritesSnapshotChanged_buildsRowsAndAverage() async {
+        // Given
+        let details = [
+            FavoriteBreedDetail(id: "a", name: "A", origin: nil, temperament: nil, lifeSpan: "10 - 14", breedDescription: nil, imageUrl: "a.jpg"),
+            FavoriteBreedDetail(id: "b", name: "B", origin: nil, temperament: nil, lifeSpan: "12", breedDescription: nil, imageUrl: "b.jpg")
+        ]
+        let store = await TestStore(initialState: FavoritesReducer.State(), reducer: { FavoritesReducer() })
+
+        // When
+        await store.send(.favoritesSnapshotChanged(details)) {
+            $0.rows = [
+                FavoriteRow(id: "a", name: "A", imageURL: "a.jpg", breed: CatBreed(id: "a", name: "A", origin: nil, description: nil, temperament: nil, lifeSpan: "10 - 14", image: BreedImage(url: "a.jpg"), referenceImageId: nil), isFavorite: false),
+                FavoriteRow(id: "b", name: "B", imageURL: "b.jpg", breed: CatBreed(id: "b", name: "B", origin: nil, description: nil, temperament: nil, lifeSpan: "12", image: BreedImage(url: "b.jpg"), referenceImageId: nil), isFavorite: false)
+            ]
+            $0.averageLifeSpanText = "12.0"
+        }
+
+        // Then
+        let s = await store.state
+        #expect(s.rows.count == 2)
+        #expect(s.averageLifeSpanText == "12.0")
+    }
+
+    @Test
+    func favorites_tappedRow_pushesBreedDetail() async {
+        // Given
+        let breed = CatBreed(id: "x", name: "X", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil)
+        let store = await TestStore(initialState: FavoritesReducer.State(), reducer: { FavoritesReducer() })
+
+        // When
+        await store.send(.tappedRow(breed)) {
+            $0.path.append(.breedDetail(BreedDetailReducer.State(breed: breed)))
+        }
+
+        // Then
+        let s = await store.state
+        #expect(s.path.count == 1)
+    }
+
+    @Test
+    func favorites_toggleFavoriteSuccess_insertsIDAndTogglesRow() async {
+        // Given
+        var state = FavoritesReducer.State()
+        state.rows = [
+            FavoriteRow(id: "a", name: "A", imageURL: nil, breed: CatBreed(id: "a", name: "A", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil), isFavorite: false)
+        ]
+        let store = await TestStore(initialState: state, reducer: { FavoritesReducer() })
+
+        // When
+        await store.send(.toggleFavoriteSuccess(id: "a")) {
+            $0.favoriteIDs = Set(["a"])
+            $0.rows[0].isFavorite = true
+        }
+
+        // Then
+        let s = await store.state
+        #expect(s.favoriteIDs.contains("a"))
+        #expect(s.rows.first?.isFavorite == true)
+    }
+
+    @Test
+    func favorites_toggleFavoriteSuccess_removesIDAndTogglesRowOff() async {
+        // Given
+        var state = FavoritesReducer.State()
+        state.favoriteIDs = Set(["a"])
+        state.rows = [
+            FavoriteRow(id: "a", name: "A", imageURL: nil, breed: CatBreed(id: "a", name: "A", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil), isFavorite: true)
+        ]
+        let store = await TestStore(initialState: state, reducer: { FavoritesReducer() })
+
+        // When
+        await store.send(.toggleFavoriteSuccess(id: "a")) {
+            $0.favoriteIDs = []
+            $0.rows[0].isFavorite = false
+        }
+
+        // Then
+        let s = await store.state
+        #expect(!s.favoriteIDs.contains("a"))
+        #expect(s.rows.first?.isFavorite == false)
+    }
+    
+    // BreedDetailReducer: refreshFavorite (true)
+    @Test
+    func detail_refreshFavorite_updatesIsFavorite_true() async {
+        // Given
+        let breed = CatBreed(id: "fav-1", name: "Fav 1", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil)
+        let store = await TestStore(
+            initialState: BreedDetailReducer.State(breed: breed),
+            reducer: { BreedDetailReducer() },
+            withDependencies: {
+                $0.favoritesService = FavoritesStub(initiallyFavorite: true)
+            }
+        )
+
+        // When
+        await store.send(.refreshFavorite)
+
+        // Then
+        await store.receive(.toggleFavoriteSuccess(id: "fav-1", isNowFavorite: true)) {
+            $0.isFavorite = true
+            $0.lastErrorMessage = nil
+        }
+    }
+
+    // BreedDetailReducer: refreshFavorite (false)
+    @Test
+    func detail_refreshFavorite_updatesIsFavorite_false() async {
+        // Given
+        let breed = CatBreed(id: "fav-2", name: "Fav 2", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil)
+        let store = await TestStore(
+            initialState: BreedDetailReducer.State(breed: breed),
+            reducer: { BreedDetailReducer() },
+            withDependencies: {
+                $0.favoritesService = FavoritesStub(initiallyFavorite: false)
+            }
+        )
+        
+        // When
+        await store.send(.refreshFavorite)
+
+        // Then: no state change expected because isFavorite is already false
+        await store.receive(.toggleFavoriteSuccess(id: "fav-2", isNowFavorite: false))
+        let s = await store.state
+        #expect(s.isFavorite == false)
+        #expect(s.lastErrorMessage == nil)
+    }
 }
 
-    // - MARK: Stubs
-    // A default stub for FavoritesServiceProtocol
-    struct FavoritesStub: FavoritesServiceProtocol {
-        var initiallyFavorite: Bool
-        var addCalled = false
-        var removeCalled = false
+// - MARK: Stubs
+struct FavoritesStub: FavoritesServiceProtocol {
+    var initiallyFavorite: Bool
+    func fetchFavorites() async throws -> [Favorite] { [] }
+    func addFavorite(id: String) async throws {}
+    func removeFavorite(id: String) async throws {}
+    func isFavorite(id: String) async -> Bool { initiallyFavorite }
+    func upsertFavoriteDetail(from breed: CatBreed) async throws {}
+    func deleteFavoriteDetail(id: String) async throws {}
+    func fetchFavoriteDetailsByIDs(_ ids: Set<String>) async throws -> [FavoriteBreedDetail] { [] }
+}
 
-        func fetchFavorites() async throws -> [Favorite] { [] }
-        func addFavorite(id: String) async throws { }
-        func removeFavorite(id: String) async throws { }
-        func isFavorite(id: String) async -> Bool { initiallyFavorite }
-        func upsertFavoriteDetail(from breed: CatBreed) async throws { }
-        func deleteFavoriteDetail(id: String) async throws { }
-        func fetchFavoriteDetailsByIDs(_ ids: Set<String>) async throws ->  [FavoriteBreedDetail] { [] }
-    }
+struct DetailsStub: DetailsServiceProtocol {
+    var detail: CatBreed?
+    var images: [BreedGalleryImage] = []
+    func breedDetail(id: String) async throws -> CatBreed? { detail }
+    func breedImages(id: String, limit: Int) async throws -> [BreedGalleryImage] { images }
+}

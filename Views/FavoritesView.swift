@@ -7,8 +7,10 @@ import Combine
 /// agora controlado por TCA (FavoritesFeature) com navegação em stack para BreedDetailFeature.
 struct FavoritesView: View {
     let store: StoreOf<FavoritesReducer>
-    
-    @Environment(\.modelContext) private var modelContext
+
+    // Observe SwiftData changes live
+    @Query(sort: [SortDescriptor(\FavoriteBreedDetail.name)])
+    private var favorites: [FavoriteBreedDetail]
 
     var body: some View {
         NavigationStackStore(
@@ -18,9 +20,17 @@ struct FavoritesView: View {
                 content(viewStore: viewStore)
                     .navigationTitle(UIStrings.Favorites.title)
                     .onAppear {
+                        // Load favorite IDs for heart state
                         viewStore.send(.onAppear)
-                        loadFavorites(viewStore: viewStore)
+                        // Send initial snapshot
+                        viewStore.send(.favoritesSnapshotChanged(favorites))
                     }
+                    // Forward live SwiftData changes to the reducer
+                    .onChange(of: favorites) { _, newValue in
+                        viewStore.send(.favoritesSnapshotChanged(newValue))
+                    }
+                    // Optional: animate removals/insertions
+                    .animation(.default, value: viewStore.rows)
             }
         } destination: { routeStore in
             SwitchStore(routeStore) { state in
@@ -34,19 +44,6 @@ struct FavoritesView: View {
                     )
                 }
             }
-        }
-    }
-
-    private func loadFavorites(viewStore: ViewStore<FavoritesReducer.State, FavoritesReducer.Action>) {
-        do {
-            let descriptor = FetchDescriptor<FavoriteBreedDetail>(
-                sortBy: [SortDescriptor(\FavoriteBreedDetail.name)]
-            )
-            let favorites = try modelContext.fetch(descriptor)
-            viewStore.send(.favoritesSnapshotChanged(favorites))
-        } catch {
-            // Handle error if necessary
-            print("Error loading favorites: \(error)")
         }
     }
 }

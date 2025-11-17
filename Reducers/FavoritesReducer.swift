@@ -15,24 +15,24 @@ struct FavoritesReducer {
     // MARK: - Navigation Route
     //@Reducer(state: .equatable, action: .equatable)
     //enum Route {
-        //case breedDetail(BreedDetailFeature)
+        //case breedDetail(BreedDetailReducer)
     //}
     @Reducer
-    struct Route {
-        @ObservableState
-        @CasePathable
-        enum State: Equatable {
-            case breedDetail(BreedDetailReducer.State)
-        }
-        enum Action: Equatable {
-            case breedDetail(BreedDetailReducer.Action)
-        }
-        var body: some ReducerOf<Self> {
-            Scope(state: \.breedDetail, action: \.breedDetail) {
-                BreedDetailReducer()
-            }
-        }
-    }
+       struct Route {
+           @ObservableState
+           @CasePathable
+           enum State: Equatable {
+               case breedDetail(BreedDetailReducer.State)
+           }
+           enum Action: Equatable {
+               case breedDetail(BreedDetailReducer.Action)
+           }
+           var body: some ReducerOf<Self> {
+               Scope(state: \.breedDetail, action: \.breedDetail) {
+                   BreedDetailReducer()
+               }
+           }
+       }
 
     // MARK: - State
     @ObservableState
