@@ -20,10 +20,7 @@ struct BreedDetailReducerTests {
         )
 
         // When
-        let store = await TestStore(
-            initialState: BreedDetailReducer.State(breed: testBreed),
-            reducer: { BreedDetailReducer() }
-        )
+        let store = await makeSUT(state: .init(breed: testBreed))
 
         // Then
         let state = await store.state
@@ -53,12 +50,9 @@ struct BreedDetailReducerTests {
         )
 
         // When
-        let store = await TestStore(
-            initialState: BreedDetailReducer.State(breed: testBreed),
-            reducer: { BreedDetailReducer() },
-            withDependencies: { deps in
-                deps.favoritesService = FavoritesStub(initiallyFavorite: false)
-            }
+        let store = await makeSUT(
+            state: .init(breed: testBreed),
+            favorites: FavoritesStub(initiallyFavorite: false)
         )
         await store.send(.toggleFavorite)
 
@@ -73,13 +67,10 @@ struct BreedDetailReducerTests {
     func detail_loadDetail_nil_setsNotFoundError() async {
         // Given
         let breed = CatBreed(id: "x", name: "X", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil)
-        let store = await TestStore(
-            initialState: BreedDetailReducer.State(breed: breed),
-            reducer: { BreedDetailReducer() },
-            withDependencies: {
-                $0.detailsService = DetailsStub(detail: nil, images: [])
-                $0.favoritesService = FavoritesStub(initiallyFavorite: false)
-            }
+        let store = await makeSUT(
+            state: .init(breed: breed),
+            details: DetailsStub(detail: nil, images: []),
+            favorites: FavoritesStub(initiallyFavorite: false)
         )
 
         // When
@@ -97,13 +88,10 @@ struct BreedDetailReducerTests {
         // Given
         let breed = CatBreed(id: "b", name: "B", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: BreedImage(url: "main.jpg"), referenceImageId: nil)
         let gallery = [BreedGalleryImage(id: "g1", url: "main.jpg"), BreedGalleryImage(id: "g2", url: "g2.jpg")]
-        let store = await TestStore(
-            initialState: BreedDetailReducer.State(breed: breed),
-            reducer: { BreedDetailReducer() },
-            withDependencies: {
-                $0.detailsService = DetailsStub(detail: breed, images: gallery)
-                $0.favoritesService = FavoritesStub(initiallyFavorite: false)
-            }
+        let store = await makeSUT(
+            state: .init(breed: breed),
+            details: DetailsStub(detail: breed, images: gallery),
+            favorites: FavoritesStub(initiallyFavorite: false)
         )
 
         // When
@@ -131,7 +119,7 @@ struct BreedDetailReducerTests {
         // Given
         var state = BreedDetailReducer.State(breed: CatBreed(id: "b", name: "B", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil))
         state.imageItems = [.init(id: "1", url: "1.jpg")]
-        let store = await TestStore(initialState: state, reducer: { BreedDetailReducer() })
+        let store = await makeSUT(state: state)
 
         // When
         await store.send(.presentFullscreenForSelected) { $0.isPresentingFullscreen = true; $0.fullscreenURL = "1.jpg" }
@@ -144,12 +132,9 @@ struct BreedDetailReducerTests {
     func detail_refreshFavorite_updatesIsFavorite_true() async {
         // Given
         let breed = CatBreed(id: "fav-1", name: "Fav 1", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil)
-        let store = await TestStore(
-            initialState: BreedDetailReducer.State(breed: breed),
-            reducer: { BreedDetailReducer() },
-            withDependencies: {
-                $0.favoritesService = FavoritesStub(initiallyFavorite: true)
-            }
+        let store = await makeSUT(
+            state: .init(breed: breed),
+            favorites: FavoritesStub(initiallyFavorite: true)
         )
 
         // When
@@ -166,12 +151,9 @@ struct BreedDetailReducerTests {
     func detail_refreshFavorite_updatesIsFavorite_false() async {
         // Given
         let breed = CatBreed(id: "fav-2", name: "Fav 2", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil)
-        let store = await TestStore(
-            initialState: BreedDetailReducer.State(breed: breed),
-            reducer: { BreedDetailReducer() },
-            withDependencies: {
-                $0.favoritesService = FavoritesStub(initiallyFavorite: false)
-            }
+        let store = await makeSUT(
+            state: .init(breed: breed),
+            favorites: FavoritesStub(initiallyFavorite: false)
         )
         
         // When
@@ -182,5 +164,21 @@ struct BreedDetailReducerTests {
         let s = await store.state
         #expect(s.isFavorite == false)
         #expect(s.lastErrorMessage == nil)
+    }
+
+    // MARK: - SUT helper
+    private func makeSUT(
+        state: BreedDetailReducer.State,
+        details: DetailsStub? = nil,
+        favorites: FavoritesStub? = nil
+    ) async -> TestStoreOf<BreedDetailReducer> {
+        await TestStore(
+            initialState: state,
+            reducer: { BreedDetailReducer() },
+            withDependencies: {
+                if let details { $0.detailsService = details }
+                if let favorites { $0.favoritesService = favorites }
+            }
+        )
     }
 }

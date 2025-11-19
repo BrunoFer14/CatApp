@@ -17,10 +17,9 @@ struct FavoritesReducerTests {
             func deleteFavoriteDetail(id: String) async throws {}
             func fetchFavoriteDetailsByIDs(_ ids: Set<String>) async throws -> [FavoriteBreedDetail] { [] }
         }
-        let store = await TestStore(
-            initialState: FavoritesReducer.State(),
-            reducer: { FavoritesReducer() },
-            withDependencies: { $0.favoritesService = FavService() }
+        let store = await makeSUT(
+            state: FavoritesReducer.State(),
+            favoritesService: FavService()
         )
 
         // When
@@ -38,7 +37,7 @@ struct FavoritesReducerTests {
             FavoriteRow(id: "a", name: "A", imageURL: nil, breed: CatBreed(id: "a", name: "A", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil), isFavorite: false),
             FavoriteRow(id: "b", name: "B", imageURL: nil, breed: CatBreed(id: "b", name: "B", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil), isFavorite: false)
         ]
-        let store = await TestStore(initialState: state, reducer: { FavoritesReducer() })
+        let store = await makeSUT(state: state)
 
         // When
         await store.send(.refreshFavoritesFinished(Set(["a"]))) {
@@ -61,7 +60,7 @@ struct FavoritesReducerTests {
             FavoriteBreedDetail(id: "a", name: "A", origin: nil, temperament: nil, lifeSpan: "10 - 14", breedDescription: nil, imageUrl: "a.jpg"),
             FavoriteBreedDetail(id: "b", name: "B", origin: nil, temperament: nil, lifeSpan: "12", breedDescription: nil, imageUrl: "b.jpg")
         ]
-        let store = await TestStore(initialState: FavoritesReducer.State(), reducer: { FavoritesReducer() })
+        let store = await makeSUT(state: FavoritesReducer.State())
 
         // When
         await store.send(.favoritesSnapshotChanged(details)) {
@@ -82,7 +81,7 @@ struct FavoritesReducerTests {
     func favorites_tappedRow_pushesBreedDetail() async {
         // Given
         let breed = CatBreed(id: "x", name: "X", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil)
-        let store = await TestStore(initialState: FavoritesReducer.State(), reducer: { FavoritesReducer() })
+        let store = await makeSUT(state: FavoritesReducer.State())
 
         // When
         await store.send(.tappedRow(breed)) {
@@ -101,7 +100,7 @@ struct FavoritesReducerTests {
         state.rows = [
             FavoriteRow(id: "a", name: "A", imageURL: nil, breed: CatBreed(id: "a", name: "A", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil), isFavorite: false)
         ]
-        let store = await TestStore(initialState: state, reducer: { FavoritesReducer() })
+        let store = await makeSUT(state: state)
 
         // When
         await store.send(.toggleFavoriteSuccess(id: "a")) {
@@ -123,7 +122,7 @@ struct FavoritesReducerTests {
         state.rows = [
             FavoriteRow(id: "a", name: "A", imageURL: nil, breed: CatBreed(id: "a", name: "A", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil), isFavorite: true)
         ]
-        let store = await TestStore(initialState: state, reducer: { FavoritesReducer() })
+        let store = await makeSUT(state: state)
 
         // When
         await store.send(.toggleFavoriteSuccess(id: "a")) {
@@ -135,5 +134,19 @@ struct FavoritesReducerTests {
         let s = await store.state
         #expect(!s.favoriteIDs.contains("a"))
         #expect(s.rows.first?.isFavorite == false)
+    }
+
+    // MARK: - SUT helper
+    private func makeSUT(
+        state: FavoritesReducer.State,
+        favoritesService: (any FavoritesServiceProtocol)? = nil
+    ) async -> TestStoreOf<FavoritesReducer> {
+        await TestStore(
+            initialState: state,
+            reducer: { FavoritesReducer() },
+            withDependencies: {
+                if let favoritesService { $0.favoritesService = favoritesService }
+            }
+        )
     }
 }

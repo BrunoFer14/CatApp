@@ -13,13 +13,10 @@ struct SearchReducerTests {
             CatBreed(id: "2", name: "Two", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil)
         ]
         let page = UIConfig.Pagination.initialPageIndex
-        let store = await TestStore(
-            initialState: SearchReducer.State(),
-            reducer: { SearchReducer() },
-            withDependencies: {
-                $0.breedsService = BreedsServiceStub(pages: [page: breeds])
-                $0.breedsCacheDB = BreedsCacheDBStub()
-            }
+        let store = await makeSUT(
+            state: SearchReducer.State(),
+            breedsService: BreedsServiceStub(pages: [page: breeds]),
+            breedsCacheDB: BreedsCacheDBStub()
         )
 
         // When
@@ -40,13 +37,10 @@ struct SearchReducerTests {
         // Given
         let page = 1
         let cached = [CachedBreed(id: "c1", name: "Cached", origin: nil, temperament: nil, lifeSpan: nil, breedDescription: nil, imageUrl: nil, orderIndex: 1)]
-        let store = await TestStore(
-            initialState: SearchReducer.State(),
-            reducer: { SearchReducer() },
-            withDependencies: {
-                $0.breedsService = BreedsServiceStub(error: URLError(.badServerResponse))
-                $0.breedsCacheDB = BreedsCacheDBStub(cachedPages: [page: cached])
-            }
+        let store = await makeSUT(
+            state: SearchReducer.State(),
+            breedsService: BreedsServiceStub(error: URLError(.badServerResponse)),
+            breedsCacheDB: BreedsCacheDBStub(cachedPages: [page: cached])
         )
 
         // When
@@ -74,10 +68,9 @@ struct SearchReducerTests {
             func deleteFavoriteDetail(id: String) async throws {}
             func fetchFavoriteDetailsByIDs(_ ids: Set<String>) async throws -> [FavoriteBreedDetail] { [] }
         }
-        let store = await TestStore(
-            initialState: SearchReducer.State(),
-            reducer: { SearchReducer() },
-            withDependencies: { $0.favoritesService = FavService() }
+        let store = await makeSUT(
+            state: SearchReducer.State(),
+            favoritesService: FavService()
         )
 
         // When
@@ -102,10 +95,9 @@ struct SearchReducerTests {
             func deleteFavoriteDetail(id: String) async throws {}
             func fetchFavoriteDetailsByIDs(_ ids: Set<String>) async throws -> [FavoriteBreedDetail] { [] }
         }
-        let store = await TestStore(
-            initialState: SearchReducer.State(),
-            reducer: { SearchReducer() },
-            withDependencies: { $0.favoritesService = FavStub() }
+        let store = await makeSUT(
+            state: SearchReducer.State(),
+            favoritesService: FavStub()
         )
 
         // When
@@ -121,10 +113,7 @@ struct SearchReducerTests {
     func search_tappedBreed_pushesDetailRoute() async {
         // Given
         let breed = CatBreed(id: "d1", name: "Detail", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil)
-        let store = await TestStore(
-            initialState: SearchReducer.State(),
-            reducer: { SearchReducer() }
-        )
+        let store = await makeSUT(state: SearchReducer.State())
 
         // When
         await store.send(.tappedBreed(breed)) {
@@ -134,5 +123,23 @@ struct SearchReducerTests {
         // Then
         let s = await store.state
         #expect(s.path.count == 1)
+    }
+
+    // MARK: - SUT helper
+    private func makeSUT(
+        state: SearchReducer.State,
+        breedsService: (any BreedsServiceProtocol)? = nil,
+        breedsCacheDB: (any BreedsCacheDatabaseServiceProtocol)? = nil,
+        favoritesService: (any FavoritesServiceProtocol)? = nil
+    ) async -> TestStoreOf<SearchReducer> {
+        await TestStore(
+            initialState: state,
+            reducer: { SearchReducer() },
+            withDependencies: {
+                if let breedsService { $0.breedsService = breedsService }
+                if let breedsCacheDB { $0.breedsCacheDB = breedsCacheDB }
+                if let favoritesService { $0.favoritesService = favoritesService }
+            }
+        )
     }
 }
