@@ -43,7 +43,7 @@ private enum NetworkServiceKey: DependencyKey {
         NetworkService(apiKey: secrets.catApiKey)
     }
 
-    // Minimal stub for tests; override as needed in your tests
+    // Minimal stub for tests; override as needed in tests
     static var testValue: NetworkServiceProtocol {
         struct Stub: NetworkServiceProtocol {
             func fetch<T>(_ type: T.Type, from url: URL) -> AnyPublisher<T, Error> where T : Decodable {
