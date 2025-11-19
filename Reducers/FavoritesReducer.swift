@@ -78,15 +78,7 @@ struct FavoritesReducer {
             switch action {
             // Lifecycle
             case .onAppear:
-                return .run { send in
-                    do {
-                        let favs = try await favoritesService.fetchFavorites()
-                        let ids = Set(favs.map { $0.breedId })
-                        await send(.refreshFavoritesFinished(ids))
-                    } catch {
-                        await send(.refreshFavoritesFinished([]))
-                    }
-                }
+                return refreshFavoritesEffect()
 
             // Snapshot coming from SwiftData via the view
             case let .favoritesSnapshotChanged(details):
@@ -127,26 +119,7 @@ struct FavoritesReducer {
 
             // Toggle favorite
             case let .toggleFavorite(breed):
-                return .run { send in
-                    let id = breed.id
-                    if await favoritesService.isFavorite(id: id) {
-                        do {
-                            try await favoritesService.removeFavorite(id: id)
-                            try await favoritesService.deleteFavoriteDetail(id: id)
-                            await send(.toggleFavoriteSuccess(id: id))
-                        } catch {
-                            await send(.toggleFavoriteFailure)
-                        }
-                    } else {
-                        do {
-                            try await favoritesService.addFavorite(id: id)
-                            try await favoritesService.upsertFavoriteDetail(from: breed)
-                            await send(.toggleFavoriteSuccess(id: id))
-                        } catch {
-                            await send(.toggleFavoriteFailure)
-                        }
-                    }
-                }
+                return toggleFavorite(for: breed)
 
             case let .toggleFavoriteSuccess(id):
                 // Update favoriteIDs and row flags locally
@@ -186,6 +159,43 @@ struct FavoritesReducer {
         // Compose child reducers for stack elements
         .forEach(\.path, action: \.path) {
             Route()
+        }
+    }
+
+    // MARK: - Effects helpers
+    
+    private func refreshFavoritesEffect() -> EffectOf<Self> {
+        .run { send in
+            do {
+                let favs = try await favoritesService.fetchFavorites()
+                let ids = Set(favs.map { $0.breedId })
+                await send(.refreshFavoritesFinished(ids))
+            } catch {
+                await send(.refreshFavoritesFinished([]))
+            }
+        }
+    }
+
+    private func toggleFavorite(for breed: CatBreed) -> EffectOf<Self> {
+        .run { send in
+            let id = breed.id
+            if await favoritesService.isFavorite(id: id) {
+                do {
+                    try await favoritesService.removeFavorite(id: id)
+                    try await favoritesService.deleteFavoriteDetail(id: id)
+                    await send(.toggleFavoriteSuccess(id: id))
+                } catch {
+                    await send(.toggleFavoriteFailure)
+                }
+            } else {
+                do {
+                    try await favoritesService.addFavorite(id: id)
+                    try await favoritesService.upsertFavoriteDetail(from: breed)
+                    await send(.toggleFavoriteSuccess(id: id))
+                } catch {
+                    await send(.toggleFavoriteFailure)
+                }
+            }
         }
     }
 }

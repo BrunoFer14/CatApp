@@ -95,24 +95,7 @@ struct SearchReducer {
             case let .fetchPage(page):
                 if state.isLoadingPage { return .none }
                 state.isLoadingPage = true
-
-                return .run { [limit] send in
-                    do {
-                        let breeds = try await breedsService.pagedBreeds(page: page, limit: limit)
-                        // Persist best-effort
-                        try? await breedsCacheDB.upsertBreeds(Array(breeds.prefix(limit)), page: page, limit: limit)
-                        await send(.fetchPageSuccess(page: page))
-                    } catch {
-                        do {
-                            let cached = try await breedsCacheDB.fetchCachedPage(page: page, limit: limit)
-                            await send(.cacheFallbackResponse(page: page, cachedCount: cached.count))
-                            await send(.fetchPageFailure(page: page))
-                        } catch {
-                            await send(.cacheFallbackResponse(page: page, cachedCount: 0))
-                            await send(.fetchPageFailure(page: page))
-                        }
-                    }
-                }
+                return fetchPageEffect(page: page)
 
             case let .fetchPageSuccess(page):
                 state.currentPage = page
@@ -143,40 +126,14 @@ struct SearchReducer {
 
             // Favorites
             case .refreshFavorites:
-                return .run { send in
-                    do {
-                        let favs = try await favoritesService.fetchFavorites()
-                        await send(.refreshFavoritesFinished(Set(favs.map { $0.breedId })))
-                    } catch {
-                        await send(.refreshFavoritesFinished([]))
-                    }
-                }
+                return refreshFavoritesEffect()
 
             case let .refreshFavoritesFinished(ids):
                 state.favoriteIDs = ids
                 return .none
 
             case let .toggleFavorite(breed):
-                return .run { send in
-                    let id = breed.id
-                    if await favoritesService.isFavorite(id: id) {
-                        do {
-                            try await favoritesService.removeFavorite(id: id)
-                            try await favoritesService.deleteFavoriteDetail(id: id)
-                            await send(.toggleFavoriteSuccess(id: id))
-                        } catch {
-                            await send(.toggleFavoriteFailure)
-                        }
-                    } else {
-                        do {
-                            try await favoritesService.addFavorite(id: id)
-                            try await favoritesService.upsertFavoriteDetail(from: breed)
-                            await send(.toggleFavoriteSuccess(id: id))
-                        } catch {
-                            await send(.toggleFavoriteFailure)
-                        }
-                    }
-                }
+                return toggleFavorite(for: breed)
 
             case let .toggleFavoriteSuccess(id):
                 if state.favoriteIDs.contains(id) {
@@ -200,6 +157,61 @@ struct SearchReducer {
         }
         .forEach(\.path, action: \.path) {
             Route()
+        }
+    }
+
+    // MARK: - Effects helpers
+    private func fetchPageEffect(page: Int) -> EffectOf<Self> {
+        .run { [limit] send in
+            do {
+                let breeds = try await breedsService.pagedBreeds(page: page, limit: limit)
+                // Persist best-effort
+                try? await breedsCacheDB.upsertBreeds(Array(breeds.prefix(limit)), page: page, limit: limit)
+                await send(.fetchPageSuccess(page: page))
+            } catch {
+                do {
+                    let cached = try await breedsCacheDB.fetchCachedPage(page: page, limit: limit)
+                    await send(.cacheFallbackResponse(page: page, cachedCount: cached.count))
+                    await send(.fetchPageFailure(page: page))
+                } catch {
+                    await send(.cacheFallbackResponse(page: page, cachedCount: 0))
+                    await send(.fetchPageFailure(page: page))
+                }
+            }
+        }
+    }
+
+    private func refreshFavoritesEffect() -> EffectOf<Self> {
+        .run { send in
+            do {
+                let favs = try await favoritesService.fetchFavorites()
+                await send(.refreshFavoritesFinished(Set(favs.map { $0.breedId })))
+            } catch {
+                await send(.refreshFavoritesFinished([]))
+            }
+        }
+    }
+
+    private func toggleFavorite(for breed: CatBreed) -> EffectOf<Self> {
+        .run { send in
+            let id = breed.id
+            if await favoritesService.isFavorite(id: id) {
+                do {
+                    try await favoritesService.removeFavorite(id: id)
+                    try await favoritesService.deleteFavoriteDetail(id: id)
+                    await send(.toggleFavoriteSuccess(id: id))
+                } catch {
+                    await send(.toggleFavoriteFailure)
+                }
+            } else {
+                do {
+                    try await favoritesService.addFavorite(id: id)
+                    try await favoritesService.upsertFavoriteDetail(from: breed)
+                    await send(.toggleFavoriteSuccess(id: id))
+                } catch {
+                    await send(.toggleFavoriteFailure)
+                }
+            }
         }
     }
 }
@@ -226,3 +238,4 @@ private extension Publisher {
         }
     }
 }
+

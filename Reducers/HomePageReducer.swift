@@ -131,7 +131,7 @@ struct HomePageReducer {
         Reduce { state, action in
             switch action {
 
-            // MARK: Lifecycle Handling
+            //Lifecycle Handling
             case .onAppear:
                 /// Load cached breeds and favorites, start initial page if needed
                 return .merge(
@@ -140,36 +140,17 @@ struct HomePageReducer {
                     state.hasLoadedFirstPage ? .none : .send(.fetchPage(UIConfig.Pagination.initialPageIndex))
                 )
 
-            // MARK: Data Loading
+            //Data Loading
             case .loadCachedBreeds:
                 /// Load all cached breeds from local storage and convert to CatBreed models
-                return .run { send in
-                    do {
-                        let cachedBreeds = try await breedsCacheDB.fetchCachedBreedsSorted()
-                        let breeds = cachedBreeds.map { cached in
-                            CatBreed(
-                                id: cached.id,
-                                name: cached.name,
-                                origin: cached.origin,
-                                description: cached.breedDescription,
-                                temperament: cached.temperament,
-                                lifeSpan: cached.lifeSpan,
-                                image: BreedImage(url: cached.imageUrl),
-                                referenceImageId: nil
-                            )
-                        }
-                        await send(.loadCachedBreedsFinished(breeds))
-                    } catch {
-                        await send(.loadCachedBreedsFinished([]))
-                    }
-                }
+                return loadCachedBreedsEffect()
 
             case let .loadCachedBreedsFinished(breeds):
                 /// Update state with loaded breeds
                 state.breeds = breeds
                 return .none
 
-            // MARK: Pagination Handling
+            //Pagination Handling
             case .requestNextPageIfNeeded:
                 /// Trigger loading of the next page in sequence
                 let next = state.currentPage + 1
@@ -185,26 +166,7 @@ struct HomePageReducer {
                 state.isLoadingPage = true
                 state.lastErrorMessage = nil
 
-                return .run { [limit] send in
-                    do {
-                        // Try to fetch from API using async/await service
-                        let breeds = try await breedsService.pagedBreeds(page: page, limit: limit)
-                        let pageSlice = Array(breeds.prefix(limit))
-                        // Persist to cache (best effort - don't fail if cache write fails)
-                        try? await breedsCacheDB.upsertBreeds(pageSlice, page: page, limit: limit)
-                        await send(.fetchPageSuccess(page: page, breeds: pageSlice))
-                    } catch {
-                        // On API failure, try to use cached data as fallback
-                        do {
-                            let cached = try await breedsCacheDB.fetchCachedPage(page: page, limit: limit)
-                            await send(.cacheFallbackResponse(page: page, cachedCount: cached.count))
-                            await send(.fetchPageFailure(page: page))
-                        } catch {
-                            await send(.cacheFallbackResponse(page: page, cachedCount: 0))
-                            await send(.fetchPageFailure(page: page))
-                        }
-                    }
-                }
+                return fetchPageEffect(page: page)
 
             case let .fetchPageSuccess(page, _):
                 state.currentPage = page
@@ -246,11 +208,7 @@ struct HomePageReducer {
                 state.hasLoadedFirstPage = false
                 state.lastErrorMessage = nil
 
-                return .run { send in
-                    do { try await breedsCacheDB.clearCache() }
-                    catch { /* log opcional */ }
-                    await send(.clearCacheFinished)
-                }
+                return clearCacheEffect()
 
             case .clearCacheFinished:
                 state.breeds = []
@@ -261,41 +219,14 @@ struct HomePageReducer {
 
             // Favorites
             case .refreshFavorites:
-                return .run { send in
-                    do {
-                        let favs = try await favoritesService.fetchFavorites()
-                        let ids = Set(favs.map { $0.breedId })
-                        await send(.refreshFavoritesFinished(ids))
-                    } catch {
-                        await send(.refreshFavoritesFinished([]))
-                    }
-                }
+                return refreshFavoritesEffect()
 
             case let .refreshFavoritesFinished(ids):
                 state.favoriteIDs = ids
                 return .none
 
             case let .toggleFavorite(breed):
-                return .run { send in
-                    let id = breed.id
-                    if await favoritesService.isFavorite(id: id) {
-                        do {
-                            try await favoritesService.removeFavorite(id: id)
-                            try await favoritesService.deleteFavoriteDetail(id: id)
-                            await send(.toggleFavoriteSuccess(id: id))
-                        } catch {
-                            await send(.toggleFavoriteFailure)
-                        }
-                    } else {
-                        do {
-                            try await favoritesService.addFavorite(id: id)
-                            try await favoritesService.upsertFavoriteDetail(from: breed)
-                            await send(.toggleFavoriteSuccess(id: id))
-                        } catch {
-                            await send(.toggleFavoriteFailure)
-                        }
-                    }
-                }
+                return toggleFavorite(for: breed)
 
             case let .toggleFavoriteSuccess(id):
                 if state.favoriteIDs.contains(id) {
@@ -326,6 +257,96 @@ struct HomePageReducer {
             Route()
         }
     }
+
+    // MARK: - Effects helpers
+    private func loadCachedBreedsEffect() -> EffectOf<Self> {
+        .run { send in
+            do {
+                let cachedBreeds = try await breedsCacheDB.fetchCachedBreedsSorted()
+                let breeds = cachedBreeds.map { cached in
+                    CatBreed(
+                        id: cached.id,
+                        name: cached.name,
+                        origin: cached.origin,
+                        description: cached.breedDescription,
+                        temperament: cached.temperament,
+                        lifeSpan: cached.lifeSpan,
+                        image: BreedImage(url: cached.imageUrl),
+                        referenceImageId: nil
+                    )
+                }
+                await send(.loadCachedBreedsFinished(breeds))
+            } catch {
+                await send(.loadCachedBreedsFinished([]))
+            }
+        }
+    }
+
+    private func fetchPageEffect(page: Int) -> EffectOf<Self> {
+        .run { [limit] send in
+            do {
+                // Try to fetch from API using async/await service
+                let breeds = try await breedsService.pagedBreeds(page: page, limit: limit)
+                let pageSlice = Array(breeds.prefix(limit))
+                // Persist to cache (best effort - don't fail if cache write fails)
+                try? await breedsCacheDB.upsertBreeds(pageSlice, page: page, limit: limit)
+                await send(.fetchPageSuccess(page: page, breeds: pageSlice))
+            } catch {
+                // On API failure, try to use cached data as fallback
+                do {
+                    let cached = try await breedsCacheDB.fetchCachedPage(page: page, limit: limit)
+                    await send(.cacheFallbackResponse(page: page, cachedCount: cached.count))
+                    await send(.fetchPageFailure(page: page))
+                } catch {
+                    await send(.cacheFallbackResponse(page: page, cachedCount: 0))
+                    await send(.fetchPageFailure(page: page))
+                }
+            }
+        }
+    }
+
+    private func clearCacheEffect() -> EffectOf<Self> {
+        .run { send in
+            do { try await breedsCacheDB.clearCache() }
+            catch { /* log opcional */ }
+            await send(.clearCacheFinished)
+        }
+    }
+
+    private func refreshFavoritesEffect() -> EffectOf<Self> {
+        .run { send in
+            do {
+                let favs = try await favoritesService.fetchFavorites()
+                let ids = Set(favs.map { $0.breedId })
+                await send(.refreshFavoritesFinished(ids))
+            } catch {
+                await send(.refreshFavoritesFinished([]))
+            }
+        }
+    }
+
+    private func toggleFavorite(for breed: CatBreed) -> EffectOf<Self> {
+        .run { send in
+            let id = breed.id
+            if await favoritesService.isFavorite(id: id) {
+                do {
+                    try await favoritesService.removeFavorite(id: id)
+                    try await favoritesService.deleteFavoriteDetail(id: id)
+                    await send(.toggleFavoriteSuccess(id: id))
+                } catch {
+                    await send(.toggleFavoriteFailure)
+                }
+            } else {
+                do {
+                    try await favoritesService.addFavorite(id: id)
+                    try await favoritesService.upsertFavoriteDetail(from: breed)
+                    await send(.toggleFavoriteSuccess(id: id))
+                } catch {
+                    await send(.toggleFavoriteFailure)
+                }
+            }
+        }
+    }
 }
 
 // MARK: - Helper: await first value from a Combine publisher
@@ -349,3 +370,4 @@ private extension Publisher {
         }
     }
 }
+
