@@ -14,6 +14,27 @@ struct FavoritesStub: FavoritesServiceProtocol {
     func fetchFavoriteDetailsByIDs(_ ids: Set<String>) async throws -> [FavoriteBreedDetail] { [] }
 }
 
+// Protocol witness for FavoritesServiceProtocol
+struct FavoritesServiceWitness: FavoritesServiceProtocol {
+    var fetchFavoritesImpl: () async throws -> [Favorite] = { [] }
+    var addFavoriteImpl: (_ id: String) async throws -> Void = { _ in }
+    var removeFavoriteImpl: (_ id: String) async throws -> Void = { _ in }
+    var isFavoriteImpl: (_ id: String) async -> Bool = { _ in false }
+    var upsertFavoriteDetailImpl: (_ breed: CatBreed) async throws -> Void = { _ in }
+    var deleteFavoriteDetailImpl: (_ id: String) async throws -> Void = { _ in }
+    var fetchFavoriteDetailsByIDsImpl: (_ ids: Set<String>) async throws -> [FavoriteBreedDetail] = { _ in [] }
+
+    func fetchFavorites() async throws -> [Favorite] { try await fetchFavoritesImpl() }
+    func addFavorite(id: String) async throws { try await addFavoriteImpl(id) }
+    func removeFavorite(id: String) async throws { try await removeFavoriteImpl(id) }
+    func isFavorite(id: String) async -> Bool { await isFavoriteImpl(id) }
+    func upsertFavoriteDetail(from breed: CatBreed) async throws { try await upsertFavoriteDetailImpl(breed) }
+    func deleteFavoriteDetail(id: String) async throws { try await deleteFavoriteDetailImpl(id) }
+    func fetchFavoriteDetailsByIDs(_ ids: Set<String>) async throws -> [FavoriteBreedDetail] {
+        try await fetchFavoriteDetailsByIDsImpl(ids)
+    }
+}
+
 struct DetailsStub: DetailsServiceProtocol {
     var detail: CatBreed?
     var images: [BreedGalleryImage] = []
@@ -39,4 +60,39 @@ struct BreedsCacheDBStub: BreedsCacheDatabaseServiceProtocol {
         cachedPages[page] ?? []
     }
     func clearCache() async throws {}
+}
+
+// Base test breed (default values shared across tests)
+let testBreed = CatBreed(
+    id: "test-id",
+    name: "Test Breed",
+    origin: "Test Origin",
+    description: "Test Description",
+    temperament: "Calm",
+    lifeSpan: "12-15",
+    image: BreedImage(url: "test-image.jpg"),
+    referenceImageId: nil
+)
+
+// Factory to create CatBreed with overridable defaults
+func makeBreed(
+    id: String = "test-id",
+    name: String = "Test Breed",
+    origin: String? = "Test Origin",
+    description: String? = "Test Description",
+    temperament: String? = "Calm",
+    lifeSpan: String? = "12-15",
+    image: BreedImage? = BreedImage(url: "test-image.jpg"),
+    referenceImageId: String? = nil
+) -> CatBreed {
+    CatBreed(
+        id: id,
+        name: name,
+        origin: origin,
+        description: description,
+        temperament: temperament,
+        lifeSpan: lifeSpan,
+        image: image,
+        referenceImageId: referenceImageId
+    )
 }

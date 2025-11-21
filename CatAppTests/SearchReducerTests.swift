@@ -9,8 +9,8 @@ struct SearchReducerTests {
     func search_fetchPageSuccess_updatesFlags() async {
         // Given
         let breeds = [
-            CatBreed(id: "1", name: "One", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil),
-            CatBreed(id: "2", name: "Two", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil)
+            makeBreed(id: "1", name: "One", image: nil),
+            makeBreed(id: "2", name: "Two", image: nil)
         ]
         let page = UIConfig.Pagination.initialPageIndex
         let store = await makeSUT(
@@ -42,7 +42,7 @@ struct SearchReducerTests {
             breedsService: BreedsServiceStub(error: URLError(.badServerResponse)),
             breedsCacheDB: BreedsCacheDBStub(cachedPages: [page: cached])
         )
-
+        
         // When
         await store.send(SearchReducer.Action.fetchPage(page)) {
             $0.isLoadingPage = true
@@ -59,18 +59,11 @@ struct SearchReducerTests {
     @Test
     func search_refreshFavorites_populatesIDs() async {
         // Given
-        struct FavService: FavoritesServiceProtocol {
-            func fetchFavorites() async throws -> [Favorite] { [Favorite(breedId: "x"), Favorite(breedId: "y")] }
-            func addFavorite(id: String) async throws {}
-            func removeFavorite(id: String) async throws {}
-            func isFavorite(id: String) async -> Bool { false }
-            func upsertFavoriteDetail(from breed: CatBreed) async throws {}
-            func deleteFavoriteDetail(id: String) async throws {}
-            func fetchFavoriteDetailsByIDs(_ ids: Set<String>) async throws -> [FavoriteBreedDetail] { [] }
-        }
         let store = await makeSUT(
             state: SearchReducer.State(),
-            favoritesService: FavService()
+            favoritesService: FavoritesServiceWitness(
+                fetchFavoritesImpl: { [Favorite(breedId: "x"), Favorite(breedId: "y")] }
+            )
         )
 
         // When
@@ -85,19 +78,11 @@ struct SearchReducerTests {
     @Test
     func search_toggleFavorite_togglesID() async {
         // Given
-        let breed = CatBreed(id: "t1", name: "T", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil)
-        struct FavStub: FavoritesServiceProtocol {
-            func fetchFavorites() async throws -> [Favorite] { [] }
-            func addFavorite(id: String) async throws {}
-            func removeFavorite(id: String) async throws {}
-            func isFavorite(id: String) async -> Bool { false }
-            func upsertFavoriteDetail(from breed: CatBreed) async throws {}
-            func deleteFavoriteDetail(id: String) async throws {}
-            func fetchFavoriteDetailsByIDs(_ ids: Set<String>) async throws -> [FavoriteBreedDetail] { [] }
-        }
+        let breed = makeBreed(id: "t1", name: "T", image: nil)
+        // Defaults to isFavoriteImpl = false and no-ops for add/remove
         let store = await makeSUT(
             state: SearchReducer.State(),
-            favoritesService: FavStub()
+            favoritesService: FavoritesServiceWitness()
         )
 
         // When
@@ -112,7 +97,7 @@ struct SearchReducerTests {
     @Test
     func search_tappedBreed_pushesDetailRoute() async {
         // Given
-        let breed = CatBreed(id: "d1", name: "Detail", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil)
+        let breed = makeBreed(id: "d1", name: "Detail", image: nil)
         let store = await makeSUT(state: SearchReducer.State())
 
         // When

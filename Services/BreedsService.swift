@@ -53,7 +53,6 @@ private enum BreedsServiceKey: DependencyKey {
         let network = DependencyValues().networkService
         return BreedsService(networkService: network)
     }
-
     static var testValue: BreedsServiceProtocol {
         struct Stub: BreedsServiceProtocol {
             var pages: [Int: [CatBreed]] = [:]

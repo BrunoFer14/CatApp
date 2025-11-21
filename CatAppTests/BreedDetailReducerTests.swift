@@ -8,17 +8,7 @@ struct BreedDetailReducerTests {
     @Test
     func testInitialState() async {
         // Given
-        let testBreed = CatBreed(
-            id: "test-id",
-            name: "Test Breed",
-            origin: "Test Origin",
-            description: "Test Description",
-            temperament: "Calm",
-            lifeSpan: "12-15",
-            image: BreedImage(url: "test-image.jpg"),
-            referenceImageId: nil
-        )
-
+        //using testBreed -> teststubs
         // When
         let store = await makeSUT(state: .init(breed: testBreed))
 
@@ -28,7 +18,7 @@ struct BreedDetailReducerTests {
         #expect(state.breed.name == "Test Breed")
         #expect(state.screenState == .loading)
         #expect(state.isFavorite == false)
-        #expect(state.isLoading == false)
+        #expect(state.isLoading == true) // computed from .loading
         #expect(state.isLoadingGallery == false)
         #expect(state.imageItems.isEmpty)
         #expect(state.selectedIndex == UIConfig.Pagination.initialPageIndex)
@@ -38,16 +28,7 @@ struct BreedDetailReducerTests {
     @Test
     func isFavoriteButtonToggled() async throws {
         // Given
-        let testBreed = CatBreed(
-            id: "test-id",
-            name: "Test Breed",
-            origin: "Test Origin",
-            description: "Test Description",
-            temperament: "Calm",
-            lifeSpan: "12-15",
-            image: BreedImage(url: "test-image.jpg"),
-            referenceImageId: nil
-        )
+        //using testBreed -> teststubs
 
         // When
         let store = await makeSUT(
@@ -66,7 +47,7 @@ struct BreedDetailReducerTests {
     @Test
     func detail_loadDetail_nil_setsNotFoundError() async {
         // Given
-        let breed = CatBreed(id: "x", name: "X", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil)
+        let breed = makeBreed(id: "x", name: "X", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil)
         let store = await makeSUT(
             state: .init(breed: breed),
             details: DetailsStub(detail: nil, images: []),
@@ -74,11 +55,10 @@ struct BreedDetailReducerTests {
         )
 
         // When
-        await store.send(.loadDetail(id: "x")) { $0.isLoading = true }
+        await store.send(.loadDetail(id: "x"))
 
         // Then
         await store.receive(.detailResponseSuccess(nil)) {
-            $0.isLoading = false
             $0.screenState = .error(UIStrings.Detail.notFoundError)
         }
     }
@@ -86,7 +66,7 @@ struct BreedDetailReducerTests {
     @Test
     func detail_loadGallery_success_rebuildsItemsAndResetsIndex() async {
         // Given
-        let breed = CatBreed(id: "b", name: "B", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: BreedImage(url: "main.jpg"), referenceImageId: nil)
+        let breed = makeBreed(id: "b", name: "B", image: BreedImage(url: "main.jpg"))
         let gallery = [BreedGalleryImage(id: "g1", url: "main.jpg"), BreedGalleryImage(id: "g2", url: "g2.jpg")]
         let store = await makeSUT(
             state: .init(breed: breed),
@@ -109,15 +89,12 @@ struct BreedDetailReducerTests {
                 .init(id: "g2.jpg", url: "g2.jpg")
             ]
         }
-        let urls = await store.state.imageItems.map(\.url)
-        #expect(urls.first == "main.jpg")
-        #expect(urls.contains("g2.jpg"))
     }
 
     @Test
     func detail_present_and_dismiss_fullscreen() async {
         // Given
-        var state = BreedDetailReducer.State(breed: CatBreed(id: "b", name: "B", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil))
+        var state = BreedDetailReducer.State(breed: makeBreed(id: "b", name: "B", image: nil))
         state.imageItems = [.init(id: "1", url: "1.jpg")]
         let store = await makeSUT(state: state)
 
@@ -131,7 +108,7 @@ struct BreedDetailReducerTests {
     @Test
     func detail_refreshFavorite_updatesIsFavorite_true() async {
         // Given
-        let breed = CatBreed(id: "fav-1", name: "Fav 1", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil)
+        let breed = makeBreed(id: "fav-1", name: "Fav 1", image: nil)
         let store = await makeSUT(
             state: .init(breed: breed),
             favorites: FavoritesStub(initiallyFavorite: true)
@@ -150,7 +127,7 @@ struct BreedDetailReducerTests {
     @Test
     func detail_refreshFavorite_updatesIsFavorite_false() async {
         // Given
-        let breed = CatBreed(id: "fav-2", name: "Fav 2", origin: nil, description: nil, temperament: nil, lifeSpan: nil, image: nil, referenceImageId: nil)
+        let breed = makeBreed(id: "fav-2", name: "Fav 2", image: nil)
         let store = await makeSUT(
             state: .init(breed: breed),
             favorites: FavoritesStub(initiallyFavorite: false)

@@ -21,7 +21,7 @@ struct BreedDetailReducer {
             case error(String)
         }
         var screenState: ScreenState = .loading
-        var isLoading: Bool = false
+        var isLoading: Bool { screenState == .loading }
 
         // Gallery
         var galleryImages: [BreedGalleryImage] = []
@@ -96,11 +96,27 @@ struct BreedDetailReducer {
             case .onAppear:
                 // Build initial image items from the current breed and kick off loads
                 rebuildImageItems(into: &state)
-                return .merge(
-                    .send(.refreshFavorite),
-                    .send(.loadDetail(id: state.breed.id)),
-                    .send(.loadGallery(id: state.breed.id, limit: APIConstants.defaultGalleryLimit))
-                )
+
+                var effects: [EffectOf<Self>] = []
+
+                // Refresh favorite
+                effects.append(refreshFavoriteEffect(for: state.breed.id))
+
+                // Detail: only fetch if not already in content state
+                if case .content = state.screenState {
+                    // no-op: keep current detail
+                } else {
+                    state.screenState = .loading
+                    state.lastErrorMessage = nil
+                    effects.append(loadDetailEffect(id: state.breed.id))
+                }
+
+                // Gallery
+                state.isLoadingGallery = true
+                state.galleryError = nil
+                effects.append(loadGalleryEffect(id: state.breed.id, limit: APIConstants.defaultGalleryLimit))
+
+                return .merge(effects)
 
             // Favorites
             case .refreshFavorite:
@@ -127,12 +143,10 @@ struct BreedDetailReducer {
                     return .none
                 }
                 state.screenState = .loading
-                state.isLoading = true
                 state.lastErrorMessage = nil
                 return loadDetailEffect(id: id)
 
             case let .detailResponseSuccess(fetched):
-                state.isLoading = false
                 if let fetched {
                     state.breed = fetched
                     state.screenState = .content
@@ -144,7 +158,6 @@ struct BreedDetailReducer {
                 return .none
 
             case let .detailResponseFailure(message):
-                state.isLoading = false
                 state.screenState = .error("Erro: \(message)")
                 return .none
 
