@@ -50,7 +50,8 @@ private extension Publisher {
 
 private enum BreedsServiceKey: DependencyKey {
     static var liveValue: BreedsServiceProtocol {
-        let network = DependencyValues().networkService
+        // Compose directly; do not read from the current dependency context here
+        let network = NetworkService(apiKey: secrets.catApiKey)
         return BreedsService(networkService: network)
     }
     static var testValue: BreedsServiceProtocol {

@@ -77,6 +77,7 @@ private extension MainView {
             case .home:
                 homePath = NavigationPath()
             case .favorites:
+                // No path reset behavior needed for Favorites
                 break
             case .search:
                 searchPath = NavigationPath()

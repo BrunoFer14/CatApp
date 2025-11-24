@@ -95,7 +95,7 @@ private extension FavoritesView {
 private extension FavoritesView {
     func favoriteRow(_ row: FavoriteRow, viewStore: ViewStoreOf<FavoritesReducer>) -> some View {
         HStack(spacing: UILayout.tileContentSpacing) {
-            // Mini
+            // Thumbnail
             CatImageView(
                 urlString: row.imageURL ?? row.breed.referenceImageUrl,
                 width: UIDimensions.favoriteThumbnailSize,

@@ -57,8 +57,8 @@ private extension Publisher {
 
 private enum DetailsServiceKey: DependencyKey {
     static var liveValue: DetailsServiceProtocol {
-        // Use the registered dependency accessor instead of referencing the key type
-        let network = DependencyValues().networkService
+        // Compose directly; do not read from the current dependency context here
+        let network = NetworkService(apiKey: secrets.catApiKey)
         return DetailsService(networkService: network)
     }
 
