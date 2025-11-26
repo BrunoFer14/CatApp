@@ -51,7 +51,7 @@ struct CatImageView: View {
                         view.clipped()
                     }
             } else if isLoading {
-                ProgressView()
+                ProgressView.standardCircular
             } else {
                 Image(systemName: UIStrings.Icons.photo)
                     .resizable()
@@ -121,6 +121,25 @@ private extension View {
         } else {
             self
         }
+    }
+}
+
+// MARK: - Reusable Progress Views
+extension ProgressView where CurrentValueLabel == EmptyView, Label == EmptyView {
+    /// Standard circular progress view with consistent styling
+    static var standardCircular: some View {
+        ProgressView()
+            .progressViewStyle(.circular)
+            .padding()
+    }
+}
+
+extension ProgressView where CurrentValueLabel == EmptyView, Label == Text {
+    /// Standard circular progress view with text and consistent styling
+    static func standardCircular(_ title: String) -> some View {
+        ProgressView(title)
+            .progressViewStyle(.circular)
+            .padding()
     }
 }
 

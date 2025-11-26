@@ -64,9 +64,7 @@ private extension HomeListView {
     /// Loading state with shimmer placeholder tiles
     var loadingPlaceholderSection: some View {
         VStack {
-            ProgressView(UIStrings.Common.loadingBreeds)
-                .progressViewStyle(.circular)
-                .padding()
+            ProgressView.standardCircular(UIStrings.Common.loadingBreeds)
             /// Grid of placeholder tiles to maintain visual consistency
             LazyVGrid(columns: columns, spacing: UILayout.gridSpacing) {
                 ForEach(0..<UIDimensions.placeholderItemsCount, id: \.self) { _ in
@@ -93,8 +91,7 @@ private extension HomeListView {
 
                 /// Show loading indicator at bottom when fetching next page
                 if viewStore.isLoadingPage {
-                    ProgressView()
-                        .padding()
+                    ProgressView.standardCircular
                         .gridCellColumns(UIDimensions.homeGridColumnCount)
                 }
             }

@@ -182,37 +182,19 @@ struct SearchReducer {
     }
 
     private func refreshFavoritesEffect() -> EffectOf<Self> {
-        .run { send in
-            do {
-                let favs = try await favoritesService.fetchFavorites()
-                await send(.refreshFavoritesFinished(Set(favs.map { $0.breedId })))
-            } catch {
-                await send(.refreshFavoritesFinished([]))
-            }
-        }
+        FavoriteToggleHelper.createRefreshEffect(
+            favoritesService: favoritesService,
+            onComplete: { ids in .refreshFavoritesFinished(ids) }
+        )
     }
 
     private func toggleFavorite(for breed: CatBreed) -> EffectOf<Self> {
-        .run { send in
-            let id = breed.id
-            if await favoritesService.isFavorite(id: id) {
-                do {
-                    try await favoritesService.removeFavorite(id: id)
-                    try await favoritesService.deleteFavoriteDetail(id: id)
-                    await send(.toggleFavoriteSuccess(id: id))
-                } catch {
-                    await send(.toggleFavoriteFailure)
-                }
-            } else {
-                do {
-                    try await favoritesService.addFavorite(id: id)
-                    try await favoritesService.upsertFavoriteDetail(from: breed)
-                    await send(.toggleFavoriteSuccess(id: id))
-                } catch {
-                    await send(.toggleFavoriteFailure)
-                }
-            }
-        }
+        FavoriteToggleHelper.createToggleEffect(
+            breed: breed,
+            favoritesService: favoritesService,
+            onSuccess: { id in .toggleFavoriteSuccess(id: id) },
+            onFailure: { .toggleFavoriteFailure }
+        )
     }
 }
 

@@ -61,9 +61,7 @@ private extension BreedDetailView {
 private extension BreedDetailView {
     var loadingSection: some View {
         VStack(spacing: UILayout.sectionSpacing) {
-            ProgressView()
-                .progressViewStyle(.circular)
-                .padding()
+            ProgressView.standardCircular
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -135,50 +133,49 @@ private extension BreedDetailView {
 
     func carouselControlsSection(viewStore: ViewStoreOf<BreedDetailReducer>) -> some View {
         HStack(spacing: UILayout.gridSpacing) {
-            Button {
-                withAnimation {
-                    _ = viewStore.send(.goPrev)
-                }
-            } label: {
-                Image(systemName: UIStrings.Icons.chevronLeft)
-                    .font(.title2)
-                    .foregroundColor(.primary)
-                    .padding(UILayout.buttonPadding)
-                    .background(
-                        Circle()
-                            .fill(Color.black.opacity(UILayout.circleButtonBackgroundOpacity))
-                    )
-            }
-            .buttonStyle(.plain)
-            .disabled(viewStore.selectedIndex == UIConfig.Pagination.initialPageIndex)
+            carouselNavigationButton(
+                icon: UIStrings.Icons.chevronLeft,
+                action: { withAnimation { _ = viewStore.send(.goPrev) } },
+                isDisabled: viewStore.selectedIndex == UIConfig.Pagination.initialPageIndex
+            )
 
             Spacer()
 
             if viewStore.isLoadingGallery {
-                ProgressView()
-                    .progressViewStyle(.circular)
-                    .padding(.horizontal)
+                ProgressView.standardCircular
+                    .padding(.horizontal, 0) // Adjust padding since standardCircular already includes padding
             }
 
             Spacer()
 
-            Button {
-                withAnimation {
-                    _ = viewStore.send(.goNext)
-                }
-            } label: {
-                Image(systemName: UIStrings.Icons.chevronRight)
-                    .font(.title2)
-                    .foregroundColor(.primary)
-                    .padding(UILayout.buttonPadding)
-                    .background(
-                        Circle()
-                            .fill(Color.black.opacity(UILayout.circleButtonBackgroundOpacity))
-                    )
-            }
-            .buttonStyle(.plain)
-            .disabled(viewStore.selectedIndex >= max(0, viewStore.imageItems.count - 1))
+            carouselNavigationButton(
+                icon: UIStrings.Icons.chevronRight,
+                action: { withAnimation { _ = viewStore.send(.goNext) } },
+                isDisabled: viewStore.selectedIndex >= max(0, viewStore.imageItems.count - 1)
+            )
         }
+    }
+    
+    @ViewBuilder
+    private func carouselNavigationButton(
+        icon: String,
+        action: @escaping () -> Void,
+        isDisabled: Bool
+    ) -> some View {
+        Button {
+            action()
+        } label: {
+            Image(systemName: icon)
+                .font(.title2)
+                .foregroundColor(.primary)
+                .padding(UILayout.buttonPadding)
+                .background(
+                    Circle()
+                        .fill(Color.black.opacity(UILayout.circleButtonBackgroundOpacity))
+                )
+        }
+        .buttonStyle(.plain)
+        .disabled(isDisabled)
     }
 
     func fallbackImageSection(currentBreed: CatBreed, viewStore: ViewStoreOf<BreedDetailReducer>) -> some View {

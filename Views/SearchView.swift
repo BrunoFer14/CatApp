@@ -42,8 +42,7 @@ struct SearchView: View {
                     if viewStore.isLoadingPage {
                         HStack(spacing: UILayout.gridSpacing) {
                             Spacer()
-                            ProgressView()
-                                .padding()
+                            ProgressView.standardCircular
                             Spacer()
                         }
                     }

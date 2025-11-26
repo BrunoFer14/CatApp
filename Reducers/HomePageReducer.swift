@@ -219,7 +219,7 @@ struct HomePageReducer {
 
             // Favorites
             case .refreshFavorites:
-                return refreshFavoritesEffect()
+                return refreshFavorites()
 
             case let .refreshFavoritesFinished(ids):
                 state.favoriteIDs = ids
@@ -263,18 +263,7 @@ struct HomePageReducer {
         .run { send in
             do {
                 let cachedBreeds = try await breedsCacheDB.fetchCachedBreedsSorted()
-                let breeds = cachedBreeds.map { cached in
-                    CatBreed(
-                        id: cached.id,
-                        name: cached.name,
-                        origin: cached.origin,
-                        description: cached.breedDescription,
-                        temperament: cached.temperament,
-                        lifeSpan: cached.lifeSpan,
-                        image: BreedImage(url: cached.imageUrl),
-                        referenceImageId: nil
-                    )
-                }
+                let breeds = FavoriteToggleHelper.convertCachedBreeds(cachedBreeds)
                 await send(.loadCachedBreedsFinished(breeds))
             } catch {
                 await send(.loadCachedBreedsFinished([]))
@@ -313,38 +302,121 @@ struct HomePageReducer {
         }
     }
 
-    private func refreshFavoritesEffect() -> EffectOf<Self> {
-        .run { send in
-            do {
-                let favs = try await favoritesService.fetchFavorites()
-                let ids = Set(favs.map { $0.breedId })
-                await send(.refreshFavoritesFinished(ids))
-            } catch {
-                await send(.refreshFavoritesFinished([]))
-            }
-        }
+    private func refreshFavorites() -> EffectOf<Self> {
+        FavoriteToggleHelper.createRefreshEffect(
+            favoritesService: favoritesService,
+            onComplete: { ids in .refreshFavoritesFinished(ids) }
+        )
     }
 
     private func toggleFavorite(for breed: CatBreed) -> EffectOf<Self> {
+        FavoriteToggleHelper.createToggleEffect(
+            breed: breed,
+            favoritesService: favoritesService,
+            onSuccess: { id in .toggleFavoriteSuccess(id: id) },
+            onFailure: { .toggleFavoriteFailure }
+        )
+    }
+}
+
+// MARK: - Shared Favorite Toggle Helper
+enum FavoriteToggleHelper {
+    static func createToggleEffect<Action>(
+        breed: CatBreed,
+        favoritesService: any FavoritesServiceProtocol,
+        onSuccess: @escaping (String) -> Action,
+        onFailure: @escaping () -> Action
+    ) -> Effect<Action> {
         .run { send in
             let id = breed.id
             if await favoritesService.isFavorite(id: id) {
                 do {
                     try await favoritesService.removeFavorite(id: id)
                     try await favoritesService.deleteFavoriteDetail(id: id)
-                    await send(.toggleFavoriteSuccess(id: id))
+                    await send(onSuccess(id))
                 } catch {
-                    await send(.toggleFavoriteFailure)
+                    await send(onFailure())
                 }
             } else {
                 do {
                     try await favoritesService.addFavorite(id: id)
                     try await favoritesService.upsertFavoriteDetail(from: breed)
-                    await send(.toggleFavoriteSuccess(id: id))
+                    await send(onSuccess(id))
                 } catch {
-                    await send(.toggleFavoriteFailure)
+                    await send(onFailure())
                 }
             }
+        }
+    }
+    
+    // Versão específica para BreedDetailReducer que precisa do bool
+    static func createToggleEffectWithBool<Action>(
+        breed: CatBreed,
+        favoritesService: any FavoritesServiceProtocol,
+        onSuccess: @escaping (String, Bool) -> Action,
+        onFailure: @escaping () -> Action
+    ) -> Effect<Action> {
+        .run { send in
+            let id = breed.id
+            if await favoritesService.isFavorite(id: id) {
+                do {
+                    try await favoritesService.removeFavorite(id: id)
+                    try await favoritesService.deleteFavoriteDetail(id: id)
+                    await send(onSuccess(id, false))
+                } catch {
+                    await send(onFailure())
+                }
+            } else {
+                do {
+                    try await favoritesService.addFavorite(id: id)
+                    try await favoritesService.upsertFavoriteDetail(from: breed)
+                    await send(onSuccess(id, true))
+                } catch {
+                    await send(onFailure())
+                }
+            }
+        }
+    }
+    
+    static func createRefreshEffect<Action>(
+        favoritesService: any FavoritesServiceProtocol,
+        onComplete: @escaping (Set<String>) -> Action
+    ) -> Effect<Action> {
+        .run { send in
+            do {
+                let favs = try await favoritesService.fetchFavorites()
+                await send(onComplete(Set(favs.map { $0.breedId })))
+            } catch {
+                await send(onComplete([]))
+            }
+        }
+    }
+    
+    // Helper para refresh de favorito individual
+    static func createSingleFavoriteRefreshEffect<Action>(
+        id: String,
+        favoritesService: any FavoritesServiceProtocol,
+        onComplete: @escaping (String, Bool) -> Action
+    ) -> Effect<Action> {
+        .run { send in
+            let isFav = await favoritesService.isFavorite(id: id)
+            await send(onComplete(id, isFav))
+        }
+    }
+    
+    // Helper para conversão de cached breeds
+    static func convertCachedBreeds(_ cachedBreeds: [CachedBreed]) -> [CatBreed] {
+        cachedBreeds.map { cached in
+            CatBreed(
+                id: cached.id,
+                name: cached.name,
+                origin: cached.origin,
+                description: cached.breedDescription,
+                temperament: cached.temperament,
+                lifeSpan: cached.lifeSpan,
+                image: BreedImage(url: cached.imageUrl),
+                referenceImageId: nil
+            )
         }
     }
 }
@@ -370,4 +442,3 @@ private extension Publisher {
         }
     }
 }
-

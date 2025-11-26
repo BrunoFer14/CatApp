@@ -219,33 +219,20 @@ struct BreedDetailReducer {
 
     // MARK: - Effects helpers
     private func toggleFavorite(for breed: CatBreed) -> EffectOf<Self> {
-        .run { send in
-            let id = breed.id
-            if await favoritesService.isFavorite(id: id) {
-                do {
-                    try await favoritesService.removeFavorite(id: id)
-                    try await favoritesService.deleteFavoriteDetail(id: id)
-                    await send(.toggleFavoriteSuccess(id: id, isNowFavorite: false))
-                } catch {
-                    await send(.toggleFavoriteFailure)
-                }
-            } else {
-                do {
-                    try await favoritesService.addFavorite(id: id)
-                    try await favoritesService.upsertFavoriteDetail(from: breed)
-                    await send(.toggleFavoriteSuccess(id: id, isNowFavorite: true))
-                } catch {
-                    await send(.toggleFavoriteFailure)
-                }
-            }
-        }
+        FavoriteToggleHelper.createToggleEffectWithBool(
+            breed: breed,
+            favoritesService: favoritesService,
+            onSuccess: { id, isFavorite in .toggleFavoriteSuccess(id: id, isNowFavorite: isFavorite) },
+            onFailure: { .toggleFavoriteFailure }
+        )
     }
 
     private func refreshFavoriteEffect(for id: String) -> EffectOf<Self> {
-        .run { [id] send in
-            let isFav = await favoritesService.isFavorite(id: id)
-            await send(.toggleFavoriteSuccess(id: id, isNowFavorite: isFav))
-        }
+        FavoriteToggleHelper.createSingleFavoriteRefreshEffect(
+            id: id,
+            favoritesService: favoritesService,
+            onComplete: { id, isFavorite in .toggleFavoriteSuccess(id: id, isNowFavorite: isFavorite) }
+        )
     }
 
     private func loadDetailEffect(id: String) -> EffectOf<Self> {
