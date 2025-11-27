@@ -3,7 +3,9 @@ import CoreGraphics
 enum UIDimensions {
     // Heights and sizes
     static let breedCardHeight: CGFloat = 180
+    static let breedCardWidth: CGFloat = 175   // Increased width for better proportions
     static let tileImageHeight: CGFloat = 120
+    static let tileTextAreaHeight: CGFloat = 44  // Fixed height for text section
 
     // Detail screen image heights
     static let detailImageHeightPrimary: CGFloat = 260

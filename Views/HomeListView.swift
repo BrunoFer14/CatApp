@@ -8,9 +8,9 @@ struct HomeListView: View {
     /// TCA store containing the home feature state and actions
     let store: StoreOf<HomePageReducer>
     
-    /// Grid layout configuration for breed tiles
+    /// Grid layout configuration for breed tiles with fixed spacing for alignment
     private var columns: [GridItem] {
-        Array(repeating: GridItem(.flexible(), spacing: UILayout.gridSpacing), count: UIDimensions.homeGridColumnCount)
+        Array(repeating: GridItem(.fixed(UIDimensions.breedCardWidth), spacing: UILayout.gridSpacing), count: UIDimensions.homeGridColumnCount)
     }
 
     var body: some View {
