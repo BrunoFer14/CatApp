@@ -33,8 +33,8 @@ struct HomeListView: View {
                 case .breedDetail:
                     BreedDetailView(
                         store: store.scope(
-                            state: { $0.breedDetail! },
-                            action: { .breedDetail($0) }
+                            state: \.breedDetail!,
+                            action: \.breedDetail
                         )
                     )
                 }

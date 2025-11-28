@@ -65,8 +65,8 @@ struct SearchView: View {
                 case .breedDetail:
                     BreedDetailView(
                         store: destinationStore.scope(
-                            state: { $0.breedDetail! },
-                            action: { .breedDetail($0) }
+                            state: \.breedDetail!,
+                            action: \.breedDetail
                         )
                     )
                 }

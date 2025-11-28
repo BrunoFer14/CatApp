@@ -38,8 +38,8 @@ struct FavoritesView: View {
                 case .breedDetail:
                     BreedDetailView(
                         store: routeStore.scope(
-                            state: { $0.breedDetail! },
-                            action: { .breedDetail($0) }
+                            state: \.breedDetail!,
+                            action: \.breedDetail
                         )
                     )
                 }
