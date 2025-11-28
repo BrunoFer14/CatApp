@@ -1,7 +1,6 @@
 import SwiftUI
 
-/// Botão de coração simples para favoritos.
-/// Recebe o estado atual (isFavorite) e uma ação a executar ao tocar.
+/// Receives current status (isFavorite) and an action when triggered
 struct FavoriteButton: View {
     let isFavorite: Bool
     let action: () -> Void

@@ -82,9 +82,6 @@ enum Endpoint {
             req.addValue(apiKey, forHTTPHeaderField: APIConstants.Headers.apiKey)
         }
 
-        // Content-Type for JSON bodies could be set here if needed for POST/PUT
-        // switch self { case .somePost(let body): req.httpBody = ...; req.addValue("application/json", forHTTPHeaderField: "Content-Type") }
-
         return req
     }
 }

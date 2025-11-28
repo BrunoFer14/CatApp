@@ -3,8 +3,7 @@ import SwiftData
 import ComposableArchitecture
 import Combine
 
-/// Ecrã que lista apenas os favoritos, lendo diretamente do SwiftData (FavoriteBreedDetail),
-/// agora controlado por TCA (FavoritesFeature) com navegação em stack para BreedDetailFeature.
+/// Screen that only lists favorites, read from SwiftData(FavoriteBreedDetail)
 struct FavoritesView: View {
     let store: StoreOf<FavoritesReducer>
 

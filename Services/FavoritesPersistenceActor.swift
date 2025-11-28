@@ -5,7 +5,6 @@ actor FavoritesPersistenceActor {
     private let context: ModelContext
 
     init(container: ModelContainer) {
-        // Cria um contexto de background próprio deste actor
         self.context = ModelContext(container)
     }
 

@@ -55,7 +55,6 @@ struct FavoritesService: FavoritesServiceProtocol {
 
 private enum FavoritesServiceKey: DependencyKey {
     static var liveValue: FavoritesServiceProtocol {
-        // Usa o provider live para criar o container
         let container = try! ModelContainerProviderKey.liveValue.make()
         return FavoritesService(container: container)
     }

@@ -2,7 +2,7 @@ import Foundation
 import Combine
 import ComposableArchitecture
 
-// MARK: - Home Feature (Cat Breeds List with TCA)
+// MARK: - Home Feature
 /// Main feature for displaying paginated cat breeds with favorites support
 /// Follows TCA architecture with proper state management and side effects
 @Reducer

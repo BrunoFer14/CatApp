@@ -70,6 +70,7 @@ struct FavoritesReducer {
     // MARK: - Dependencies
     @Dependency(\.favoritesService) var favoritesService
 
+    
     // MARK: - Body
     var body: some ReducerOf<Self> {
         BindingReducer()

@@ -2,7 +2,6 @@ import SwiftUI
 import ComposableArchitecture
 
 /// Home screen view displaying a grid of cat breeds with navigation
-/// Follows TCA principles - purely presentational, no business logic
 /// All data comes from TCA state, all interactions send actions
 struct HomeListView: View {
     /// TCA store containing the home feature state and actions
