@@ -236,11 +236,16 @@ private extension BreedDetailView {
             HStack(spacing: UILayout.tileContentSpacing) {
                 Image(systemName: viewStore.isFavorite ? UIStrings.Icons.heartFill : UIStrings.Icons.heart)
                     .foregroundColor(.red)
+                    .scaleEffect(viewStore.isFavorite ? 1.1 : 1.0)
+                    .animation(.spring(response: 0.3, dampingFraction: 0.7), value: viewStore.isFavorite)
                 Text(viewStore.isFavorite ? UIStrings.Detail.removeFromFavorites : UIStrings.Detail.addToFavorites)
+                    .animation(.easeInOut(duration: 0.2), value: viewStore.isFavorite)
             }
             .padding()
             .frame(maxWidth: .infinity)
             .background(buttonBackground)
+            .scaleEffect(viewStore.isFavorite ? 1.02 : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.8), value: viewStore.isFavorite)
             .cornerRadius(UILayout.defaultCornerRadius)
         }
         .padding(.top, UILayout.textTopPaddingMedium)

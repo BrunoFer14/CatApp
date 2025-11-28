@@ -32,14 +32,18 @@ struct BreedSquareTile: View {
                     )
                 )
 
-                // Favorite button floating over the image
+                // Favorite button floating over the image with animation
                 Button(action: favoriteAction) {
                     Image(systemName: isFavorite ? "heart.fill" : "heart")
                         .foregroundColor(.red)
+                        .scaleEffect(isFavorite ? 1.1 : 1.0) // Slight scale when favorited
+                        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isFavorite)
                         .padding(UILayout.iconButtonPadding)
                         .background(
                             Circle()
                                 .fill(Color.white.opacity(UILayout.circleButtonFillOpacity))
+                                .scaleEffect(isFavorite ? 1.05 : 1.0) // Background also scales slightly
+                                .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isFavorite)
                                 .shadow(
                                     color: Color.black.opacity(UILayout.circleButtonShadowOpacity),
                                     radius: UILayout.circleButtonShadowRadius,
