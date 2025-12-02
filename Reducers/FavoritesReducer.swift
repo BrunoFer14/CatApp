@@ -69,7 +69,7 @@ struct FavoritesReducer {
 
     // MARK: - Dependencies
     @Dependency(\.favoritesService) var favoritesService
-
+    
     
     // MARK: - Body
     var body: some ReducerOf<Self> {
@@ -110,7 +110,6 @@ struct FavoritesReducer {
             // Refresh IDs finished
             case let .refreshFavoritesFinished(ids):
                 state.favoriteIDs = ids
-                // Also update isFavorite flags in current rows to keep in sync
                 state.rows = state.rows.map { row in
                     var copy = row
                     copy.isFavorite = ids.contains(row.id)
@@ -123,19 +122,15 @@ struct FavoritesReducer {
                 return toggleFavorite(for: breed)
 
             case let .toggleFavoriteSuccess(id):
-                // Update favoriteIDs and row flags locally
                 if state.favoriteIDs.contains(id) {
                     state.favoriteIDs.remove(id)
                 } else {
                     state.favoriteIDs.insert(id)
                 }
+                let ids = state.favoriteIDs
                 state.rows = state.rows.map { row in
                     var copy = row
-                    if row.id == id {
-                        copy.isFavorite.toggle()
-                    } else {
-                        copy.isFavorite = state.favoriteIDs.contains(row.id)
-                    }
+                    copy.isFavorite = ids.contains(row.id)
                     return copy
                 }
                 return .none
@@ -184,21 +179,46 @@ struct FavoritesReducer {
 
 // MARK: - Helpers
 private func computeAverageLifeSpanText(from details: [FavoriteBreedDetail]) -> String? {
-    let values: [Double] = details.compactMap { detail in
-        guard let life = detail.lifeSpan else { return nil }
-        let parts = life
-            .components(separatedBy: "-")
-            .map { $0.trimmingCharacters(in: .whitespaces) }
-            .compactMap(Double.init)
+    func extractNumbers(from string: String) -> [Double] {
+        var numbers: [Double] = []
+        var current = ""
+        for ch in string {
+            if ch.isNumber || ch == "." {
+                current.append(ch)
+            } else {
+                if !current.isEmpty, let val = Double(current) {
+                    numbers.append(val)
+                }
+                current.removeAll(keepingCapacity: true)
+            }
+        }
+        if !current.isEmpty, let val = Double(current) {
+            numbers.append(val)
+        }
+        return numbers
+    }
 
-        switch parts.count {
-        case 2: return (parts[0] + parts[1]) / 2.0
-        case 1: return parts[0]
-        default: return nil
+    let values: [Double] = details.compactMap { detail in
+        guard let life = detail.lifeSpan, !life.isEmpty else { return nil }
+        let nums = extractNumbers(from: life)
+        switch nums.count {
+        case 2:
+            return (nums[0] + nums[1]) / 2.0
+        case 1:
+            return nums[0]
+        default:
+            return nil
         }
     }
 
     guard !values.isEmpty else { return nil }
     let avg = values.reduce(0, +) / Double(values.count)
-    return String(format: "%.1f", avg)
+
+    let formatter = NumberFormatter()
+    formatter.numberStyle = .decimal
+    formatter.minimumFractionDigits = 1
+    formatter.maximumFractionDigits = 1
+    formatter.locale = .current
+
+    return formatter.string(from: NSNumber(value: avg))
 }
