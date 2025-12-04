@@ -136,7 +136,6 @@ struct FavoritesReducer {
                 return .none
 
             case .toggleFavoriteFailure:
-                // Optional: could set an error message in state
                 return .none
 
             // Navigation

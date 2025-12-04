@@ -28,8 +28,11 @@ struct FavoritesView: View {
                     .onChange(of: favorites) { _, newValue in
                         viewStore.send(.favoritesSnapshotChanged(newValue))
                     }
-                    // Optional: animate removals/insertions
+                    // Animate list diffs smoothly
                     .animation(.default, value: viewStore.rows)
+                    .safeAreaInset(edge: .bottom) {
+                        averageFooterInset(viewStore: viewStore)
+                    }
             }
         } destination: { routeStore in
             SwitchStore(routeStore) { state in
@@ -55,7 +58,6 @@ private extension FavoritesView {
                 emptyStateSection
             } else {
                 favoritesListSection(viewStore: viewStore)
-                averageFooterSection(viewStore: viewStore)
             }
         }
     }
@@ -67,6 +69,7 @@ private extension FavoritesView {
         Text(UIStrings.Common.noFavoritesYet)
             .foregroundColor(.gray)
             .padding()
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
     }
 
     func favoritesListSection(viewStore: ViewStoreOf<FavoritesReducer>) -> some View {
@@ -78,14 +81,32 @@ private extension FavoritesView {
             }
             .buttonStyle(.plain)
         }
+        // The safeAreaInset for the footer will automatically push content above it.
     }
 
+    /// Bottom inset renderer for the average lifespan footer.
+    /// Keeps it centered, pretty, and only visible when we have a value.
     @ViewBuilder
-    func averageFooterSection(viewStore: ViewStoreOf<FavoritesReducer>) -> some View {
-        if let avgText = viewStore.averageLifeSpanText {
-            Text("\(UIStrings.Common.averageLifeSpanOfFavoritesPrefix) \(avgText) \(UIStrings.Common.years)")
-                .font(.subheadline)
-                .padding()
+    func averageFooterInset(viewStore: ViewStoreOf<FavoritesReducer>) -> some View {
+        if let avgText = viewStore.averageLifeSpanText, !avgText.isEmpty, !viewStore.rows.isEmpty {
+            HStack {
+                Text("\(UIStrings.Common.averageLifeSpanOfFavoritesPrefix) \(avgText) \(UIStrings.Common.years)")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundColor(.primary)
+                    .multilineTextAlignment(.center)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .frame(maxWidth: .infinity)
+            .background(.ultraThinMaterial) // Pretty blur background
+            .clipShape(Capsule())
+            .shadow(color: Color.black.opacity(0.1), radius: 6, x: 0, y: 2)
+            .padding(.horizontal, 24)
+            .padding(.top, 8)
+            .padding(.bottom, 8) // Safe area inset will keep this above the bottom edge
+        } else {
+            // No footer when there is no average
+            EmptyView()
         }
     }
 }
@@ -109,5 +130,6 @@ private extension FavoritesView {
                 viewStore.send(.toggleFavorite(row.breed))
             }
         }
+        .contentShape(Rectangle())
     }
 }
