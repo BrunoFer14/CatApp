@@ -37,6 +37,8 @@ struct HomePageReducer {
     struct State: Equatable {
         /// Array of cat breeds ready for display (converted from cache)
         var breeds: [CatBreed] = []
+        /// Raw snapshot used to reapply filters
+        var originalBreeds: [CatBreed] = []
         
         /// Set of breed IDs that are marked as favorites
         var favoriteIDs: Set<String> = []
@@ -58,6 +60,10 @@ struct HomePageReducer {
 
         /// Navigation stack for routing to child features
         var path = StackState<Route.State>()
+
+        /// Age range filter (in years)
+        var minAgeFilter: Double?
+        var maxAgeFilter: Double?
     }
 
     // MARK: - Actions
@@ -146,8 +152,13 @@ struct HomePageReducer {
                 return loadCachedBreedsEffect()
 
             case let .loadCachedBreedsFinished(breeds):
-                /// Update state with loaded breeds
-                state.breeds = breeds
+                /// Update state with loaded breeds and apply age filter
+                state.originalBreeds = breeds
+                state.breeds = applyAgeFilter(
+                    breeds: breeds,
+                    minAge: state.minAgeFilter,
+                    maxAge: state.maxAgeFilter
+                )
                 return .none
 
             //Pagination Handling
@@ -212,6 +223,7 @@ struct HomePageReducer {
 
             case .clearCacheFinished:
                 state.breeds = []
+                state.originalBreeds = []
                 return .merge(
                     .send(.refreshFavorites),
                     .send(.fetchPage(UIConfig.Pagination.initialPageIndex))
@@ -249,6 +261,12 @@ struct HomePageReducer {
                 return .none
 
             case .binding:
+                // Sempre que minAgeFilter/maxAgeFilter mudarem via binding, reaplicamos o filtro
+                state.breeds = applyAgeFilter(
+                    breeds: state.originalBreeds,
+                    minAge: state.minAgeFilter,
+                    maxAge: state.maxAgeFilter
+                )
                 return .none
             }
         }
@@ -317,6 +335,66 @@ struct HomePageReducer {
             onFailure: { .toggleFavoriteFailure }
         )
     }
+
+    // MARK: - Filter helpers
+    private func applyAgeFilter(
+        breeds: [CatBreed],
+        minAge: Double?,
+        maxAge: Double?
+    ) -> [CatBreed] {
+        let (lo, hi) = normalizedRange(minAge: minAge, maxAge: maxAge)
+        guard lo != nil || hi != nil else { return breeds }
+
+        return breeds.filter { breed in
+            guard let (bMin, bMax) = parseLifeSpanRange(breed.lifeSpan) else {
+                return false
+            }
+            if let lo, let hi {
+                return bMax >= lo && bMin <= hi
+            } else if let lo {
+                return bMin >= lo
+            } else if let hi {
+                return bMax <= hi
+            }
+            return true
+        }
+    }
+
+    private func normalizedRange(minAge: Double?, maxAge: Double?) -> (Double?, Double?) {
+        guard let minAge, let maxAge else { return (minAge, maxAge) }
+        if minAge <= maxAge { return (minAge, maxAge) }
+        // Se o usuário inverteu os valores, normalizamos trocando
+        return (maxAge, minAge)
+    }
+
+    private func parseLifeSpanRange(_ lifeSpan: String?) -> (Double, Double)? {
+        guard let lifeSpan, !lifeSpan.isEmpty else { return nil }
+        var numbers: [Double] = []
+        var current = ""
+        for ch in lifeSpan {
+            if ch.isNumber || ch == "." {
+                current.append(ch)
+            } else {
+                if !current.isEmpty, let val = Double(current) {
+                    numbers.append(val)
+                }
+                current.removeAll(keepingCapacity: true)
+            }
+        }
+        if !current.isEmpty, let val = Double(current) {
+            numbers.append(val)
+        }
+        switch numbers.count {
+        case 2:
+            let a = numbers[0], b = numbers[1]
+            return (min(a, b), max(a, b))
+        case 1:
+            let n = numbers[0]
+            return (n, n)
+        default:
+            return nil
+        }
+    }
 }
 
 // MARK: - Shared Favorite Toggle Helper
@@ -349,7 +427,6 @@ enum FavoriteToggleHelper {
         }
     }
     
-    // Versão específica para BreedDetailReducer que precisa do bool
     static func createToggleEffectWithBool<Action>(
         breed: CatBreed,
         favoritesService: any FavoritesServiceProtocol,

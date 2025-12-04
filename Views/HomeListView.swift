@@ -79,23 +79,93 @@ private extension HomeListView {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
-    /// Main grid section displaying actual breed data
+    /// Main grid section displaying actual breed data + filter controls
     func breedsGridSection(viewStore: ViewStoreOf<HomePageReducer>) -> some View {
-        ScrollView {
-            LazyVGrid(columns: columns, spacing: UILayout.gridSpacing) {
-                /// Display each breed with index for pagination tracking
-                ForEach(Array(viewStore.breeds.enumerated()), id: \.element.id) { index, breed in
-                    breedTileLink(index: index, breed: breed, viewStore: viewStore)
-                }
+        VStack(spacing: UILayout.sectionSpacing) {
+            filterSection(viewStore: viewStore)
 
-                /// Show loading indicator at bottom when fetching next page
-                if viewStore.isLoadingPage {
-                    ProgressView.standardCircular
-                        .gridCellColumns(UIDimensions.homeGridColumnCount)
+            ScrollView {
+                LazyVGrid(columns: columns, spacing: UILayout.gridSpacing) {
+                    /// Display each breed with index for pagination tracking
+                    ForEach(Array(viewStore.breeds.enumerated()), id: \.element.id) { index, breed in
+                        breedTileLink(index: index, breed: breed, viewStore: viewStore)
+                    }
+
+                    /// Show loading indicator at bottom when fetching next page
+                    if viewStore.isLoadingPage {
+                        ProgressView.standardCircular
+                            .gridCellColumns(UIDimensions.homeGridColumnCount)
+                    }
+                }
+                .padding(.horizontal, UILayout.listPadding)
+                .padding(.bottom, UILayout.listPadding)
+            }
+        }
+    }
+
+    /// Filter controls for lifespan range
+    func filterSection(viewStore: ViewStoreOf<HomePageReducer>) -> some View {
+        VStack(alignment: .leading, spacing: UILayout.gridSpacing) {
+            HStack {
+                Text("Filtrar por idade (anos)")
+                    .font(.headline)
+                Spacer()
+                Button {
+                    // Clear both filters
+                    viewStore.send(.binding(.set(\.minAgeFilter, nil)))
+                    viewStore.send(.binding(.set(\.maxAgeFilter, nil)))
+                } label: {
+                    Text("Limpar filtro")
+                }
+                .disabled(viewStore.minAgeFilter == nil && viewStore.maxAgeFilter == nil)
+            }
+
+            // Min age
+            VStack(alignment: .leading, spacing: UILayout.searchRowVerticalSpacing) {
+                Toggle(isOn: minEnabledBinding(viewStore: viewStore)) {
+                    Text("Idade mínima: \(formattedAge(viewStore.minAgeFilter))")
+                }
+                .toggleStyle(.switch)
+
+                if viewStore.minAgeFilter != nil {
+                    Slider(
+                        value: minValueBinding(viewStore: viewStore),
+                        in: 0...25,
+                        step: 1
+                    ) {
+                        Text("Mín.")
+                    } minimumValueLabel: {
+                        Text("0")
+                    } maximumValueLabel: {
+                        Text("25")
+                    }
                 }
             }
-            .padding(.all, UILayout.listPadding)
+
+            // Max age
+            VStack(alignment: .leading, spacing: UILayout.searchRowVerticalSpacing) {
+                Toggle(isOn: maxEnabledBinding(viewStore: viewStore)) {
+                    Text("Idade máxima: \(formattedAge(viewStore.maxAgeFilter))")
+                }
+                .toggleStyle(.switch)
+
+                if viewStore.maxAgeFilter != nil {
+                    Slider(
+                        value: maxValueBinding(viewStore: viewStore),
+                        in: 0...25,
+                        step: 1
+                    ) {
+                        Text("Máx.")
+                    } minimumValueLabel: {
+                        Text("0")
+                    } maximumValueLabel: {
+                        Text("25")
+                    }
+                }
+            }
         }
+        .padding(.horizontal, UILayout.listPadding)
+        .padding(.top, UILayout.listPadding)
     }
 }
 
@@ -122,6 +192,71 @@ private extension HomeListView {
             /// Trigger pagination when tile appears near the end of the list
             onTileAppear(index: index, totalCount: viewStore.breeds.count, viewStore: viewStore)
         }
+    }
+}
+
+// MARK: - Bindings for filter
+private extension HomeListView {
+    func formattedAge(_ value: Double?) -> String {
+        guard let value else { return "—" }
+        if value.rounded(.towardZero) == value {
+            return String(format: "%.0f", value)
+        } else {
+            return String(format: "%.1f", value)
+        }
+    }
+
+    // Toggle for enabling/disabling min filter
+    func minEnabledBinding(viewStore: ViewStoreOf<HomePageReducer>) -> Binding<Bool> {
+        Binding(
+            get: { viewStore.minAgeFilter != nil },
+            set: { isOn in
+                if isOn {
+                    // if enabling and nil, default to 0
+                    if viewStore.minAgeFilter == nil {
+                        viewStore.send(.binding(.set(\.minAgeFilter, 0)))
+                    }
+                } else {
+                    viewStore.send(.binding(.set(\.minAgeFilter, nil)))
+                }
+            }
+        )
+    }
+
+    // Slider value for min filter
+    func minValueBinding(viewStore: ViewStoreOf<HomePageReducer>) -> Binding<Double> {
+        Binding(
+            get: { viewStore.minAgeFilter ?? 0 },
+            set: { newValue in
+                viewStore.send(.binding(.set(\.minAgeFilter, newValue)))
+            }
+        )
+    }
+
+    // Toggle for enabling/disabling max filter
+    func maxEnabledBinding(viewStore: ViewStoreOf<HomePageReducer>) -> Binding<Bool> {
+        Binding(
+            get: { viewStore.maxAgeFilter != nil },
+            set: { isOn in
+                if isOn {
+                    if viewStore.maxAgeFilter == nil {
+                        viewStore.send(.binding(.set(\.maxAgeFilter, 25)))
+                    }
+                } else {
+                    viewStore.send(.binding(.set(\.maxAgeFilter, nil)))
+                }
+            }
+        )
+    }
+
+    // Slider value for max filter
+    func maxValueBinding(viewStore: ViewStoreOf<HomePageReducer>) -> Binding<Double> {
+        Binding(
+            get: { viewStore.maxAgeFilter ?? 25 },
+            set: { newValue in
+                viewStore.send(.binding(.set(\.maxAgeFilter, newValue)))
+            }
+        )
     }
 }
 
