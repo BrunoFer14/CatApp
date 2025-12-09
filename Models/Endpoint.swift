@@ -13,9 +13,8 @@ enum Endpoint {
     // MARK: - Breeds
     case breeds(page: Int?, limit: Int?)
     case breedSearch(query: String)
-    case breedImages(breedId: String, limit: Int?)
+    case breedImages(breedId: String, limit: Int?, page: Int?)
 
-    
     // MARK: - Components
     var method: HTTPMethod {
         switch self {
@@ -48,9 +47,17 @@ enum Endpoint {
         case let .breedSearch(query):
             return [URLQueryItem(name: APIConstants.Query.search, value: query)]
 
-        case let .breedImages(breedId, limit):
-            var items: [URLQueryItem] = [URLQueryItem(name: APIConstants.Query.breedIds, value: breedId)]
-            if let limit { items.append(URLQueryItem(name: APIConstants.Query.limit, value: String(limit))) }
+        case let .breedImages(breedId, limit, page):
+            var items: [URLQueryItem] = [
+                // IMPORTANT: TheCatAPI expects "breed_ids" (plural)
+                URLQueryItem(name: APIConstants.Query.breedIds, value: breedId)
+            ]
+            if let limit {
+                items.append(URLQueryItem(name: APIConstants.Query.limit, value: String(limit)))
+            }
+            if let page {
+                items.append(URLQueryItem(name: APIConstants.Query.page, value: String(page)))
+            }
             return items
         }
     }

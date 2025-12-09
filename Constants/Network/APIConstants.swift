@@ -6,8 +6,10 @@ enum APIConstants {
     // MARK: - Pagination Settings
     /// Default number of breeds to fetch per page
     static let defaultPageLimit: Int = 20
-    /// Default number of images to fetch for breed galleries
-    static let defaultGalleryLimit: Int = 10
+    /// Page size used when fetching gallery images (per request)
+    static let defaultGalleryLimit: Int = 100
+    /// Safety cap to avoid unbounded downloads when fetching all images for a breed
+    static let defaultGalleryMaxTotal: Int = 200
 
     // MARK: - Networking Configuration
     /// Timeout duration for network requests (in seconds)
@@ -27,7 +29,10 @@ enum APIConstants {
         static let page = "page"
         /// Parameter for search queries
         static let search = "q"
-        /// Parameter for filtering by specific breed IDs
+        /// Parameter for filtering by specific breed IDs (plural - for breeds endpoint)
         static let breedIds = "breed_ids"
+        /// Parameter for filtering by specific breed ID (singular - for images/search endpoint)
+        static let breedId = "breed_id"
     }
 }
+

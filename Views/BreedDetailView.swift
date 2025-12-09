@@ -26,6 +26,7 @@ struct BreedDetailView: View {
                 .onAppear {
                     viewStore.send(.onAppear)
                 }
+                #if os(iOS)
                 .fullScreenCover(
                     isPresented: viewStore.binding(
                         get: \.isPresentingFullscreen,
@@ -36,6 +37,18 @@ struct BreedDetailView: View {
                         viewStore.send(.dismissFullscreen)
                     }
                 }
+                #elseif os(macOS)
+                .sheet(
+                    isPresented: viewStore.binding(
+                        get: \.isPresentingFullscreen,
+                        send: { $0 ? .presentFullscreenForSelected : .dismissFullscreen }
+                    )
+                ) {
+                    FullscreenImageView(urlString: viewStore.fullscreenURL) {
+                        viewStore.send(.dismissFullscreen)
+                    }
+                }
+                #endif
         }
     }
 }
@@ -96,7 +109,9 @@ private extension BreedDetailView {
             .padding()
         }
         .navigationTitle(currentBreed.name)
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+        #endif
     }
 
     func headerCarouselSection(viewStore: ViewStoreOf<BreedDetailReducer>) -> some View {
@@ -107,7 +122,7 @@ private extension BreedDetailView {
                     send: { .selectImage(index: $0) }
                 )
             ) {
-                ForEach(Array(viewStore.imageItems.enumerated()), id: \.offset) { index, item in
+                ForEach(Array(viewStore.imageItems.enumerated()), id: \.element.id) { index, item in
                     CatImageView(
                         urlString: item.url,
                         height: UIDimensions.detailImageHeightPrimary,
@@ -122,7 +137,9 @@ private extension BreedDetailView {
                     .tag(index)
                 }
             }
+            #if os(iOS)
             .tabViewStyle(.page(indexDisplayMode: .automatic))
+            #endif
             .frame(height: UIDimensions.detailImageHeightPrimary)
 
             carouselControlsSection(viewStore: viewStore)
@@ -143,7 +160,7 @@ private extension BreedDetailView {
 
             if viewStore.isLoadingGallery {
                 ProgressView.standardCircular
-                    .padding(.horizontal, 0) // Adjust padding since standardCircular already includes padding
+                    .padding(.horizontal, 0)
             }
 
             Spacer()

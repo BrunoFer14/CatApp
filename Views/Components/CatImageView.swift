@@ -70,7 +70,8 @@ struct CatImageView: View {
         .frame(width: width, height: height)
         .cornerRadius(cornerRadius)
         .task(id: urlString) {
-            // When the URL changes, try to load the image
+            // When the URL changes, clear previous image and load the new one
+            image = nil
             await loadImage()
         }
     }
@@ -96,7 +97,6 @@ struct CatImageView: View {
     @MainActor
     private func loadImage() async {
         guard let urlString, let url = URL(string: urlString) else { return }
-        if image != nil { return } // avoid reloading
         isLoading = true
         defer { isLoading = false }
 
@@ -142,4 +142,3 @@ extension ProgressView where CurrentValueLabel == EmptyView, Label == Text {
             .padding()
     }
 }
-

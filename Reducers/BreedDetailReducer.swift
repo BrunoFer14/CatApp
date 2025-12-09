@@ -94,24 +94,15 @@ struct BreedDetailReducer {
 
             // Lifecycle
             case .onAppear:
-                // Build initial image items from the current breed and kick off loads
+                // Show the passed-in breed immediately so UI isn't blocked by network.
+                state.screenState = .content
+                state.lastErrorMessage = nil
                 rebuildImageItems(into: &state)
 
                 var effects: [EffectOf<Self>] = []
-
-                // Refresh favorite
                 effects.append(refreshFavoriteEffect(for: state.breed.id))
+                effects.append(loadDetailEffect(id: state.breed.id))
 
-                // Detail: only fetch if not already in content state
-                if case .content = state.screenState {
-                    // no-op: keep current detail
-                } else {
-                    state.screenState = .loading
-                    state.lastErrorMessage = nil
-                    effects.append(loadDetailEffect(id: state.breed.id))
-                }
-
-                // Gallery
                 state.isLoadingGallery = true
                 state.galleryError = nil
                 effects.append(loadGalleryEffect(id: state.breed.id, limit: APIConstants.defaultGalleryLimit))
@@ -138,27 +129,23 @@ struct BreedDetailReducer {
 
             // Detail loading
             case let .loadDetail(id):
-                // Only fetch if we don't have a fully loaded breed yet; current code uses presence of content state
-                if case .content = state.screenState {
-                    return .none
-                }
-                state.screenState = .loading
+                // Keep showing content; update in background
                 state.lastErrorMessage = nil
                 return loadDetailEffect(id: id)
 
             case let .detailResponseSuccess(fetched):
                 if let fetched {
                     state.breed = fetched
-                    state.screenState = .content
-                    // If the main image changed, rebuild
                     return .send(.rebuildImageItems)
                 } else {
-                    state.screenState = .error(UIStrings.Detail.notFoundError)
+                    // Keep showing initial content; record a non-blocking error
+                    state.lastErrorMessage = UIStrings.Detail.notFoundError
                 }
                 return .none
 
             case let .detailResponseFailure(message):
-                state.screenState = .error("Erro: \(message)")
+                // Keep UI usable, just surface error message
+                state.lastErrorMessage = "Erro: \(message)"
                 return .none
 
             // Gallery
@@ -170,7 +157,6 @@ struct BreedDetailReducer {
             case let .galleryResponseSuccess(images):
                 state.isLoadingGallery = false
                 state.galleryImages = images
-                // Reset selection to initial page when gallery updates
                 state.selectedIndex = UIConfig.Pagination.initialPageIndex
                 return .send(.rebuildImageItems)
 
@@ -260,26 +246,31 @@ struct BreedDetailReducer {
 
 // MARK: - Helpers
 private func rebuildImageItems(into state: inout BreedDetailReducer.State) {
-    var urls: [String] = []
+    var items: [BreedDetailReducer.State.ImageItem] = []
 
-    // main image (from breed)
-    if let main = state.breed.image?.url ?? state.breed.referenceImageUrl {
-        urls.append(main)
-    }
-    // gallery urls
-    let gallery = state.galleryImages.map { $0.url }
-
-    // deduplicate while preserving order (main first)
-    var seen = Set<String>()
-    var result: [BreedDetailReducer.State.ImageItem] = []
-    for url in urls + gallery {
-        if !seen.contains(url) {
-            seen.insert(url)
-            result.append(.init(id: url, url: url))
-        }
+    // 1) Main image by URL (if present)
+    let mainURL = state.breed.image?.url ?? state.breed.referenceImageUrl
+    if let mainURL {
+        items.append(.init(id: "main:\(mainURL)", url: mainURL))
     }
 
-    state.imageItems = result
+    // 2) Gallery images: prefer uniqueness by gallery ID, and also skip if URL equals main
+    var seenGalleryIDs = Set<String>()
+    var seenURLs = Set<String>()
+    if let mainURL { seenURLs.insert(mainURL) }
+
+    for img in state.galleryImages {
+        // Skip if duplicate gallery ID
+        if seenGalleryIDs.contains(img.id) { continue }
+        // Skip if same URL as main or already added
+        if seenURLs.contains(img.url) { continue }
+
+        seenGalleryIDs.insert(img.id)
+        seenURLs.insert(img.url)
+        items.append(.init(id: img.id, url: img.url))
+    }
+
+    state.imageItems = items
     if state.selectedIndex >= state.imageItems.count {
         state.selectedIndex = max(UIConfig.Pagination.initialPageIndex, state.imageItems.count - 1)
     }

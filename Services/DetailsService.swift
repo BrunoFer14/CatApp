@@ -15,6 +15,23 @@ struct DetailsService: DetailsServiceProtocol {
     }
 
     func breedDetail(id: String) async throws -> CatBreed? {
+        // Try search first
+        if let searchRequest = Endpoint.breedSearch(query: id).request() {
+            do {
+                let publisher = networkService.fetch([CatBreed].self, from: searchRequest)
+                let results = try await publisher.asyncFirst()
+                if let exact = results.first(where: { $0.id == id }) {
+                    return exact
+                }
+                if let first = results.first {
+                    return first
+                }
+            } catch {
+                // fall back below
+            }
+        }
+
+        // Fallback: fetch full list and match by id
         guard let request = Endpoint.breeds(page: nil, limit: nil).request() else {
             throw URLError(.badURL)
         }
@@ -22,12 +39,33 @@ struct DetailsService: DetailsServiceProtocol {
         return try await publisher.asyncFirst().first(where: { $0.id == id })
     }
 
+    // Fetch all images for a breed by paginating until no more results or a safe cap is reached.
+    // IMPORTANT: Only use Endpoint.breedImages so we always send "breed_ids" (plural) and the requested limit.
     func breedImages(id: String, limit: Int) async throws -> [BreedGalleryImage] {
-        guard let request = Endpoint.breedImages(breedId: id, limit: limit).request() else {
-            throw URLError(.badURL)
+        let pageSize = max(1, min(limit, APIConstants.defaultGalleryMaxTotal))
+        var all: [BreedGalleryImage] = []
+        var page = 0 // TheCatAPI uses 0-based page indexing
+
+        while all.count < APIConstants.defaultGalleryMaxTotal {
+            guard let request = Endpoint.breedImages(breedId: id, limit: pageSize, page: page).request() else {
+                throw URLError(.badURL)
+            }
+
+            let publisher = networkService.fetch([BreedGalleryImage].self, from: request)
+            let batch = try await publisher.asyncFirst()
+
+            // Append new items; avoid duplicates by ID
+            let existingIDs = Set(all.map { $0.id })
+            let uniqueNew = batch.filter { !existingIDs.contains($0.id) }
+            all.append(contentsOf: uniqueNew)
+
+            // Stop if fewer than a full page returned
+            if batch.count < pageSize { break }
+            page += 1
         }
-        let publisher = networkService.fetch([BreedGalleryImage].self, from: request)
-        return try await publisher.asyncFirst()
+
+        let capped = Array(all.prefix(APIConstants.defaultGalleryMaxTotal))
+        return capped
     }
 }
 
