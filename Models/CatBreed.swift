@@ -1,39 +1,51 @@
 import Foundation
 import SwiftData
 
-/// Modelo principal vindo da API (Codable) e usado pela UI.
+/// Main cat breed model from API (Codable) and used throughout the UI
+/// Represents a complete cat breed with all available information
 struct CatBreed: Identifiable, Codable, Equatable {
+    /// Unique identifier for the breed
     let id: String
     let name: String
     let origin: String?
     let description: String?
+    /// Personality traits and temperament information
     let temperament: String?
+    /// Expected lifespan range (e.g., "12 - 15")
     let lifeSpan: String?
+    /// Image object containing URL for breed representation
     let image: BreedImage?
+    /// Alternative image ID for constructing image URLs
     let referenceImageId: String?
 
+    /// Maps JSON keys to Swift property names
     enum CodingKeys: String, CodingKey {
         case id
         case name
         case origin
         case description
         case temperament
-        case lifeSpan = "life_span" // map JSON snake_case to Swift camelCase
+        case lifeSpan = "life_span" // Maps JSON snake_case to Swift camelCase
         case image
         case referenceImageId = "reference_image_id"
     }
 
+    /// Constructs image URL from reference image ID
+    /// - Returns: Complete URL string for the breed's reference image
     var referenceImageUrl: String? {
         guard let id = referenceImageId else { return nil }
         return "https://cdn2.thecatapi.com/images/\(id).jpg"
     }
 
-    // URL pronta para UI
+    /// Primary image URL for UI display
+    /// Prefers direct image URL, falls back to reference image URL
     var displayImageUrl: String? {
         image?.url ?? referenceImageUrl
     }
 
-    // Vida média como Double
+    /// Calculates average lifespan from string range
+    /// Handles both single values ("12") and ranges ("12 - 15")
+    /// - Returns: Average lifespan as Double, nil if parsing fails
     var averageLifeSpan: Double? {
         guard let lifeSpan else { return nil }
 
@@ -61,8 +73,10 @@ struct CatBreed: Identifiable, Codable, Equatable {
     }
 }
 
-/// Submodelo para a imagem dentro do JSON.
+/// Image submodel contained within breed JSON response
+/// Contains URL information for breed representation images
 struct BreedImage: Codable, Equatable {
+    /// Direct URL to the breed's image
     let url: String?
 }
 

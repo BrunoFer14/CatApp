@@ -12,6 +12,10 @@ enum UIStrings {
         static let catBreedsTitle = "Cat Breeds"
         static let noFavoritesYet = "No favorites yet 🐾"
         static let averageLifeSpanOfFavoritesPrefix = "Average life span of favorites:"
+        
+        // Error messages
+        static let pageLoadFailure = "Failed loading page"
+        static let favoriteUpdateFailure = "Failed updating favorite"
     }
 
     enum Detail {
@@ -20,7 +24,7 @@ enum UIStrings {
         static let lifeSpanPrefix = "⏳ Life span:"
         static let addToFavorites = "Add to Favorites"
         static let removeFromFavorites = "Remove from Favorites"
-        static let notFoundError = "Erro: Raça não encontrada."
+        static let notFoundError = "Error: Breed not found"
     }
 
     enum Favorites {
@@ -42,5 +46,15 @@ enum UIStrings {
         static let chevronLeft = "chevron.left"
         static let chevronRight = "chevron.right"
         static let closeCircleFill = "xmark.circle.fill"
+        
+        // Tab bar icons
+        static let house = "house"
+        static let magnifyingglass = "magnifyingglass"
+        
+        // SearchBar icons
+        static let xmarkCircleFill = "xmark.circle.fill"
+        
+        // Placeholder icons
+        static let photo = "photo"
     }
 }

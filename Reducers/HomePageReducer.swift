@@ -1,0 +1,521 @@
+import Foundation
+import Combine
+import ComposableArchitecture
+
+// MARK: - Home Feature
+/// Main feature for displaying paginated cat breeds with favorites support
+/// Follows TCA architecture with proper state management and side effects
+@Reducer
+struct HomePageReducer {
+    // MARK: - Navigation Route
+    /// Defines possible navigation destinations from the home screen
+    @Reducer
+    struct Route {
+        /// Available destination states for navigation
+        @ObservableState
+        @CasePathable
+        enum State: Equatable {
+            case breedDetail(BreedDetailReducer.State)
+        }
+        
+        /// Actions that can be performed on navigation destinations
+        enum Action: Equatable {
+            case breedDetail(BreedDetailReducer.Action)
+        }
+        
+        /// Composes child reducers for navigation destinations
+        var body: some ReducerOf<Self> {
+            Scope(state: \.breedDetail, action: \.breedDetail) {
+                BreedDetailReducer()
+            }
+        }
+    }
+
+    // MARK: - State
+    /// Complete state for the home feature including breeds, favorites, and pagination
+    @ObservableState
+    struct State: Equatable {
+        /// Array of cat breeds ready for display (converted from cache)
+        var breeds: [CatBreed] = []
+        /// Raw snapshot used to reapply filters
+        var originalBreeds: [CatBreed] = []
+        
+        /// Set of breed IDs that are marked as favorites
+        var favoriteIDs: Set<String> = []
+        
+        /// Indicates if a page request is currently in progress
+        var isLoadingPage: Bool = false
+        
+        /// Current page number for pagination tracking
+        var currentPage: Int = 0
+        
+        /// Tracks if the initial page has been loaded successfully
+        var hasLoadedFirstPage: Bool = false
+
+        /// Internal: prevents duplicate page requests
+        var pagesRequested: Set<Int> = []
+        
+        /// Optional error message for UI display (Equatable-friendly)
+        var lastErrorMessage: String?
+
+        /// Navigation stack for routing to child features
+        var path = StackState<Route.State>()
+
+        /// Age range filter (in years)
+        var minAgeFilter: Double?
+        var maxAgeFilter: Double?
+    }
+
+    // MARK: - Actions
+    /// All possible actions that can occur in the home feature
+    enum Action: Equatable, BindableAction {
+        /// Binding actions for two-way data flow
+        case binding(BindingAction<State>)
+
+        //Lifecycle Actions
+        /// Triggered when the view appears for the first time
+        case onAppear
+
+        //Data Loading Actions
+        /// Request to load cached breeds from local storage
+        case loadCachedBreeds
+        /// Successful completion of cached breeds loading
+        case loadCachedBreedsFinished([CatBreed])
+
+        //Pagination Actions
+        /// Request to load the next page if needed (triggered by scroll)
+        case requestNextPageIfNeeded
+        /// Start fetching a specific page from the API
+        case fetchPage(Int)
+        /// Successfully received breeds for a page
+        case fetchPageSuccess(page: Int, breeds: [CatBreed])
+        /// Failed to fetch a page from the API
+        case fetchPageFailure(page: Int)
+        /// Fallback response when using cached data after API failure
+        case cacheFallbackResponse(page: Int, cachedCount: Int)
+
+        //Cache Management Actions
+        /// Request to clear all cached data
+        case clearCache
+        /// Cache clearing operation completed
+        case clearCacheFinished
+
+        //Favorites Actions
+        /// Request to refresh the favorites list
+        case refreshFavorites
+        /// Successfully loaded favorites from storage
+        case refreshFavoritesFinished(Set<String>)
+        /// Toggle favorite status for a specific breed
+        case toggleFavorite(breed: CatBreed)
+        /// Successfully updated favorite status
+        case toggleFavoriteSuccess(id: String)
+        /// Failed to update favorite status
+        case toggleFavoriteFailure
+
+        //Navigation Actions
+        /// Handle navigation stack actions
+        case path(StackActionOf<Route>)
+        /// User tapped on a breed to view details
+        case tappedBreed(CatBreed)
+    }
+
+    // MARK: - Dependencies
+    /// Injected dependencies for accessing external services
+    @Dependency(\.breedsService) var breedsService
+    @Dependency(\.favoritesService) var favoritesService
+    @Dependency(\.breedsCacheDB) var breedsCacheDB
+
+    // MARK: - Configuration
+    /// Number of breeds to fetch per page
+    private let limit: Int = APIConstants.defaultPageLimit
+
+    // MARK: - Body
+    /// Main reducer logic that handles all actions and state transitions
+    var body: some ReducerOf<Self> {
+        BindingReducer()
+
+        Reduce { state, action in
+            switch action {
+
+            //Lifecycle Handling
+            case .onAppear:
+                /// Load cached breeds and favorites, start initial page if needed
+                return .merge(
+                    .send(.loadCachedBreeds),
+                    .send(.refreshFavorites),
+                    state.hasLoadedFirstPage ? .none : .send(.fetchPage(UIConfig.Pagination.initialPageIndex))
+                )
+
+            //Data Loading
+            case .loadCachedBreeds:
+                /// Load all cached breeds from local storage and convert to CatBreed models
+                return loadCachedBreedsEffect()
+
+            case let .loadCachedBreedsFinished(breeds):
+                /// Update state with loaded breeds and apply age filter
+                state.originalBreeds = breeds
+                state.breeds = applyAgeFilter(
+                    breeds: breeds,
+                    minAge: state.minAgeFilter,
+                    maxAge: state.maxAgeFilter
+                )
+                return .none
+
+            //Pagination Handling
+            case .requestNextPageIfNeeded:
+                /// Trigger loading of the next page in sequence
+                let next = state.currentPage + 1
+                return .send(.fetchPage(next))
+
+            case let .fetchPage(page):
+                /// Fetch a specific page from the API with duplicate prevention
+                // Prevent duplicate requests for the same page
+                if state.isLoadingPage || state.pagesRequested.contains(page) {
+                    return .none
+                }
+                state.pagesRequested.insert(page)
+                state.isLoadingPage = true
+                state.lastErrorMessage = nil
+
+                return fetchPageEffect(page: page)
+
+            case let .fetchPageSuccess(page, _):
+                state.currentPage = page
+                if page == UIConfig.Pagination.initialPageIndex {
+                    state.hasLoadedFirstPage = true
+                }
+                state.isLoadingPage = false
+                state.lastErrorMessage = nil
+                // Reload cached breeds to update state
+                return .send(.loadCachedBreeds)
+
+            case let .fetchPageFailure(page):
+                if page == UIConfig.Pagination.initialPageIndex, !state.hasLoadedFirstPage {
+                    state.hasLoadedFirstPage = true
+                }
+                state.lastErrorMessage = "\(UIStrings.Common.pageLoadFailure) \(page)."
+                return .none
+
+            case let .cacheFallbackResponse(page, cachedCount):
+                state.isLoadingPage = false
+                if cachedCount > 0 {
+                    state.currentPage = page
+                    if page == UIConfig.Pagination.initialPageIndex {
+                        state.hasLoadedFirstPage = true
+                    }
+                    // Reload cached breeds to update state
+                    return .send(.loadCachedBreeds)
+                } else if page == UIConfig.Pagination.initialPageIndex {
+                    state.hasLoadedFirstPage = true
+                }
+                return .none
+
+            // Cache management
+            case .clearCache:
+                // local reset and clear
+                state.currentPage = 0
+                state.isLoadingPage = false
+                state.pagesRequested.removeAll()
+                state.hasLoadedFirstPage = false
+                state.lastErrorMessage = nil
+
+                return clearCacheEffect()
+
+            case .clearCacheFinished:
+                state.breeds = []
+                state.originalBreeds = []
+                return .merge(
+                    .send(.refreshFavorites),
+                    .send(.fetchPage(UIConfig.Pagination.initialPageIndex))
+                )
+
+            // Favorites
+            case .refreshFavorites:
+                return refreshFavorites()
+
+            case let .refreshFavoritesFinished(ids):
+                state.favoriteIDs = ids
+                return .none
+
+            case let .toggleFavorite(breed):
+                return toggleFavorite(for: breed)
+
+            case let .toggleFavoriteSuccess(id):
+                if state.favoriteIDs.contains(id) {
+                    state.favoriteIDs.remove(id)
+                } else {
+                    state.favoriteIDs.insert(id)
+                }
+                return .none
+
+            case .toggleFavoriteFailure:
+                state.lastErrorMessage = UIStrings.Common.favoriteUpdateFailure
+                return .none
+
+            // Navigation
+            case let .tappedBreed(breed):
+                state.path.append(.breedDetail(BreedDetailReducer.State(breed: breed)))
+                return .none
+
+            case .path:
+                return .none
+
+            case .binding:
+                // Sempre que minAgeFilter/maxAgeFilter mudarem via binding, reaplicamos o filtro
+                state.breeds = applyAgeFilter(
+                    breeds: state.originalBreeds,
+                    minAge: state.minAgeFilter,
+                    maxAge: state.maxAgeFilter
+                )
+                return .none
+            }
+        }
+        // Compose child reducers for stack elements
+        .forEach(\.path, action: \.path) {
+            Route()
+        }
+    }
+
+    // MARK: - Effects helpers
+    private func loadCachedBreedsEffect() -> EffectOf<Self> {
+        .run { send in
+            do {
+                let cachedBreeds = try await breedsCacheDB.fetchCachedBreedsSorted()
+                let breeds = FavoriteToggleHelper.convertCachedBreeds(cachedBreeds)
+                await send(.loadCachedBreedsFinished(breeds))
+            } catch {
+                await send(.loadCachedBreedsFinished([]))
+            }
+        }
+    }
+
+    private func fetchPageEffect(page: Int) -> EffectOf<Self> {
+        .run { [limit] send in
+            do {
+                // Try to fetch from API using async/await service
+                let breeds = try await breedsService.pagedBreeds(page: page, limit: limit)
+                let pageSlice = Array(breeds.prefix(limit))
+                // Persist to cache (best effort - don't fail if cache write fails)
+                try? await breedsCacheDB.upsertBreeds(pageSlice, page: page, limit: limit)
+                await send(.fetchPageSuccess(page: page, breeds: pageSlice))
+            } catch {
+                // On API failure, try to use cached data as fallback
+                do {
+                    let cached = try await breedsCacheDB.fetchCachedPage(page: page, limit: limit)
+                    await send(.cacheFallbackResponse(page: page, cachedCount: cached.count))
+                    await send(.fetchPageFailure(page: page))
+                } catch {
+                    await send(.cacheFallbackResponse(page: page, cachedCount: 0))
+                    await send(.fetchPageFailure(page: page))
+                }
+            }
+        }
+    }
+
+    private func clearCacheEffect() -> EffectOf<Self> {
+        .run { send in
+            do { try await breedsCacheDB.clearCache() }
+            catch { /* log opcional */ }
+            await send(.clearCacheFinished)
+        }
+    }
+
+    private func refreshFavorites() -> EffectOf<Self> {
+        FavoriteToggleHelper.createRefreshEffect(
+            favoritesService: favoritesService,
+            onComplete: { ids in .refreshFavoritesFinished(ids) }
+        )
+    }
+
+    private func toggleFavorite(for breed: CatBreed) -> EffectOf<Self> {
+        FavoriteToggleHelper.createToggleEffect(
+            breed: breed,
+            favoritesService: favoritesService,
+            onSuccess: { id in .toggleFavoriteSuccess(id: id) },
+            onFailure: { .toggleFavoriteFailure }
+        )
+    }
+
+    // MARK: - Filter helpers
+    private func applyAgeFilter(
+        breeds: [CatBreed],
+        minAge: Double?,
+        maxAge: Double?
+    ) -> [CatBreed] {
+        let (lo, hi) = normalizedRange(minAge: minAge, maxAge: maxAge)
+        guard lo != nil || hi != nil else { return breeds }
+
+        return breeds.filter { breed in
+            guard let (bMin, bMax) = parseLifeSpanRange(breed.lifeSpan) else {
+                return false
+            }
+            if let lo, let hi {
+                return bMax >= lo && bMin <= hi
+            } else if let lo {
+                return bMin >= lo
+            } else if let hi {
+                return bMax <= hi
+            }
+            return true
+        }
+    }
+
+    private func normalizedRange(minAge: Double?, maxAge: Double?) -> (Double?, Double?) {
+        guard let minAge, let maxAge else { return (minAge, maxAge) }
+        if minAge <= maxAge { return (minAge, maxAge) }
+        // Se o usuário inverteu os valores, normalizamos trocando
+        return (maxAge, minAge)
+    }
+
+    private func parseLifeSpanRange(_ lifeSpan: String?) -> (Double, Double)? {
+        guard let lifeSpan, !lifeSpan.isEmpty else { return nil }
+        var numbers: [Double] = []
+        var current = ""
+        for ch in lifeSpan {
+            if ch.isNumber || ch == "." {
+                current.append(ch)
+            } else {
+                if !current.isEmpty, let val = Double(current) {
+                    numbers.append(val)
+                }
+                current.removeAll(keepingCapacity: true)
+            }
+        }
+        if !current.isEmpty, let val = Double(current) {
+            numbers.append(val)
+        }
+        switch numbers.count {
+        case 2:
+            let a = numbers[0], b = numbers[1]
+            return (min(a, b), max(a, b))
+        case 1:
+            let n = numbers[0]
+            return (n, n)
+        default:
+            return nil
+        }
+    }
+}
+
+// MARK: - Shared Favorite Toggle Helper
+enum FavoriteToggleHelper {
+    static func createToggleEffect<Action>(
+        breed: CatBreed,
+        favoritesService: any FavoritesServiceProtocol,
+        onSuccess: @escaping (String) -> Action,
+        onFailure: @escaping () -> Action
+    ) -> Effect<Action> {
+        .run { send in
+            let id = breed.id
+            if await favoritesService.isFavorite(id: id) {
+                do {
+                    try await favoritesService.removeFavorite(id: id)
+                    try await favoritesService.deleteFavoriteDetail(id: id)
+                    await send(onSuccess(id))
+                } catch {
+                    await send(onFailure())
+                }
+            } else {
+                do {
+                    try await favoritesService.addFavorite(id: id)
+                    try await favoritesService.upsertFavoriteDetail(from: breed)
+                    await send(onSuccess(id))
+                } catch {
+                    await send(onFailure())
+                }
+            }
+        }
+    }
+    
+    static func createToggleEffectWithBool<Action>(
+        breed: CatBreed,
+        favoritesService: any FavoritesServiceProtocol,
+        onSuccess: @escaping (String, Bool) -> Action,
+        onFailure: @escaping () -> Action
+    ) -> Effect<Action> {
+        .run { send in
+            let id = breed.id
+            if await favoritesService.isFavorite(id: id) {
+                do {
+                    try await favoritesService.removeFavorite(id: id)
+                    try await favoritesService.deleteFavoriteDetail(id: id)
+                    await send(onSuccess(id, false))
+                } catch {
+                    await send(onFailure())
+                }
+            } else {
+                do {
+                    try await favoritesService.addFavorite(id: id)
+                    try await favoritesService.upsertFavoriteDetail(from: breed)
+                    await send(onSuccess(id, true))
+                } catch {
+                    await send(onFailure())
+                }
+            }
+        }
+    }
+    
+    static func createRefreshEffect<Action>(
+        favoritesService: any FavoritesServiceProtocol,
+        onComplete: @escaping (Set<String>) -> Action
+    ) -> Effect<Action> {
+        .run { send in
+            do {
+                let favs = try await favoritesService.fetchFavorites()
+                await send(onComplete(Set(favs.map { $0.breedId })))
+            } catch {
+                await send(onComplete([]))
+            }
+        }
+    }
+    
+    // Helper para refresh de favorito individual
+    static func createSingleFavoriteRefreshEffect<Action>(
+        id: String,
+        favoritesService: any FavoritesServiceProtocol,
+        onComplete: @escaping (String, Bool) -> Action
+    ) -> Effect<Action> {
+        .run { send in
+            let isFav = await favoritesService.isFavorite(id: id)
+            await send(onComplete(id, isFav))
+        }
+    }
+    
+    // Helper para conversão de cached breeds
+    static func convertCachedBreeds(_ cachedBreeds: [CachedBreed]) -> [CatBreed] {
+        cachedBreeds.map { cached in
+            CatBreed(
+                id: cached.id,
+                name: cached.name,
+                origin: cached.origin,
+                description: cached.breedDescription,
+                temperament: cached.temperament,
+                lifeSpan: cached.lifeSpan,
+                image: BreedImage(url: cached.imageUrl),
+                referenceImageId: nil
+            )
+        }
+    }
+}
+
+// MARK: - Helper: await first value from a Combine publisher
+private extension Publisher {
+    func asyncFirst() async throws -> Output {
+        try await withCheckedThrowingContinuation { continuation in
+            var cancellable: AnyCancellable?
+            cancellable = self.first()
+                .sink(
+                    receiveCompletion: { completion in
+                        if case .failure(let error) = completion {
+                            continuation.resume(throwing: error)
+                        }
+                        _ = cancellable
+                    },
+                    receiveValue: { value in
+                        continuation.resume(returning: value)
+                        _ = cancellable
+                    }
+                )
+        }
+    }
+}

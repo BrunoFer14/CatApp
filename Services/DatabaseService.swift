@@ -12,7 +12,6 @@ protocol DatabaseServiceProtocol {
     func saveIfNeeded() throws
 }
 
-/// Concrete implementation using SwiftData.
 @MainActor
 final class SwiftDataDatabaseService: DatabaseServiceProtocol {
     let context: ModelContext

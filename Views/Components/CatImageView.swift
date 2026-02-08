@@ -51,9 +51,9 @@ struct CatImageView: View {
                         view.clipped()
                     }
             } else if isLoading {
-                ProgressView()
+                ProgressView.standardCircular
             } else {
-                Image(systemName: "photo")
+                Image(systemName: UIStrings.Icons.photo)
                     .resizable()
                     .aspectRatio(contentMode: contentMode == .fill ? .fill : .fit)
                     .scaledToFit()
@@ -70,7 +70,8 @@ struct CatImageView: View {
         .frame(width: width, height: height)
         .cornerRadius(cornerRadius)
         .task(id: urlString) {
-            // When the URL changes, try to load the image
+            // When the URL changes, clear previous image and load the new one
+            image = nil
             await loadImage()
         }
     }
@@ -96,7 +97,6 @@ struct CatImageView: View {
     @MainActor
     private func loadImage() async {
         guard let urlString, let url = URL(string: urlString) else { return }
-        if image != nil { return } // avoid reloading
         isLoading = true
         defer { isLoading = false }
 
@@ -124,3 +124,21 @@ private extension View {
     }
 }
 
+// MARK: - Reusable Progress Views
+extension ProgressView where CurrentValueLabel == EmptyView, Label == EmptyView {
+    /// Standard circular progress view with consistent styling
+    static var standardCircular: some View {
+        ProgressView()
+            .progressViewStyle(.circular)
+            .padding()
+    }
+}
+
+extension ProgressView where CurrentValueLabel == EmptyView, Label == Text {
+    /// Standard circular progress view with text and consistent styling
+    static func standardCircular(_ title: String) -> some View {
+        ProgressView(title)
+            .progressViewStyle(.circular)
+            .padding()
+    }
+}

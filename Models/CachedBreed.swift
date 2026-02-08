@@ -1,16 +1,16 @@
 import SwiftData
 
-/// Modelo SwiftData para guardar raças em cache (persistência local).
+/// SwiftData model for caching cat breeds in local persistence storage.
+/// Used to maintain breed data offline and support pagination ordering.
 @Model
 class CachedBreed {
-    @Attribute(.unique) var id: String // único por raça
+    @Attribute(.unique) var id: String
     var name: String
     var origin: String?
     var temperament: String?
     var lifeSpan: String?
     var breedDescription: String?
     var imageUrl: String?
-    // Índice para manter a ordem de carregamento/paginação
     var orderIndex: Int = UIConfig.Pagination.initialPageIndex
 
     init(

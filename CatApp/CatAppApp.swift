@@ -1,14 +1,16 @@
 import SwiftUI
 import SwiftData
 
-/// Ponto de entrada da app.
-/// Cria a janela e configura o container do SwiftData com os modelos persistidos.
+/// Main entry point for the Cat Breeds application
+/// Sets up the app window and configures SwiftData container with persistent models
 @main
 struct CatAppApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
         }
+        /// Configure SwiftData model container for local persistence
+        /// Includes all models: Favorite, CachedBreed, and FavoriteBreedDetail
         .modelContainer(for: [Favorite.self, CachedBreed.self, FavoriteBreedDetail.self])
     }
 }

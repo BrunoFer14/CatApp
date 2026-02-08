@@ -5,15 +5,11 @@ import UIKit
 #if canImport(AppKit)
 import AppKit
 #endif
+import ComposableArchitecture
 
-/// Ecrã de detalhes de uma raça.
 struct BreedDetailView: View {
-    let breed: CatBreed
-    @ObservedObject var viewModel: CatBreedsViewModel
+    let store: StoreOf<BreedDetailReducer>
 
-    @StateObject private var detailVM = BreedDetailViewModel()
-
-    // Cor do botão (compatível com várias plataformas)
     private var buttonBackground: Color {
         #if canImport(UIKit)
         return Color(UIColor.systemGray6)
@@ -25,29 +21,50 @@ struct BreedDetailView: View {
     }
 
     var body: some View {
-        content
-            .onAppear(perform: onAppearDetail)
-            // Fullscreen viewer
-            .fullScreenCover(isPresented: $detailVM.isPresentingFullscreen) {
-                FullscreenImageView(urlString: detailVM.fullscreenURL) {
-                    detailVM.dismissFullscreen()
+        WithViewStore(store, observe: { $0 }) { viewStore in
+            content(viewStore: viewStore)
+                .onAppear {
+                    viewStore.send(.onAppear)
                 }
-            }
+                #if os(iOS)
+                .fullScreenCover(
+                    isPresented: viewStore.binding(
+                        get: \.isPresentingFullscreen,
+                        send: { $0 ? .presentFullscreenForSelected : .dismissFullscreen }
+                    )
+                ) {
+                    FullscreenImageView(urlString: viewStore.fullscreenURL) {
+                        viewStore.send(.dismissFullscreen)
+                    }
+                }
+                #elseif os(macOS)
+                .sheet(
+                    isPresented: viewStore.binding(
+                        get: \.isPresentingFullscreen,
+                        send: { $0 ? .presentFullscreenForSelected : .dismissFullscreen }
+                    )
+                ) {
+                    FullscreenImageView(urlString: viewStore.fullscreenURL) {
+                        viewStore.send(.dismissFullscreen)
+                    }
+                }
+                #endif
+        }
     }
 }
 
 // MARK: - Body composition
 private extension BreedDetailView {
     @ViewBuilder
-    var content: some View {
+    func content(viewStore: ViewStoreOf<BreedDetailReducer>) -> some View {
         Group {
-            switch detailVM.state {
-            case .idle, .loading:
+            switch viewStore.screenState {
+            case .loading:
                 loadingSection
             case .error(let message):
                 errorSection(message: message)
-            case .content(let currentBreed):
-                contentSection(currentBreed: currentBreed)
+            case .content:
+                contentSection(viewStore: viewStore, currentBreed: viewStore.breed)
             }
         }
     }
@@ -57,9 +74,7 @@ private extension BreedDetailView {
 private extension BreedDetailView {
     var loadingSection: some View {
         VStack(spacing: UILayout.sectionSpacing) {
-            ProgressView()
-                .progressViewStyle(.circular)
-                .padding()
+            ProgressView.standardCircular
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -77,30 +92,37 @@ private extension BreedDetailView {
         }
     }
 
-    func contentSection(currentBreed: CatBreed) -> some View {
+    func contentSection(viewStore: ViewStoreOf<BreedDetailReducer>, currentBreed: CatBreed) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: UILayout.sectionSpacing) {
-                if !detailVM.imageItems.isEmpty {
-                    headerCarouselSection
+                if !viewStore.imageItems.isEmpty {
+                    headerCarouselSection(viewStore: viewStore)
                 } else {
-                    fallbackImageSection(currentBreed: currentBreed)
+                    fallbackImageSection(currentBreed: currentBreed, viewStore: viewStore)
                 }
 
                 titleSection(currentBreed: currentBreed)
                 infoSection(currentBreed: currentBreed)
                 descriptionSection(currentBreed: currentBreed)
-                favoriteButtonSection(currentBreed: currentBreed)
+                favoriteButtonSection(viewStore: viewStore)
             }
             .padding()
         }
         .navigationTitle(currentBreed.name)
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+        #endif
     }
 
-    var headerCarouselSection: some View {
+    func headerCarouselSection(viewStore: ViewStoreOf<BreedDetailReducer>) -> some View {
         VStack(spacing: 0) {
-            TabView(selection: $detailVM.selectedIndex) {
-                ForEach(Array(detailVM.imageItems.enumerated()), id: \.offset) { index, item in
+            TabView(
+                selection: viewStore.binding(
+                    get: \.selectedIndex,
+                    send: { .selectImage(index: $0) }
+                )
+            ) {
+                ForEach(Array(viewStore.imageItems.enumerated()), id: \.element.id) { index, item in
                     CatImageView(
                         urlString: item.url,
                         height: UIDimensions.detailImageHeightPrimary,
@@ -109,70 +131,71 @@ private extension BreedDetailView {
                     )
                     .contentShape(Rectangle())
                     .onTapGesture {
-                        detailVM.select(index: index)
-                        detailVM.presentFullscreenForSelected()
+                        viewStore.send(.selectImage(index: index))
+                        viewStore.send(.presentFullscreenForSelected)
                     }
                     .tag(index)
                 }
             }
+            #if os(iOS)
             .tabViewStyle(.page(indexDisplayMode: .automatic))
+            #endif
             .frame(height: UIDimensions.detailImageHeightPrimary)
 
-            carouselControlsSection
+            carouselControlsSection(viewStore: viewStore)
                 .padding(.horizontal)
                 .padding(.top, UILayout.gridSpacing)
         }
     }
 
-    var carouselControlsSection: some View {
+    func carouselControlsSection(viewStore: ViewStoreOf<BreedDetailReducer>) -> some View {
         HStack(spacing: UILayout.gridSpacing) {
-            Button {
-                withAnimation {
-                    detailVM.goPrev()
-                }
-            } label: {
-                Image(systemName: UIStrings.Icons.chevronLeft)
-                    .font(.title2)
-                    .foregroundColor(.primary)
-                    .padding(UILayout.buttonPadding)
-                    .background(
-                        Circle()
-                            .fill(Color.black.opacity(UILayout.circleButtonBackgroundOpacity))
-                    )
-            }
-            .buttonStyle(.plain)
-            .disabled(detailVM.selectedIndex == UIConfig.Pagination.initialPageIndex)
+            carouselNavigationButton(
+                icon: UIStrings.Icons.chevronLeft,
+                action: { withAnimation { _ = viewStore.send(.goPrev) } },
+                isDisabled: viewStore.selectedIndex == UIConfig.Pagination.initialPageIndex
+            )
 
             Spacer()
 
-            if detailVM.isLoadingGallery {
-                ProgressView()
-                    .progressViewStyle(.circular)
-                    .padding(.horizontal)
+            if viewStore.isLoadingGallery {
+                ProgressView.standardCircular
+                    .padding(.horizontal, 0)
             }
 
             Spacer()
 
-            Button {
-                withAnimation {
-                    detailVM.goNext()
-                }
-            } label: {
-                Image(systemName: UIStrings.Icons.chevronRight)
-                    .font(.title2)
-                    .foregroundColor(.primary)
-                    .padding(UILayout.buttonPadding)
-                    .background(
-                        Circle()
-                            .fill(Color.black.opacity(UILayout.circleButtonBackgroundOpacity))
-                    )
-            }
-            .buttonStyle(.plain)
-            .disabled(detailVM.selectedIndex >= detailVM.imageItems.count - 1)
+            carouselNavigationButton(
+                icon: UIStrings.Icons.chevronRight,
+                action: { withAnimation { _ = viewStore.send(.goNext) } },
+                isDisabled: viewStore.selectedIndex >= max(0, viewStore.imageItems.count - 1)
+            )
         }
     }
+    
+    @ViewBuilder
+    private func carouselNavigationButton(
+        icon: String,
+        action: @escaping () -> Void,
+        isDisabled: Bool
+    ) -> some View {
+        Button {
+            action()
+        } label: {
+            Image(systemName: icon)
+                .font(.title2)
+                .foregroundColor(.primary)
+                .padding(UILayout.buttonPadding)
+                .background(
+                    Circle()
+                        .fill(Color.black.opacity(UILayout.circleButtonBackgroundOpacity))
+                )
+        }
+        .buttonStyle(.plain)
+        .disabled(isDisabled)
+    }
 
-    func fallbackImageSection(currentBreed: CatBreed) -> some View {
+    func fallbackImageSection(currentBreed: CatBreed, viewStore: ViewStoreOf<BreedDetailReducer>) -> some View {
         CatImageView(
             urlString: currentBreed.image?.url ?? currentBreed.referenceImageUrl,
             height: UIDimensions.detailImageHeightFallback,
@@ -181,9 +204,9 @@ private extension BreedDetailView {
         )
         .contentShape(Rectangle())
         .onTapGesture {
-            if let url = currentBreed.image?.url ?? currentBreed.referenceImageUrl {
-                detailVM.fullscreenURL = url
-                detailVM.isPresentingFullscreen = true
+            if currentBreed.image?.url ?? currentBreed.referenceImageUrl != nil {
+                viewStore.send(.selectImage(index: 0))
+                viewStore.send(.presentFullscreenForSelected)
             }
         }
         .frame(maxWidth: .infinity)
@@ -223,29 +246,26 @@ private extension BreedDetailView {
         }
     }
 
-    func favoriteButtonSection(currentBreed: CatBreed) -> some View {
+    func favoriteButtonSection(viewStore: ViewStoreOf<BreedDetailReducer>) -> some View {
         Button(action: {
-            viewModel.toggleFavorite(for: currentBreed)
+            viewStore.send(.toggleFavorite)
         }) {
             HStack(spacing: UILayout.tileContentSpacing) {
-                Image(systemName: viewModel.isFavorite(currentBreed) ? UIStrings.Icons.heartFill : UIStrings.Icons.heart)
+                Image(systemName: viewStore.isFavorite ? UIStrings.Icons.heartFill : UIStrings.Icons.heart)
                     .foregroundColor(.red)
-                Text(viewModel.isFavorite(currentBreed) ? UIStrings.Detail.removeFromFavorites : UIStrings.Detail.addToFavorites)
+                    .scaleEffect(viewStore.isFavorite ? 1.1 : 1.0)
+                    .animation(.spring(response: 0.3, dampingFraction: 0.7), value: viewStore.isFavorite)
+                Text(viewStore.isFavorite ? UIStrings.Detail.removeFromFavorites : UIStrings.Detail.addToFavorites)
+                    .animation(.easeInOut(duration: 0.2), value: viewStore.isFavorite)
             }
             .padding()
             .frame(maxWidth: .infinity)
             .background(buttonBackground)
+            .scaleEffect(viewStore.isFavorite ? 1.02 : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.8), value: viewStore.isFavorite)
             .cornerRadius(UILayout.defaultCornerRadius)
         }
         .padding(.top, UILayout.textTopPaddingMedium)
-    }
-}
-
-// MARK: - Lifecycle handlers
-private extension BreedDetailView {
-    func onAppearDetail() {
-        // VM decide o que carregar e como construir imagens
-        detailVM.prepare(for: breed)
     }
 }
 
@@ -268,7 +288,7 @@ private struct FullscreenImageView: View {
                     cornerRadius: UILayout.fullscreenImageCornerRadius,
                     contentMode: .fit
                 )
-                .id(urlString) // força reload quando a URL muda
+                .id(urlString)
                 .frame(width: side, height: side, alignment: .center)
 
                 VStack(spacing: 0) {

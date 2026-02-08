@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		B3B318432E99346800E3BA47 /* ConfigDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3B318422E99345900E3BA47 /* ConfigDecoder.swift */; };
+		B3C808CC2EC600D50091937C /* CatApp.xctestplan in Resources */ = {isa = PBXBuildFile; fileRef = B3C808CB2EC600D50091937C /* CatApp.xctestplan */; };
+		B3FB2EA92EB22D0500C45695 /* ComposableArchitecture in Frameworks */ = {isa = PBXBuildFile; productRef = B3FB2EA82EB22D0500C45695 /* ComposableArchitecture */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -18,7 +20,7 @@
 			remoteGlobalIDString = AF7B3B1F2E43AEAB005F7801;
 			remoteInfo = CatApp;
 		};
-		B38B17F62E8C276C00F2B693 /* PBXContainerItemProxy */ = {
+		B3C808D62EC602CA0091937C /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = AF7B3B182E43AEAB005F7801 /* Project object */;
 			proxyType = 1;
@@ -30,12 +32,13 @@
 /* Begin PBXFileReference section */
 		AF7B3B202E43AEAB005F7801 /* CatApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CatApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF7B3B382E43AEAD005F7801 /* CatAppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CatAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		B38B17F22E8C276C00F2B693 /* CatAppTests1.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CatAppTests1.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B3B318422E99345900E3BA47 /* ConfigDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigDecoder.swift; sourceTree = "<group>"; };
+		B3C808CB2EC600D50091937C /* CatApp.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = CatApp.xctestplan; sourceTree = "<group>"; };
+		B3C808D22EC602CA0091937C /* CatAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CatAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		B3B318452E99366C00E3BA47 /* Exceptions for "CatApp" folder in "CatApp" target */ = {
+		B3FB2EA62EB22A2D00C45695 /* Exceptions for "CatApp" folder in "CatApp" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -48,7 +51,7 @@
 		AF7B3B222E43AEAB005F7801 /* CatApp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				B3B318452E99366C00E3BA47 /* Exceptions for "CatApp" folder in "CatApp" target */,
+				B3FB2EA62EB22A2D00C45695 /* Exceptions for "CatApp" folder in "CatApp" target */,
 			);
 			path = CatApp;
 			sourceTree = "<group>";
@@ -56,11 +59,6 @@
 		AF7B3B4B2E43AF37005F7801 /* Models */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Models;
-			sourceTree = "<group>";
-		};
-		AF7B3B4C2E43AF40005F7801 /* ViewModels */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = ViewModels;
 			sourceTree = "<group>";
 		};
 		AF7B3B4D2E43AF4B005F7801 /* Views */ = {
@@ -73,16 +71,6 @@
 			path = Services;
 			sourceTree = "<group>";
 		};
-		B38B17C82E8A879C00F2B693 /* Repositories */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Repositories;
-			sourceTree = "<group>";
-		};
-		B38B17F32E8C276C00F2B693 /* CatAppTests1 */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = CatAppTests1;
-			sourceTree = "<group>";
-		};
 		B3B318462E993EE500E3BA47 /* Secrets */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Secrets;
@@ -93,6 +81,16 @@
 			path = Constants;
 			sourceTree = "<group>";
 		};
+		B3C808D32EC602CA0091937C /* CatAppTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = CatAppTests;
+			sourceTree = "<group>";
+		};
+		B3FB2EAA2EB26AE300C45695 /* Reducers */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Reducers;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -100,6 +98,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B3FB2EA92EB22D0500C45695 /* ComposableArchitecture in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -110,7 +109,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		B38B17EF2E8C276C00F2B693 /* Frameworks */ = {
+		B3C808CF2EC602CA0091937C /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -123,16 +122,17 @@
 		AF7B3B172E43AEAB005F7801 = {
 			isa = PBXGroup;
 			children = (
+				B3C808CB2EC600D50091937C /* CatApp.xctestplan */,
+				B3FB2EAA2EB26AE300C45695 /* Reducers */,
 				B3B31A0E2EA128B800E3BA47 /* Constants */,
 				B3B318422E99345900E3BA47 /* ConfigDecoder.swift */,
 				B3B318462E993EE500E3BA47 /* Secrets */,
-				B38B17C82E8A879C00F2B693 /* Repositories */,
 				B38B17C42E8A860A00F2B693 /* Services */,
 				AF7B3B4D2E43AF4B005F7801 /* Views */,
-				AF7B3B4C2E43AF40005F7801 /* ViewModels */,
 				AF7B3B4B2E43AF37005F7801 /* Models */,
 				AF7B3B222E43AEAB005F7801 /* CatApp */,
-				B38B17F32E8C276C00F2B693 /* CatAppTests1 */,
+				B3C808D32EC602CA0091937C /* CatAppTests */,
+				B3C3E4C32EC37CE70025F6AB /* Frameworks */,
 				AF7B3B212E43AEAB005F7801 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -142,9 +142,16 @@
 			children = (
 				AF7B3B202E43AEAB005F7801 /* CatApp.app */,
 				AF7B3B382E43AEAD005F7801 /* CatAppUITests.xctest */,
-				B38B17F22E8C276C00F2B693 /* CatAppTests1.xctest */,
+				B3C808D22EC602CA0091937C /* CatAppTests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		B3C3E4C32EC37CE70025F6AB /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -165,15 +172,15 @@
 			fileSystemSynchronizedGroups = (
 				AF7B3B222E43AEAB005F7801 /* CatApp */,
 				AF7B3B4B2E43AF37005F7801 /* Models */,
-				AF7B3B4C2E43AF40005F7801 /* ViewModels */,
 				AF7B3B4D2E43AF4B005F7801 /* Views */,
 				B38B17C42E8A860A00F2B693 /* Services */,
-				B38B17C82E8A879C00F2B693 /* Repositories */,
 				B3B318462E993EE500E3BA47 /* Secrets */,
 				B3B31A0E2EA128B800E3BA47 /* Constants */,
+				B3FB2EAA2EB26AE300C45695 /* Reducers */,
 			);
 			name = CatApp;
 			packageProductDependencies = (
+				B3FB2EA82EB22D0500C45695 /* ComposableArchitecture */,
 			);
 			productName = CatApp;
 			productReference = AF7B3B202E43AEAB005F7801 /* CatApp.app */;
@@ -199,27 +206,27 @@
 			productReference = AF7B3B382E43AEAD005F7801 /* CatAppUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
-		B38B17F12E8C276C00F2B693 /* CatAppTests1 */ = {
+		B3C808D12EC602CA0091937C /* CatAppTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = B38B17F82E8C276C00F2B693 /* Build configuration list for PBXNativeTarget "CatAppTests1" */;
+			buildConfigurationList = B3C808D82EC602CA0091937C /* Build configuration list for PBXNativeTarget "CatAppTests" */;
 			buildPhases = (
-				B38B17EE2E8C276C00F2B693 /* Sources */,
-				B38B17EF2E8C276C00F2B693 /* Frameworks */,
-				B38B17F02E8C276C00F2B693 /* Resources */,
+				B3C808CE2EC602CA0091937C /* Sources */,
+				B3C808CF2EC602CA0091937C /* Frameworks */,
+				B3C808D02EC602CA0091937C /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				B38B17F72E8C276C00F2B693 /* PBXTargetDependency */,
+				B3C808D72EC602CA0091937C /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				B38B17F32E8C276C00F2B693 /* CatAppTests1 */,
+				B3C808D32EC602CA0091937C /* CatAppTests */,
 			);
-			name = CatAppTests1;
+			name = CatAppTests;
 			packageProductDependencies = (
 			);
-			productName = CatAppTests1;
-			productReference = B38B17F22E8C276C00F2B693 /* CatAppTests1.xctest */;
+			productName = CatAppTests;
+			productReference = B3C808D22EC602CA0091937C /* CatAppTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
@@ -239,7 +246,7 @@
 						CreatedOnToolsVersion = 16.4;
 						TestTargetID = AF7B3B1F2E43AEAB005F7801;
 					};
-					B38B17F12E8C276C00F2B693 = {
+					B3C808D12EC602CA0091937C = {
 						CreatedOnToolsVersion = 26.0.1;
 						TestTargetID = AF7B3B1F2E43AEAB005F7801;
 					};
@@ -254,6 +261,9 @@
 			);
 			mainGroup = AF7B3B172E43AEAB005F7801;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				B3FB2EA72EB22D0500C45695 /* XCRemoteSwiftPackageReference "swift-composable-architecture" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = AF7B3B212E43AEAB005F7801 /* Products */;
 			projectDirPath = "";
@@ -261,7 +271,7 @@
 			targets = (
 				AF7B3B1F2E43AEAB005F7801 /* CatApp */,
 				AF7B3B372E43AEAD005F7801 /* CatAppUITests */,
-				B38B17F12E8C276C00F2B693 /* CatAppTests1 */,
+				B3C808D12EC602CA0091937C /* CatAppTests */,
 			);
 		};
 /* End PBXProject section */
@@ -271,6 +281,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B3C808CC2EC600D50091937C /* CatApp.xctestplan in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -281,7 +292,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		B38B17F02E8C276C00F2B693 /* Resources */ = {
+		B3C808D02EC602CA0091937C /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -306,7 +317,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		B38B17EE2E8C276C00F2B693 /* Sources */ = {
+		B3C808CE2EC602CA0091937C /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -321,10 +332,10 @@
 			target = AF7B3B1F2E43AEAB005F7801 /* CatApp */;
 			targetProxy = AF7B3B392E43AEAD005F7801 /* PBXContainerItemProxy */;
 		};
-		B38B17F72E8C276C00F2B693 /* PBXTargetDependency */ = {
+		B3C808D72EC602CA0091937C /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = AF7B3B1F2E43AEAB005F7801 /* CatApp */;
-			targetProxy = B38B17F62E8C276C00F2B693 /* PBXContainerItemProxy */;
+			targetProxy = B3C808D62EC602CA0091937C /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -569,7 +580,7 @@
 			};
 			name = Release;
 		};
-		B38B17F92E8C276C00F2B693 /* Debug */ = {
+		B3C808D92EC602CA0091937C /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -578,7 +589,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = CatApp.CatAppTests1;
+				PRODUCT_BUNDLE_IDENTIFIER = CatApp.CatAppTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
@@ -591,7 +602,7 @@
 			};
 			name = Debug;
 		};
-		B38B17FA2E8C276C00F2B693 /* Release */ = {
+		B3C808DA2EC602CA0091937C /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -600,7 +611,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = CatApp.CatAppTests1;
+				PRODUCT_BUNDLE_IDENTIFIER = CatApp.CatAppTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
@@ -644,16 +655,35 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		B38B17F82E8C276C00F2B693 /* Build configuration list for PBXNativeTarget "CatAppTests1" */ = {
+		B3C808D82EC602CA0091937C /* Build configuration list for PBXNativeTarget "CatAppTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				B38B17F92E8C276C00F2B693 /* Debug */,
-				B38B17FA2E8C276C00F2B693 /* Release */,
+				B3C808D92EC602CA0091937C /* Debug */,
+				B3C808DA2EC602CA0091937C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		B3FB2EA72EB22D0500C45695 /* XCRemoteSwiftPackageReference "swift-composable-architecture" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/pointfreeco/swift-composable-architecture";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.23.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		B3FB2EA82EB22D0500C45695 /* ComposableArchitecture */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B3FB2EA72EB22D0500C45695 /* XCRemoteSwiftPackageReference "swift-composable-architecture" */;
+			productName = ComposableArchitecture;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = AF7B3B182E43AEAB005F7801 /* Project object */;
 }

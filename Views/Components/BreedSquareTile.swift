@@ -13,24 +13,37 @@ struct BreedSquareTile: View {
     private let imageHeight: CGFloat = UIDimensions.tileImageHeight
 
     var body: some View {
-        VStack(alignment: .leading, spacing: UILayout.tileContentSpacing) {
+        VStack(alignment: .leading, spacing: 0) {
             ZStack(alignment: .topTrailing) {
-                // Image (uses URL from breed model)
+                // Image (uses URL from breed model) - full width edge-to-edge
                 CatImageView(
                     urlString: breed.displayImageUrl ?? breed.referenceImageUrl,
+                    width: UIDimensions.breedCardWidth, // Full card width
                     height: imageHeight,
-                    cornerRadius: imageCornerRadius,
+                    cornerRadius: cornerRadius, // Match card corner radius
                     contentMode: .fill
                 )
+                .clipShape(
+                    UnevenRoundedRectangle(
+                        topLeadingRadius: cornerRadius,
+                        bottomLeadingRadius: 0,
+                        bottomTrailingRadius: 0,
+                        topTrailingRadius: cornerRadius
+                    )
+                )
 
-                // Favorite button floating over the image
+                // Favorite button floating over the image with animation
                 Button(action: favoriteAction) {
                     Image(systemName: isFavorite ? "heart.fill" : "heart")
                         .foregroundColor(.red)
+                        .scaleEffect(isFavorite ? 1.1 : 1.0) // Slight scale when favorited
+                        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isFavorite)
                         .padding(UILayout.iconButtonPadding)
                         .background(
                             Circle()
                                 .fill(Color.white.opacity(UILayout.circleButtonFillOpacity))
+                                .scaleEffect(isFavorite ? 1.05 : 1.0) // Background also scales slightly
+                                .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isFavorite)
                                 .shadow(
                                     color: Color.black.opacity(UILayout.circleButtonShadowOpacity),
                                     radius: UILayout.circleButtonShadowRadius,
@@ -44,27 +57,37 @@ struct BreedSquareTile: View {
                 .accessibilityLabel(isFavorite ? "Remove from Favorites" : "Add to Favorites")
             }
 
-            // Title
-            Text(breed.name)
-                .font(.headline)
-                .foregroundColor(.primary)
-                .lineLimit(UILayout.titleLineLimit)
-                .multilineTextAlignment(.leading)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            // Fixed height text section for consistent alignment
+            VStack(alignment: .leading, spacing: 4) {
+                // Title with fixed size for consistent wrapping
+                Text(breed.name)
+                    .font(.headline)
+                    .foregroundColor(.primary)
+                    .lineLimit(UILayout.titleLineLimit)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
-            // Optional origin as subtitle
-            if let origin = breed.origin, !origin.isEmpty {
-                Text(origin)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .lineLimit(UILayout.subtitleLineLimit)
+                // Optional origin as subtitle
+                if let origin = breed.origin, !origin.isEmpty {
+                    Text(origin)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .lineLimit(UILayout.subtitleLineLimit)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
             }
+            .frame(height: UIDimensions.tileTextAreaHeight, alignment: .top) // Fixed height for text area
+            .padding(.horizontal, UILayout.cardContentPadding) // Only horizontal padding for text
+            .padding(.top, UILayout.tileContentSpacing) // Top spacing from image
 
             Spacer(minLength: 0)
         }
-        .padding(UILayout.cardContentPadding)
-        .frame(maxWidth: .infinity)
-        .frame(height: UIDimensions.breedCardHeight) // matches HomeListView placeholder height
+        .padding(.bottom, UILayout.cardContentPadding) // Only bottom padding
+        .frame(
+            width: UIDimensions.breedCardWidth,   // Fixed width for consistent grid
+            height: UIDimensions.breedCardHeight  // Fixed height
+        )
         .background(cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
         .shadow(
